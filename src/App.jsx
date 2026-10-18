@@ -201,45 +201,34 @@ export default function App() {
 
   const isAuthorizedToEdit = isLoggedIn && (currentUserRole === 'Admin' || currentUserRole === 'Order Processing');
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     
-    let assignedRole = 'Salesperson';
-    let userName = loginNameInput;
+    try {
+      const payload = new URLSearchParams();
+      payload.append('action', 'verifyLogin');
+      payload.append('user', loginNameInput);
+      payload.append('pin', loginPinInput);
 
-    if (userName === 'Admin') {
-      if (loginPinInput !== 'ADMIN') {
-        alert("❌ Incorrect Admin PIN!");
-        return;
+      const response = await fetch(GOOGLE_SHEETS_API_URL, {
+        method: "POST",
+        body: payload
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setCurrentUserRole(result.role);
+        setCurrentUserName(result.name || loginNameInput);
+        setIsLoggedIn(true);
+        setShowLoginModal(false);
+        setLoginPinInput('');
+      } else {
+        alert("❌ Incorrect PIN or Username!");
       }
-      assignedRole = 'Admin';
-      userName = 'Senior Admin';
-    } else if (userName === 'Amardeep') {
-      if (loginPinInput !== 'AMARDEEP') {
-        alert("❌ Incorrect PIN for Amardeep!");
-        return;
-      }
-      assignedRole = 'Order Processing';
-    } else if (userName === 'Gautam') {
-      if (loginPinInput !== 'GAUTAM') {
-        alert("❌ Incorrect PIN for Gautam!");
-        return;
-      }
-      assignedRole = 'Order Processing';
-    } else if (userName === 'Viewer') {
-      if (loginPinInput !== '0000') {
-        alert("❌ Incorrect Viewer PIN!");
-        return;
-      }
-      assignedRole = 'Viewer';
-      userName = 'Guest Viewer';
+    } catch (err) {
+      console.error("Login verification failed:", err);
+      alert("⚠️ Network error during login. Please try again.");
     }
-
-    setCurrentUserRole(assignedRole);
-    setCurrentUserName(userName);
-    setIsLoggedIn(true);
-    setShowLoginModal(false);
-    setLoginPinInput('');
   };
 
   const handleLogout = () => {
