@@ -927,7 +927,7 @@ export default function App() {
                         {(() => {
                           const productStatus = (order.productStatus || "").toLowerCase();
                           const karigarName = order.karigarName || order.KarigarName || "Not Assigned";
-                          const karigarDOD = order.karigarDOD || order.KarigarDOD || "";
+                          const karigarDOD = order.karigarDod || order.karigarDOD || "";
 
                           if (!isAssigned || productStatus.includes('not assign') || productStatus === '') {
                             return (
