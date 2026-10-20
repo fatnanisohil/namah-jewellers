@@ -950,24 +950,23 @@ export default function App() {
                             );
                           } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
                             return (
-                              <div className="status-badge received">
-                                <strong>Received from Karigar</strong>
-                                <span className="sub-text">{karigarName}</span>
+                              <div className="px-3 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
+                                Received from Karigar<br />
+                                <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
                               </div>
                             );
                           } else if (productStatus.includes("packed") || productStatus.includes("dispatch")) {
                             return (
-                              <div className="status-badge dispatch">
-                                <strong>Ready to Dispatch</strong>
+                              <div className="px-3 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-xs font-bold text-center">
+                                Ready to Dispatch
                               </div>
                             );
                           } else {
-                            // Default Under Process / Assigned state
                             return (
-                              <div className="status-badge assigned">
-                                <strong>Assigned to Karigar</strong>
-                                <span className="sub-text">{karigarName}</span>
-                                {karigarDOD && <span className="sub-text">DOD: {karigarDOD}</span>}
+                              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center">
+                                Assigned to Karigar<br />
+                                <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
+                                {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-90">DOD: {karigarDOD}</span></>}
                               </div>
                             );
                           }
