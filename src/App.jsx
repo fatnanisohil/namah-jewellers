@@ -961,20 +961,16 @@ export default function App() {
                                 <strong>Ready to Dispatch</strong>
                               </div>
                             );
-                          } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
-  return (
-    <div className="status-badge received" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-      <strong style={{ display: 'block' }}>Received from Karigar</strong>
-      <span className="sub-text" style={{ display: 'block', marginTop: '2px' }}>{karigarName}</span>
-    </div>
-  );
-} else if (productStatus.includes("packed") || productStatus.includes("dispatch")) {
-  return (
-    <div className="status-badge dispatch" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-      <strong style={{ display: 'block' }}>Ready to Dispatch</strong>
-    </div>
-  );
-}
+                          } else {
+                            // Default Under Process / Assigned state
+                            return (
+                              <div className="status-badge assigned">
+                                <strong>Assigned to Karigar</strong>
+                                <span className="sub-text">{karigarName}</span>
+                                {karigarDOD && <span className="sub-text">DOD: {karigarDOD}</span>}
+                              </div>
+                            );
+                          }
                         })()}
                       </td>
 
