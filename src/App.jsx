@@ -911,9 +911,16 @@ export default function App() {
   
   {/* Added Order Description */}
   {/* Added Order Description with text wrap */}
+{/* Added Order Description with text wrap */}
 <div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
   <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
   <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
+</div>
+
+{/* Added Daily Remarks */}
+<div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
+  <span className="font-medium text-purple-400">DAILY REMARKS - </span>
+  <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
 </div>
 </td>
 
