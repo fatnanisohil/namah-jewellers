@@ -924,7 +924,13 @@ export default function App() {
                           </td>
 
                           <td className="p-4">
-                            {!isAssigned ? (
+                        {(() => {
+                          const productStatus = (order.productStatus || "").toLowerCase();
+                          const karigarName = order.karigarName || order.KarigarName || "Not Assigned";
+                          const karigarDOD = order.karigarDOD || order.KarigarDOD || "";
+
+                          if (!isAssigned || productStatus.includes('not assign') || productStatus === '') {
+                            return (
                               <button
                                 onClick={() => {
                                   if (!isAuthorizedToEdit) {
@@ -941,13 +947,32 @@ export default function App() {
                               >
                                 Place order
                               </button>
-                            ) : (
-                              <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/30 inline-flex items-center gap-1.5 select-none cursor-default">
-                                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                                <span>Assigned to Karigar</span>
-                              </span>
-                            )}
-                          </td>
+                            );
+                          } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
+                            return (
+                              <div className="status-badge received">
+                                <strong>Received from Karigar</strong>
+                                <span className="sub-text">{karigarName}</span>
+                              </div>
+                            );
+                          } else if (productStatus.includes("packed") || productStatus.includes("dispatch")) {
+                            return (
+                              <div className="status-badge dispatch">
+                                <strong>Ready to Dispatch</strong>
+                              </div>
+                            );
+                          } else {
+                            // Default Under Process / Assigned state
+                            return (
+                              <div className="status-badge assigned">
+                                <strong>Assigned to Karigar</strong>
+                                <span className="sub-text">{karigarName}</span>
+                                {karigarDOD && <span className="sub-text">DOD: {karigarDOD}</span>}
+                              </div>
+                            );
+                          }
+                        })()}
+                      </td>
 
                           <td className="p-4 text-center">
                             <button
