@@ -1098,11 +1098,31 @@ export default function App() {
                             <p className="text-[11px] font-bold text-amber-400">Sales: {order.salesPerson}</p>
                           </td>
                           <td className="p-4 space-y-1">
-                            <span className="font-bold text-slate-200 text-sm">{order.jewelleryItem}</span>
-                            <div className="text-[11px] text-slate-300">
-                              {order.goldWeight && <span>Gold: <strong className="text-amber-400">{order.goldWeight}g</strong></span>}
-                            </div>
-                          </td>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-200 text-sm">{order.jewelleryItem || 'Necklace'}</span>
+                            {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
+                          </div>
+                          <div className="text-[11px] text-slate-300 space-x-1">
+                            {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
+                            {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
+                            {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
+                          </div>
+                          <p className="text-[11px] text-slate-400">
+                            {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
+                          </p>
+                          
+                          {/* Order Description */}
+                          <div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
+                            <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
+                            <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
+                          </div>
+
+                          {/* Daily Remarks */}
+                          <div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
+                            <span className="font-medium text-purple-400">DAILY REMARKS - </span>
+                            <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
+                          </div>
+                        </td>
                           <td className="p-4">
                             <span className="px-3 py-1.5 rounded-xl bg-[#232d42] text-blue-300 border border-blue-500/30 text-xs font-bold inline-block">
                               {order.orderPerson || 'Amardeep'}
