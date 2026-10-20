@@ -966,7 +966,7 @@ export default function App() {
                               <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center">
                                 Assigned to Karigar<br />
                                 <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
-                                {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-90">DOD: {karigarDOD}</span></>}
+                                {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-95">DOD: {extractDateOnly(karigarDOD)}</span></>}
                               </div>
                             );
                           }
