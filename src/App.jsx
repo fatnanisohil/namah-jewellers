@@ -560,6 +560,10 @@ export default function App() {
           if (!(pStatus === 'packed')) {
             return false;
           }
+        } else if (filterStatus === '--Not Assign--') {
+          if (!(!order.productStatus || order.productStatus === '' || pStatus.includes('not assign'))) {
+            return false;
+          }
         } else if (pStatus !== filterStatus.toLowerCase()) {
           return false;
         }
@@ -704,18 +708,19 @@ export default function App() {
             return clean;
           };
 
-          // Helper to get normalized product status strictly matching actual state
+          // Helper to get normalized product status including --Not Assign--
           const getStatusStr = (o) => {
             const pStatus = (o.productStatus || '').toLowerCase();
-            
-            if (pStatus.includes('process') || pStatus === 'assigned') {
+            if (!o.productStatus || o.productStatus === '' || pStatus.includes('not assign')) {
+              return '--Not Assign--';
+            } else if (pStatus.includes('process') || pStatus === 'assigned') {
               return 'Under Process';
             } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
               return 'Ready but bill pending';
             } else if (pStatus === 'packed') {
               return 'Packed';
             }
-            return toProperCase(o.productStatus) || 'Under Process';
+            return toProperCase(o.productStatus);
           };
 
           // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter correctly
@@ -1169,6 +1174,7 @@ export default function App() {
                     <option value="Under Process" className="bg-[#181b22]">Under Process</option>
                     <option value="Ready but bill pending" className="bg-[#181b22]">Ready but bill pending</option>
                     <option value="Packed" className="bg-[#181b22]">Packed</option>
+                    <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
                   </select>
                 </div>
               </div>
