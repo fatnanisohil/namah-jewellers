@@ -1850,24 +1850,13 @@ export default function App() {
               <X className="w-6 h-6" />
             </button>
             
-            {/* Instant Thumbnail Placeholder + HD Loader */}
-            <div className="relative flex items-center justify-center">
-              {/* Small preview loads instantly */}
-              <img 
-                src={previewImage} 
-                alt="Product Preview Loading" 
-                className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
-              />
-              {/* HD large image loads smoothly on top */}
-              <img 
-                src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
-                alt="Product Preview HD" 
-                className="absolute inset-0 max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900 transition-opacity duration-300"
-                onClick={(e) => e.stopPropagation()} 
-                onLoad={(e) => e.target.style.opacity = '1'}
-                style={{ opacity: 0 }}
-              />
-            </div>
+            {/* Large Clear HD Preview */}
+            <img 
+              src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
+              alt="Product Preview HD" 
+              className="w-auto h-auto max-w-[85vw] max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
+              onClick={(e) => e.stopPropagation()} 
+            />
           </div>
         </div>
       )}
