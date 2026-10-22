@@ -687,11 +687,22 @@ export default function App() {
 
       <main className="flex-1 p-4 sm:p-6 max-w-[1450px] w-full mx-auto space-y-6">
         {activeTab === 'dashboard' && (() => {
-          // Total active live orders (isOn === true and not delivered)
+          // Total active live orders (ON + OFF, non-delivered)
           const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
-            return !isDelivered && o.isOn;
+            return !isDelivered;
           });
+
+          // Helper to format date into DD/MM for display and sorting
+          const formatDateDDMM = (dateStr) => {
+            const clean = extractDateOnly(dateStr);
+            if (!clean || clean === 'N/A') return 'N/A';
+            const parts = clean.split('-');
+            if (parts.length === 3) {
+              return `${parts[2]}/${parts[1]}`;
+            }
+            return clean;
+          };
 
           // Helper to get normalized product status for live orders
           const getStatusStr = (o) => {
@@ -753,7 +764,7 @@ export default function App() {
             return true;
           });
 
-          const totalLiveOrders = dashboardFilteredOrders.length;
+          const totalLiveOrders = allLiveOrders.length;
 
           const uniqueLiveOrdersMap = {};
           dashboardFilteredOrders.forEach(o => {
@@ -781,6 +792,17 @@ export default function App() {
             }
           };
 
+          // Strict Under Process Tracker sorted by Karigar DOD chronological order
+          const underProcessTrackerOrders = dashboardFilteredOrders.filter(o => {
+            return getStatusStr(o) === 'Under Process';
+          }).sort((a, b) => {
+            const dateA = extractDateOnly(a.karigarDod);
+            const dateB = extractDateOnly(b.karigarDod);
+            if (dateA === 'N/A' || !dateA) return 1;
+            if (dateB === 'N/A' || !dateB) return -1;
+            return dateA.localeCompare(dateB);
+          });
+
           const customerGroups = {};
           dashboardFilteredOrders.forEach(o => {
             const custKey = o.contactNumber || o.customerName || 'Unknown';
@@ -805,16 +827,6 @@ export default function App() {
               return st === 'packed';
             });
             if (allPacked) packedCustomers.push(cust);
-          });
-
-          // Dedicated Under Process orders sorted by Karigar DOD chronologically
-          const underProcessOrdersList = allLiveOrders.filter(o => getStatusStr(o) === 'Under Process').sort((a, b) => {
-            const dateA = extractDateOnly(a.karigarDod);
-            const dateB = extractDateOnly(b.karigarDod);
-            if (dateA === 'N/A' && dateB === 'N/A') return 0;
-            if (dateA === 'N/A') return 1;
-            if (dateB === 'N/A') return -1;
-            return dateA.localeCompare(dateB);
           });
 
           return (
@@ -845,7 +857,7 @@ export default function App() {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders (ON)</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders (ON+OFF)</p>
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
@@ -926,7 +938,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Under Process Orders Tracker (Strictly Under Process & Sorted by Karigar DOD) */}
+              {/* Under Process Orders - Karigar DOD Status Tracker (Chronological Order with DD/MM) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
                   UNDER PROCESS ORDERS - KARIGAR DOD STATUS TRACKER (CHRONOLOGICAL ORDER)
@@ -938,22 +950,22 @@ export default function App() {
                         <th className="p-3">Order / Tag</th>
                         <th className="p-3">Customer</th>
                         <th className="p-3">Karigar Name</th>
-                        <th className="p-3">Karigar DOD</th>
+                        <th className="p-3">Karigar DOD (DD/MM)</th>
                         <th className="p-3 text-center">DOD Timeline Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {underProcessOrdersList.length === 0 ? (
+                      {underProcessTrackerOrders.length === 0 ? (
                         <tr><td colSpan="5" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
                       ) : (
-                        underProcessOrdersList.map((ord, idx) => {
+                        underProcessTrackerOrders.map((ord, idx) => {
                           const dodStatus = getDODStatus(ord.karigarDod);
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
                               <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
                               <td className="p-3">{ord.customerName}</td>
                               <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
-                              <td className="p-3">{extractDateOnly(ord.karigarDod)}</td>
+                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
                               <td className="p-3 text-center">
                                 <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${dodStatus.color}`}>
                                   {dodStatus.text}
@@ -968,74 +980,41 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Bill Pending & Packed Customer Lists */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-3">
-                  <h4 className="text-sm font-black text-emerald-400 uppercase">Customers: All Items Ready (Bill Pending)</h4>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {billPendingCustomers.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">No customers found with all bill pending items.</p>
-                    ) : (
-                      billPendingCustomers.map((cust, i) => (
-                        <div key={i} className="bg-[#111318] p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                          <div>
-                            <p className="font-bold text-slate-100">{cust.customerName}</p>
-                            <p className="text-[11px] text-slate-400">{cust.contactNumber} — <strong className="text-amber-400">{cust.items.length} item(s)</strong></p>
-                          </div>
-                          <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-bold">Bill Pending</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-3">
-                  <h4 className="text-sm font-black text-purple-400 uppercase">Customers: All Items Packed</h4>
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {packedCustomers.length === 0 ? (
-                      <p className="text-xs text-slate-500 py-4 text-center">No customers found with all packed items.</p>
-                    ) : (
-                      packedCustomers.map((cust, i) => (
-                        <div key={i} className="bg-[#111318] p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
-                          <div>
-                            <p className="font-bold text-slate-100">{cust.customerName}</p>
-                            <p className="text-[11px] text-slate-400">{cust.contactNumber} — <strong className="text-amber-400">{cust.items.length} item(s)</strong></p>
-                          </div>
-                          <span className="px-2 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-lg text-[10px] font-bold">Packed</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Complete List of All Orders at the Bottom */}
+              {/* Master List of All Active Live Orders (ON and OFF) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">Complete List of All Active Live Orders</h4>
+                <h4 className="text-sm font-black text-amber-400 uppercase">
+                  Master List of All Active Live Orders (ON & OFF)
+                </h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[850px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Order Sheet</th>
-                        <th className="p-3">Promised Delivery Date (DOD)</th>
+                        <th className="p-3">DOD (Promised)</th>
                         <th className="p-3">Karigar Name</th>
                         <th className="p-3">Karigar DOD</th>
                         <th className="p-3">Daily Remarks</th>
+                        <th className="p-3 text-center">State</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {allLiveOrders.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
+                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
                         allLiveOrders.map((ord, idx) => (
                           <tr key={idx} className="hover:bg-[#111318]/50">
                             <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
-                            <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo || 'N/A'} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
+                            <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo || 'N/A'} <span className="text-slate-500 font-mono text-[10px]">({ord.tagNumber})</span></td>
                             <td className="p-3">{extractDateOnly(ord.deliveryDate)}</td>
                             <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
-                            <td className="p-3">{extractDateOnly(ord.karigarDod)}</td>
-                            <td className="p-3 text-purple-300">{ord.dailyRemarks || '--'}</td>
+                            <td className="p-3 font-mono">{formatDateDDMM(ord.karigarDod)}</td>
+                            <td className="p-3 text-slate-300 max-w-xs truncate">{ord.dailyRemarks || ord.orderDescription || '--'}</td>
+                            <td className="p-3 text-center">
+                              <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${ord.isOn ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : 'bg-slate-800 text-slate-400 border-slate-700'}`}>
+                                {ord.isOn ? 'ON' : 'OFF'}
+                              </span>
+                            </td>
                           </tr>
                         ))
                       )}
