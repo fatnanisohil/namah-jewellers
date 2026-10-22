@@ -549,15 +549,15 @@ export default function App() {
       if (filterStatus !== 'ALL') {
         const pStatus = (order.productStatus || '--Not Assign--').toLowerCase();
         if (filterStatus === 'Under Process') {
-          if (!(order.isOn && (pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign')))) {
+          if (!(pStatus.includes('process') || pStatus === 'assigned')) {
             return false;
           }
         } else if (filterStatus === 'Ready but bill pending') {
-          if (!(order.isOn && (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')))) {
+          if (!(pStatus === 'ready but bill pending' || pStatus.includes('bill pending'))) {
             return false;
           }
         } else if (filterStatus === 'Packed') {
-          if (!(order.isOn && pStatus === 'packed')) {
+          if (!(pStatus === 'packed')) {
             return false;
           }
         } else if (pStatus !== filterStatus.toLowerCase()) {
@@ -704,19 +704,18 @@ export default function App() {
             return clean;
           };
 
-          // Helper to get normalized product status for live orders
+          // Helper to get normalized product status strictly matching actual state
           const getStatusStr = (o) => {
             const pStatus = (o.productStatus || '').toLowerCase();
-            const isUnderProcess = pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
             
-            if (isUnderProcess) {
+            if (pStatus.includes('process') || pStatus === 'assigned') {
               return 'Under Process';
             } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
               return 'Ready but bill pending';
             } else if (pStatus === 'packed') {
               return 'Packed';
             }
-            return toProperCase(o.productStatus);
+            return toProperCase(o.productStatus) || 'Under Process';
           };
 
           // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter correctly
@@ -1054,7 +1053,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return o.isOn && (pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign'));
+                      return pStatus.includes('process') || pStatus === 'assigned';
                     }).length}
                   </h3>
                 </div>
@@ -1073,7 +1072,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return o.isOn && (pStatus === 'ready but bill pending' || pStatus.includes('bill pending'));
+                      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending');
                     }).length}
                   </h3>
                 </div>
@@ -1092,7 +1091,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return o.isOn && pStatus === 'packed';
+                      return pStatus === 'packed';
                     }).length}
                   </h3>
                 </div>
