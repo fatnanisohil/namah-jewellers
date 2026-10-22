@@ -68,6 +68,11 @@ export default function App() {
   const [filterWorkType, setFilterWorkType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
+  // Dashboard specific local cross-filtering states
+  const [dashboardSalesFilter, setDashboardSalesFilter] = useState('ALL');
+  const [dashboardExecFilter, setDashboardExecFilter] = useState('ALL');
+  const [dashboardStatusFilter, setDashboardStatusFilter] = useState('ALL');
+
   const [selectedOrderForKarigar, setSelectedOrderForKarigar] = useState(null);
   const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [selectedCustomerCRM, setSelectedCustomerCRM] = useState(null);
@@ -682,34 +687,46 @@ export default function App() {
 
       <main className="flex-1 p-4 sm:p-6 max-w-[1450px] w-full mx-auto space-y-6">
         {activeTab === 'dashboard' && (() => {
-          const liveOrders = orders.filter(o => {
+          // Total live orders (both ON and OFF active non-delivered orders)
+          const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
-            return !isDelivered && o.isOn;
+            return !isDelivered;
           });
 
-          const totalLiveOrders = liveOrders.length;
+          // Apply Dashboard specific cross filters
+          const dashboardFilteredOrders = allLiveOrders.filter(o => {
+            if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
+            if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
+            if (dashboardStatusFilter !== 'ALL') {
+              const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
+              if (st !== dashboardStatusFilter) return false;
+            }
+            return true;
+          });
+
+          const totalLiveOrders = dashboardFilteredOrders.length;
 
           const uniqueLiveOrdersMap = {};
-          liveOrders.forEach(o => {
+          dashboardFilteredOrders.forEach(o => {
             const key = o.orderSheetNo || o.tagNumber;
             if (key) uniqueLiveOrdersMap[key] = true;
           });
           const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
 
           const liveBySales = {};
-          liveOrders.forEach(o => {
+          allLiveOrders.forEach(o => {
             const sp = o.salesPerson || 'Unassigned';
             liveBySales[sp] = (liveBySales[sp] || 0) + 1;
           });
 
           const liveByExec = {};
-          liveOrders.forEach(o => {
+          allLiveOrders.forEach(o => {
             const ep = o.orderPerson || 'Unassigned';
             liveByExec[ep] = (liveByExec[ep] || 0) + 1;
           });
 
           const liveByStatus = {};
-          liveOrders.forEach(o => {
+          allLiveOrders.forEach(o => {
             const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
             liveByStatus[st] = (liveByStatus[st] || 0) + 1;
           });
@@ -728,7 +745,7 @@ export default function App() {
             }
           };
 
-          const underProcessOrders = liveOrders.filter(o => {
+          const underProcessOrders = dashboardFilteredOrders.filter(o => {
             const pStatus = (o.productStatus || '').toLowerCase();
             return pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
           }).sort((a, b) => {
@@ -740,7 +757,7 @@ export default function App() {
           });
 
           const customerGroups = {};
-          liveOrders.forEach(o => {
+          dashboardFilteredOrders.forEach(o => {
             const custKey = o.contactNumber || o.customerName || 'Unknown';
             if (!customerGroups[custKey]) {
               customerGroups[custKey] = { customerName: o.customerName, contactNumber: o.contactNumber, items: [] };
@@ -772,16 +789,16 @@ export default function App() {
                   <Sparkles className="w-5 h-5" /> Comprehensive Business Dashboard
                 </h3>
                 <div className="flex items-center gap-3">
-                  {(filterSalesperson !== 'ALL' || filterExecutive !== 'ALL' || filterStatus !== 'ALL') && (
+                  {(dashboardSalesFilter !== 'ALL' || dashboardExecFilter !== 'ALL' || dashboardStatusFilter !== 'ALL') && (
                     <button
                       onClick={() => {
-                        setFilterSalesperson('ALL');
-                        setFilterExecutive('ALL');
-                        setFilterStatus('ALL');
+                        setDashboardSalesFilter('ALL');
+                        setDashboardExecFilter('ALL');
+                        setDashboardStatusFilter('ALL');
                       }}
                       className="px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" /> Clear Filters
+                      <RotateCcw className="w-3.5 h-3.5" /> Clear Dashboard Filters
                     </button>
                   )}
                   <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
@@ -793,7 +810,7 @@ export default function App() {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders (ON+OFF)</p>
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
@@ -817,19 +834,18 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Breakdown Grid with Cross Filtering */}
+              {/* Breakdown Grid with Dashboard-Only Cross Filtering */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter)</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter Dashboard)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveBySales).map(([sp, count], i) => (
                       <div 
                         key={i} 
-                        onClick={() => {
-                          setFilterSalesperson(sp);
-                          setActiveTab('orders');
-                        }}
-                        className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80 hover:border-amber-500 cursor-pointer transition-all"
+                        onClick={() => setDashboardSalesFilter(dashboardSalesFilter === sp ? 'ALL' : sp)}
+                        className={`flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border cursor-pointer transition-all ${
+                          dashboardSalesFilter === sp ? 'border-amber-500 bg-amber-500/10 font-bold text-amber-300' : 'border-slate-800/80 hover:border-amber-500'
+                        }`}
                       >
                         <span>{sp}</span>
                         <strong className="text-amber-400">{count}</strong>
@@ -839,16 +855,15 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person (Click to Filter)</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person (Click to Filter Dashboard)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveByExec).map(([ep, count], i) => (
                       <div 
                         key={i} 
-                        onClick={() => {
-                          setFilterExecutive(ep);
-                          setActiveTab('orders');
-                        }}
-                        className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80 hover:border-amber-500 cursor-pointer transition-all"
+                        onClick={() => setDashboardExecFilter(dashboardExecFilter === ep ? 'ALL' : ep)}
+                        className={`flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border cursor-pointer transition-all ${
+                          dashboardExecFilter === ep ? 'border-amber-500 bg-amber-500/10 font-bold text-amber-300' : 'border-slate-800/80 hover:border-amber-500'
+                        }`}
                       >
                         <span>{ep}</span>
                         <strong className="text-amber-400">{count}</strong>
@@ -858,16 +873,15 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise (Click to Filter)</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise (Click to Filter Dashboard)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveByStatus).map(([st, count], i) => (
                       <div 
                         key={i} 
-                        onClick={() => {
-                          setFilterStatus(st);
-                          setActiveTab('orders');
-                        }}
-                        className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80 hover:border-amber-500 cursor-pointer transition-all"
+                        onClick={() => setDashboardStatusFilter(dashboardStatusFilter === st ? 'ALL' : st)}
+                        className={`flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border cursor-pointer transition-all ${
+                          dashboardStatusFilter === st ? 'border-amber-500 bg-amber-500/10 font-bold text-amber-300' : 'border-slate-800/80 hover:border-amber-500'
+                        }`}
                       >
                         <span>{st}</span>
                         <strong className="text-amber-400">{count}</strong>
@@ -877,7 +891,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Under Process DOD Status List (Sorted by Date) */}
+              {/* Under Process DOD Status List (Chronological Order) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">Under Process Orders - Karigar DOD Status Tracker (Chronological Order)</h4>
                 <div className="overflow-x-auto">
@@ -963,7 +977,7 @@ export default function App() {
                 <h4 className="text-sm font-black text-amber-400 uppercase">Unique Live Orders & Complete Item Breakdown</h4>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
                   {Object.entries(uniqueLiveOrdersMap).map(([sheetNo], idx) => {
-                    const sheetOrders = liveOrders.filter(o => (o.orderSheetNo || o.tagNumber) === sheetNo);
+                    const sheetOrders = dashboardFilteredOrders.filter(o => (o.orderSheetNo || o.tagNumber) === sheetNo);
                     const sample = sheetOrders[0] || {};
                     return (
                       <div key={idx} className="bg-[#111318] border border-slate-800 p-4 rounded-xl space-y-2">
