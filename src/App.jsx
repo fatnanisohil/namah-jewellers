@@ -106,33 +106,32 @@ export default function App() {
   };
 
   const formatDriveUrl = (order) => {
-    if (order.imagePreviewLocal) return order.imagePreviewLocal;
-    if (order.imageBase64) return order.imageBase64;
-    if (order.productImageLink && (order.productImageLink.startsWith('blob:') || order.productImageLink.startsWith('data:image'))) {
-      return order.productImageLink;
-    }
+  if (order.imagePreviewLocal) return order.imagePreviewLocal;
 
-    const rawUrl = order.productImageLink || order.imageUrl || order.image || order.photo || '';
-    if (!rawUrl || typeof rawUrl !== 'string') return '';
-    if (rawUrl.startsWith('data:image') || rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
-      return rawUrl;
-    }
-    if (rawUrl.includes('Drive Error') || rawUrl.includes('Exception:')) return '';
+  const rawUrl = order.productImageLink || '';
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
 
-    let fileId = '';
-    if (rawUrl.includes('/file/d/')) {
-      fileId = rawUrl.split('/file/d/')[1]?.split('/')[0];
-    } else if (rawUrl.includes('id=')) {
-      fileId = rawUrl.split('id=')[1]?.split('&')[0];
-    } else if (rawUrl.includes('/d/')) {
-      fileId = rawUrl.split('/d/')[1]?.split('/')[0];
-    }
-
-    if (fileId) {
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
-    }
+  // Ignore massive base64 strings in the web view to prevent browser crashes
+  if (rawUrl.startsWith('data:image')) return ''; 
+  if (rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
     return rawUrl;
-  };
+  }
+
+  let fileId = '';
+  if (rawUrl.includes('/file/d/')) {
+    fileId = rawUrl.split('/file/d/')[1]?.split('/')[0];
+  } else if (rawUrl.includes('id=')) {
+    fileId = rawUrl.split('id=')[1]?.split('&')[0];
+  } else if (rawUrl.includes('/d/')) {
+    fileId = rawUrl.split('/d/')[1]?.split('/')[0];
+  }
+
+  if (fileId) {
+    // Request a small thumbnail size (&sz=w150) to save memory
+    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w150`;
+  }
+  return '';
+};
 
   const fetchOrdersFromSheet = async () => {
     setLoading(true);
@@ -174,7 +173,7 @@ export default function App() {
 
   useEffect(() => {
     fetchOrdersFromSheet();
-    const interval = setInterval(fetchOrdersFromSheet, 20000);
+    const interval = setInterval(fetchOrdersFromSheet, 60000);
     return () => clearInterval(interval);
   }, []);
 
