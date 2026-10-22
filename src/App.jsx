@@ -857,7 +857,7 @@ export default function App() {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders (ON+OFF)</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ORDERS (ON+OFF)</p>
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
