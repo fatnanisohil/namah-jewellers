@@ -1850,11 +1850,11 @@ export default function App() {
               <X className="w-6 h-6" />
             </button>
             <img 
-              src={previewImage} 
-              alt="Product Preview" 
-              className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
-              onClick={(e) => e.stopPropagation()} 
-            />
+  src={previewImage ? previewImage.replace('&sz=w150', '&sz=w1000') : ''} 
+  alt="Product Preview" 
+  className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
+  onClick={(e) => e.stopPropagation()} 
+/>
           </div>
         </div>
       )}
