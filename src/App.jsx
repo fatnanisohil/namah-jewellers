@@ -693,36 +693,63 @@ export default function App() {
             return !isDelivered;
           });
 
-          // Step 1: Base unfiltered breakdown lists for displaying breakdown card counts correctly
+          // Helper to get normalized product status
+          const getStatusStr = (o) => {
+            const pStatus = (o.productStatus || '').toLowerCase();
+            if (pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign')) {
+              return 'Under Process';
+            } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
+              return 'Ready but bill pending';
+            } else if (pStatus === 'packed') {
+              return 'Packed';
+            }
+            return toProperCase(o.productStatus);
+          };
+
+          // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter each other
+          const ordersForSalesBreakdown = allLiveOrders.filter(o => {
+            if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
+            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            return true;
+          });
+
+          const ordersForExecBreakdown = allLiveOrders.filter(o => {
+            if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
+            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            return true;
+          });
+
+          const ordersForStatusBreakdown = allLiveOrders.filter(o => {
+            if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
+            if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
+            return true;
+          });
+
           const liveBySalesAll = {};
-          allLiveOrders.forEach(o => {
+          ordersForSalesBreakdown.forEach(o => {
             const sp = o.salesPerson || 'Unassigned';
             liveBySalesAll[sp] = (liveBySalesAll[sp] || 0) + 1;
           });
 
           const liveByExecAll = {};
-          allLiveOrders.forEach(o => {
+          ordersForExecBreakdown.forEach(o => {
             const ep = o.orderPerson || 'Unassigned';
             liveByExecAll[ep] = (liveByExecAll[ep] || 0) + 1;
           });
 
-          // Product Status Wise counts restricted to ON orders (or active live orders)
           const liveByStatusAll = {};
-          allLiveOrders.forEach(o => {
+          ordersForStatusBreakdown.forEach(o => {
             if (o.isOn) {
-              const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
+              const st = getStatusStr(o);
               liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
             }
           });
 
-          // Step 2: Apply Dashboard specific cross filters to main metrics & table
+          // Step 2: Fully filtered orders for summary metrics, tables and lists
           const dashboardFilteredOrders = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
-            if (dashboardStatusFilter !== 'ALL') {
-              const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
-              if (st !== dashboardStatusFilter) return false;
-            }
+            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
             return true;
           });
 
@@ -738,7 +765,6 @@ export default function App() {
           });
           const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
 
-          // OFF orders dynamically filtered by current dashboard selections
           const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
 
           const todayStr = new Date().toISOString().split('T')[0];
@@ -844,7 +870,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Breakdown Grid with Dashboard-Only Cross Filtering */}
+              {/* Breakdown Grid with Cross Filtering */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
                   <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter Dashboard)</h4>
