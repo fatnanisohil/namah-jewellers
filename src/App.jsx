@@ -796,15 +796,17 @@ export default function App() {
             }
           };
 
-          // Strict Under Process Tracker sorted by Karigar DOD chronological order
+          // Strict Under Process Tracker sorted by True Calendar Date Chronologically
           const underProcessTrackerOrders = dashboardFilteredOrders.filter(o => {
             return getStatusStr(o) === 'Under Process';
           }).sort((a, b) => {
-            const dateA = extractDateOnly(a.karigarDod);
-            const dateB = extractDateOnly(b.karigarDod);
-            if (dateA === 'N/A' || !dateA) return 1;
-            if (dateB === 'N/A' || !dateB) return -1;
-            return dateA.localeCompare(dateB);
+            const dateStrA = extractDateOnly(a.karigarDod);
+            const dateStrB = extractDateOnly(b.karigarDod);
+
+            const timeA = (!dateStrA || dateStrA === 'N/A') ? Infinity : new Date(dateStrA).getTime();
+            const timeB = (!dateStrB || dateStrB === 'N/A') ? Infinity : new Date(dateStrB).getTime();
+
+            return timeA - timeB;
           });
 
           const customerGroups = {};
