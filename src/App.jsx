@@ -697,6 +697,17 @@ export default function App() {
             return !isDelivered;
           });
 
+          // Helper to format date into DD/MM for display and sorting
+          const formatDateDDMM = (dateStr) => {
+            const clean = extractDateOnly(dateStr);
+            if (!clean || clean === 'N/A') return 'N/A';
+            const parts = clean.split('-');
+            if (parts.length === 3) {
+              return `${parts[2]}/${parts[1]}`;
+            }
+            return clean;
+          };
+
           // Helper to get normalized product status including --Not Assign--
           const getStatusStr = (o) => {
             const pStatus = (o.productStatus || '').toLowerCase();
