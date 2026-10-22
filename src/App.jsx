@@ -693,11 +693,13 @@ export default function App() {
             return !isDelivered;
           });
 
-          // Helper to get normalized product status
+          // Helper to get normalized product status (Only count Under Process if isOn is true)
           const getStatusStr = (o) => {
             const pStatus = (o.productStatus || '').toLowerCase();
-            if (pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign')) {
-              return 'Under Process';
+            const isUnderProcess = pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
+            
+            if (isUnderProcess) {
+              return o.isOn ? 'Under Process' : null; // Exclude OFF unassigned orders from status breakdown
             } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
               return 'Ready but bill pending';
             } else if (pStatus === 'packed') {
@@ -709,13 +711,15 @@ export default function App() {
           // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter each other
           const ordersForSalesBreakdown = allLiveOrders.filter(o => {
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
-            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            const st = getStatusStr(o);
+            if (dashboardStatusFilter !== 'ALL' && st !== dashboardStatusFilter) return false;
             return true;
           });
 
           const ordersForExecBreakdown = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
-            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            const st = getStatusStr(o);
+            if (dashboardStatusFilter !== 'ALL' && st !== dashboardStatusFilter) return false;
             return true;
           });
 
@@ -739,8 +743,8 @@ export default function App() {
 
           const liveByStatusAll = {};
           ordersForStatusBreakdown.forEach(o => {
-            if (o.isOn) {
-              const st = getStatusStr(o);
+            const st = getStatusStr(o);
+            if (st) {
               liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
             }
           });
@@ -751,11 +755,7 @@ export default function App() {
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
             if (dashboardStatusFilter !== 'ALL') {
               const matchedStatus = getStatusStr(o);
-              if (dashboardStatusFilter === 'Under Process') {
-                if (matchedStatus !== 'Under Process') return false;
-              } else if (matchedStatus !== dashboardStatusFilter) {
-                return false;
-              }
+              if (matchedStatus !== dashboardStatusFilter) return false;
             }
             return true;
           });
@@ -787,17 +787,6 @@ export default function App() {
               return { text: 'ON TRACK', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
             }
           };
-
-          const underProcessOrders = dashboardFilteredOrders.filter(o => {
-            const pStatus = (o.productStatus || '').toLowerCase();
-            return pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
-          }).sort((a, b) => {
-            const dateA = extractDateOnly(a.karigarDod);
-            const dateB = extractDateOnly(b.karigarDod);
-            if (dateA === 'N/A') return 1;
-            if (dateB === 'N/A') return -1;
-            return dateA.localeCompare(dateB);
-          });
 
           const customerGroups = {};
           dashboardFilteredOrders.forEach(o => {
