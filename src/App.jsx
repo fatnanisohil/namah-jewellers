@@ -58,8 +58,6 @@ export default function App() {
     return saved ? JSON.parse(saved) : [];
   });
 
-
-
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -106,32 +104,32 @@ export default function App() {
   };
 
   const formatDriveUrl = (order) => {
-  if (order.imagePreviewLocal) return order.imagePreviewLocal;
+    if (order.imagePreviewLocal) return order.imagePreviewLocal;
 
-  const rawUrl = order.productImageLink || '';
-  if (!rawUrl || typeof rawUrl !== 'string') return '';
+    const rawUrl = order.productImageLink || '';
+    if (!rawUrl || typeof rawUrl !== 'string') return '';
 
-  // Ignore massive base64 strings in the web view to prevent browser crashes
-  if (rawUrl.startsWith('data:image')) return ''; 
-  if (rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
-    return rawUrl;
-  }
+    // Ignore massive base64 strings in the web view to prevent browser crashes
+    if (rawUrl.startsWith('data:image')) return ''; 
+    if (rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
+      return rawUrl;
+    }
 
-  let fileId = '';
-  if (rawUrl.includes('/file/d/')) {
-    fileId = rawUrl.split('/file/d/')[1]?.split('/')[0];
-  } else if (rawUrl.includes('id=')) {
-    fileId = rawUrl.split('id=')[1]?.split('&')[0];
-  } else if (rawUrl.includes('/d/')) {
-    fileId = rawUrl.split('/d/')[1]?.split('/')[0];
-  }
+    let fileId = '';
+    if (rawUrl.includes('/file/d/')) {
+      fileId = rawUrl.split('/file/d/')[1]?.split('/')[0];
+    } else if (rawUrl.includes('id=')) {
+      fileId = rawUrl.split('id=')[1]?.split('&')[0];
+    } else if (rawUrl.includes('/d/')) {
+      fileId = rawUrl.split('/d/')[1]?.split('/')[0];
+    }
 
-  if (fileId) {
-    // Request a small thumbnail size (&sz=w150) to save memory
-    return `https://drive.google.com/thumbnail?id=${fileId}&sz=w150`;
-  }
-  return '';
-};
+    if (fileId) {
+      // Request a small thumbnail size (&sz=w150) to save memory
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w150`;
+    }
+    return '';
+  };
 
   const fetchOrdersFromSheet = async () => {
     setLoading(true);
@@ -177,23 +175,20 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
- 
-
   useEffect(() => {
-  try {
-    // Strip heavy base64 strings before saving to prevent QuotaExceededError
-    const lightOrders = orders.map(o => ({
-      ...o,
-      imageBase64: undefined,
-      imagePreviewLocal: undefined
-    }));
-    localStorage.setItem('namah_local_orders', JSON.stringify(lightOrders));
-  } catch (error) {
-    console.error("Local storage quota exceeded:", error);
-  }
-}, [orders]);
+    try {
+      const lightOrders = orders.map(o => ({
+        ...o,
+        imageBase64: undefined,
+        imagePreviewLocal: undefined
+      }));
+      localStorage.setItem('namah_local_orders', JSON.stringify(lightOrders));
+    } catch (error) {
+      console.error("Local storage quota exceeded:", error);
+    }
+  }, [orders]);
 
-// Preload high-res images silently in the background so they open instantly
+  // Preload high-res images silently in the background so they open instantly
   useEffect(() => {
     orders.forEach(order => {
       const url = formatDriveUrl(order);
@@ -204,7 +199,6 @@ export default function App() {
       }
     });
   }, [orders]);
-
 
   useEffect(() => {
     localStorage.setItem('namah_logged_in', isLoggedIn);
@@ -275,7 +269,6 @@ export default function App() {
     setSubmitting(true);
 
     try {
-      // Prioritize imageBase64 so Google Apps Script receives the actual file data to upload to Drive
       const submissionData = {
         ...formData,
         productImageLink: formData.imageBase64 || formData.imagePreviewLocal || ''
@@ -614,6 +607,16 @@ export default function App() {
 
         <nav className="flex bg-[#111317] p-1.5 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto w-full sm:w-auto justify-start sm:justify-center">
           <button
+            onClick={() => setActiveTab('dashboard')}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'dashboard'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" /> Dashboard
+          </button>
+          <button
             onClick={() => setActiveTab('orders')}
             className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
               activeTab === 'orders'
@@ -653,7 +656,6 @@ export default function App() {
           >
             <Send className="w-3.5 h-3.5" /> Karigar ({activeKarigarOrders.length})
           </button>
-          
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
@@ -682,6 +684,269 @@ export default function App() {
       </header>
 
       <main className="flex-1 p-4 sm:p-6 max-w-[1450px] w-full mx-auto space-y-6">
+        {activeTab === 'dashboard' && (() => {
+          const liveOrders = orders.filter(o => {
+            const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
+            return !isDelivered && o.isOn;
+          });
+
+          const totalLiveOrders = liveOrders.length;
+
+          const uniqueLiveOrdersMap = {};
+          liveOrders.forEach(o => {
+            const key = o.orderSheetNo || o.tagNumber;
+            if (key) uniqueLiveOrdersMap[key] = true;
+          });
+          const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
+
+          const liveBySales = {};
+          liveOrders.forEach(o => {
+            const sp = o.salesPerson || 'Unassigned';
+            liveBySales[sp] = (liveBySales[sp] || 0) + 1;
+          });
+
+          const liveByExec = {};
+          liveOrders.forEach(o => {
+            const ep = o.orderPerson || 'Unassigned';
+            liveByExec[ep] = (liveByExec[ep] || 0) + 1;
+          });
+
+          const liveByStatus = {};
+          liveOrders.forEach(o => {
+            const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
+            liveByStatus[st] = (liveByStatus[st] || 0) + 1;
+          });
+
+          const todayStr = new Date().toISOString().split('T')[0];
+          const getDODStatus = (dodStr) => {
+            const cleanDOD = extractDateOnly(dodStr);
+            if (!cleanDOD || cleanDOD === 'N/A') return { text: 'No DOD', color: 'text-slate-400 bg-slate-800/30 border-slate-700' };
+            
+            if (cleanDOD === todayStr) {
+              return { text: 'DUE TODAY', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30' };
+            } else if (cleanDOD < todayStr) {
+              return { text: 'OVERDUE NEED UPDATE', color: 'text-red-400 bg-red-500/10 border-red-500/30' };
+            } else {
+              return { text: 'ON TRACK', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30' };
+            }
+          };
+
+          const underProcessOrders = liveOrders.filter(o => {
+            const pStatus = (o.productStatus || '').toLowerCase();
+            return pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
+          });
+
+          const customerGroups = {};
+          liveOrders.forEach(o => {
+            const custKey = o.contactNumber || o.customerName || 'Unknown';
+            if (!customerGroups[custKey]) {
+              customerGroups[custKey] = { customerName: o.customerName, contactNumber: o.contactNumber, items: [] };
+            }
+            customerGroups[custKey].items.push(o);
+          });
+
+          const billPendingCustomers = [];
+          const packedCustomers = [];
+
+          Object.values(customerGroups).forEach(cust => {
+            const allBillPending = cust.items.length > 0 && cust.items.every(item => {
+              const st = (item.productStatus || '').toLowerCase();
+              return st === 'ready but bill pending' || st.includes('bill pending');
+            });
+            if (allBillPending) billPendingCustomers.push(cust);
+
+            const allPacked = cust.items.length > 0 && cust.items.every(item => {
+              const st = (item.productStatus || '').toLowerCase();
+              return st === 'packed';
+            });
+            if (allPacked) packedCustomers.push(cust);
+          });
+
+          return (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" /> Comprehensive Business Dashboard
+                </h3>
+                <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
+                  Active Live Metrics
+                </span>
+              </div>
+
+              {/* Summary Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders</p>
+                  <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
+                </div>
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Unique Live Orders</p>
+                  <h4 className="text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
+                </div>
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
+                  <p className="text-xs text-slate-400 font-bold uppercase">Bill Pending Customers</p>
+                  <h4 className="text-2xl font-black text-emerald-400 mt-1">{billPendingCustomers.length}</h4>
+                </div>
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
+                  <p className="text-xs text-slate-400 font-bold uppercase">Fully Packed Customers</p>
+                  <h4 className="text-2xl font-black text-purple-400 mt-1">{packedCustomers.length}</h4>
+                </div>
+              </div>
+
+              {/* Breakdown Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {Object.entries(liveBySales).map(([sp, count], i) => (
+                      <div key={i} className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80">
+                        <span>{sp}</span>
+                        <strong className="text-amber-400">{count}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {Object.entries(liveByExec).map(([ep, count], i) => (
+                      <div key={i} className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80">
+                        <span>{ep}</span>
+                        <strong className="text-amber-400">{count}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise</h4>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {Object.entries(liveByStatus).map(([st, count], i) => (
+                      <div key={i} className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80">
+                        <span>{st}</span>
+                        <strong className="text-amber-400">{count}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Under Process DOD Status List */}
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-amber-400 uppercase">Under Process Orders - Karigar DOD Status Tracker</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3">Customer</th>
+                        <th className="p-3">Karigar Name</th>
+                        <th className="p-3">Karigar DOD</th>
+                        <th className="p-3 text-center">DOD Timeline Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {underProcessOrders.length === 0 ? (
+                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No Under Process live orders found.</td></tr>
+                      ) : (
+                        underProcessOrders.map((ord, idx) => {
+                          const dodStatus = getDODStatus(ord.karigarDod);
+                          return (
+                            <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
+                              <td className="p-3">{ord.customerName}</td>
+                              <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
+                              <td className="p-3">{extractDateOnly(ord.karigarDod)}</td>
+                              <td className="p-3 text-center">
+                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${dodStatus.color}`}>
+                                  {dodStatus.text}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Bill Pending & Packed Customer Lists */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-3">
+                  <h4 className="text-sm font-black text-emerald-400 uppercase">Customers: All Items Ready (Bill Pending)</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {billPendingCustomers.length === 0 ? (
+                      <p className="text-xs text-slate-500 py-4 text-center">No customers found with all bill pending items.</p>
+                    ) : (
+                      billPendingCustomers.map((cust, i) => (
+                        <div key={i} className="bg-[#111318] p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                          <div>
+                            <p className="font-bold text-slate-100">{cust.customerName}</p>
+                            <p className="text-[11px] text-slate-400">{cust.contactNumber} — <strong className="text-amber-400">{cust.items.length} item(s)</strong></p>
+                          </div>
+                          <span className="px-2 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 rounded-lg text-[10px] font-bold">Bill Pending</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-3">
+                  <h4 className="text-sm font-black text-purple-400 uppercase">Customers: All Items Packed</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {packedCustomers.length === 0 ? (
+                      <p className="text-xs text-slate-500 py-4 text-center">No customers found with all packed items.</p>
+                    ) : (
+                      packedCustomers.map((cust, i) => (
+                        <div key={i} className="bg-[#111318] p-3 rounded-xl border border-slate-800 flex justify-between items-center text-xs">
+                          <div>
+                            <p className="font-bold text-slate-100">{cust.customerName}</p>
+                            <p className="text-[11px] text-slate-400">{cust.contactNumber} — <strong className="text-amber-400">{cust.items.length} item(s)</strong></p>
+                          </div>
+                          <span className="px-2 py-1 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-lg text-[10px] font-bold">Packed</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Total Unique Live Orders with All Items Details */}
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-amber-400 uppercase">Unique Live Orders & Complete Item Breakdown</h4>
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {Object.entries(uniqueLiveOrdersMap).map(([sheetNo], idx) => {
+                    const sheetOrders = liveOrders.filter(o => (o.orderSheetNo || o.tagNumber) === sheetNo);
+                    const sample = sheetOrders[0] || {};
+                    return (
+                      <div key={idx} className="bg-[#111318] border border-slate-800 p-4 rounded-xl space-y-2">
+                        <div className="flex justify-between items-center border-b border-slate-800/80 pb-2 text-xs">
+                          <div>
+                            <span className="font-black text-amber-400 text-sm">Order Sheet: {sheetNo}</span>
+                            <span className="text-slate-400 ml-3">Customer: <strong className="text-slate-200">{sample.customerName || 'N/A'}</strong></span>
+                          </div>
+                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded text-[10px] font-bold">{sheetOrders.length} Item(s)</span>
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
+                          {sheetOrders.map((item, i) => (
+                            <div key={i} className="bg-[#181b22] p-2.5 rounded-lg border border-slate-800/60 text-[11px] space-y-1">
+                              <p className="font-bold text-slate-200">🏷️ Tag: {item.tagNumber || 'N/A'} — {item.jewelleryItem}</p>
+                              <p className="text-slate-400">Purity: <strong className="text-amber-300">{item.purity || 'N/A'}</strong> | Gold: <strong className="text-amber-400">{item.goldWeight || '0'}g</strong></p>
+                              <p className="text-slate-400">Status: <strong className="text-emerald-400">{item.productStatus || 'Under Process'}</strong></p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
+
         {activeTab === 'orders' && (
           <div className="space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -909,33 +1174,29 @@ export default function App() {
                           </td>
 
                           <td className="p-4 space-y-1">
-  <div className="flex items-center gap-1.5">
-    <span className="font-bold text-slate-200 text-sm">{order.jewelleryItem || 'Necklace'}</span>
-    {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
-  </div>
-  <div className="text-[11px] text-slate-300 space-x-1">
-    {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
-    {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
-    {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
-  </div>
-  <p className="text-[11px] text-slate-400">
-    {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
-  </p>
-  
-  {/* Added Order Description */}
-  {/* Added Order Description with text wrap */}
-{/* Added Order Description with text wrap */}
-<div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
-  <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
-  <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
-</div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-200 text-sm">{order.jewelleryItem || 'Necklace'}</span>
+                              {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
+                            </div>
+                            <div className="text-[11px] text-slate-300 space-x-1">
+                              {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
+                              {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
+                              {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
+                            </p>
+                            
+                            <div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
+                              <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
+                              <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
+                            </div>
 
-{/* Added Daily Remarks */}
-<div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
-  <span className="font-medium text-purple-400">DAILY REMARKS - </span>
-  <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
-</div>
-</td>
+                            <div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
+                              <span className="font-medium text-purple-400">DAILY REMARKS - </span>
+                              <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
+                            </div>
+                          </td>
 
                           <td className="p-4">
                             <span className="px-3 py-1.5 rounded-xl bg-[#232d42] text-blue-300 border border-blue-500/30 text-xs font-bold inline-block">
@@ -944,54 +1205,54 @@ export default function App() {
                           </td>
 
                           <td className="p-4">
-                        {(() => {
-                          const productStatus = (order.productStatus || "").toLowerCase();
-                          const karigarName = order.karigarName || order.KarigarName || "Not Assigned";
-                          const karigarDOD = order.karigarDod || order.karigarDOD || "";
+                            {(() => {
+                              const productStatus = (order.productStatus || "").toLowerCase();
+                              const karigarName = order.karigarName || order.KarigarName || "Not Assigned";
+                              const karigarDOD = order.karigarDod || order.karigarDOD || "";
 
-                          if (!isAssigned || productStatus.includes('not assign') || productStatus === '') {
-                            return (
-                              <button
-                                onClick={() => {
-                                  if (!isAuthorizedToEdit) {
-                                    alert("🔒 Restricted: Please login as Admin or Order Desk to place orders.");
-                                    return;
-                                  }
-                                  setSelectedOrderForKarigar(order);
-                                }}
-                                className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer ${
-                                  isAuthorizedToEdit
-                                    ? 'text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30'
-                                    : 'text-slate-500 bg-slate-900 border-slate-800 opacity-70'
-                                }`}
-                              >
-                                Place order
-                              </button>
-                            );
-                          } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
-                            return (
-                              <div className="px-3 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
-                                Received from Karigar<br />
-                                <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
-                              </div>
-                            );
-                          } else if (productStatus.includes("packed") || productStatus.includes("dispatch")) {
-                            return (
-                              <div className="px-3 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-xs font-bold text-center">
-                                Ready to Dispatch
-                              </div>
-                            );
-                          } else {
-                            return (
-                              <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center">
-                                Assigned to Karigar<br />
-                                <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
-                                {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-95">DOD: {extractDateOnly(karigarDOD)}</span></>}
-                              </div>
-                            );
-                          }
-                        })()}
-                      </td>
+                              if (!isAssigned || productStatus.includes('not assign') || productStatus === '') {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (!isAuthorizedToEdit) {
+                                        alert("🔒 Restricted: Please login as Admin or Order Desk to place orders.");
+                                        return;
+                                      }
+                                      setSelectedOrderForKarigar(order);
+                                    }}
+                                    className={`text-xs font-bold px-3 py-1.5 rounded-xl border transition-all flex items-center gap-1 cursor-pointer ${
+                                      isAuthorizedToEdit
+                                        ? 'text-amber-400 hover:text-amber-300 bg-amber-500/10 hover:bg-amber-500/20 border-amber-500/30'
+                                        : 'text-slate-500 bg-slate-900 border-slate-800 opacity-70'
+                                    }`}
+                                  >
+                                    Place order
+                                  </button>
+                                );
+                              } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
+                                return (
+                                  <div className="px-3 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
+                                    Received from Karigar<br />
+                                    <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
+                                  </div>
+                                );
+                              } else if (productStatus.includes("packed") || productStatus.includes("dispatch")) {
+                                return (
+                                  <div className="px-3 py-1.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-xs font-bold text-center">
+                                    Ready to Dispatch
+                                  </div>
+                                );
+                              } else {
+                                return (
+                                  <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center">
+                                    Assigned to Karigar<br />
+                                    <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
+                                    {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-95">DOD: {extractDateOnly(karigarDOD)}</span></>}
+                                  </div>
+                                );
+                              }
+                            })()}
+                          </td>
 
                           <td className="p-4 text-center">
                             <button
@@ -1124,13 +1385,11 @@ export default function App() {
                             {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
                           </p>
                           
-                          {/* Order Description */}
                           <div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
                             <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
                             <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
                           </div>
 
-                          {/* Daily Remarks */}
                           <div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
                             <span className="font-medium text-purple-400">DAILY REMARKS - </span>
                             <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
@@ -1343,11 +1602,11 @@ export default function App() {
                   <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
                     <Camera className="w-4 h-4" /> Click / Take Photo
                     <input 
-  type="file" 
-  accept="image/*" 
-  onChange={handleImageCapture} 
-  className="hidden" 
-/>
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageCapture} 
+                      className="hidden" 
+                    />
                   </label>
                   {formData.imagePreviewLocal && (
                     <img src={formData.imagePreviewLocal} alt="" onClick={() => setPreviewImage(formData.imagePreviewLocal)} className="w-12 h-12 rounded-lg object-cover border border-amber-500 cursor-pointer" />
@@ -1572,8 +1831,6 @@ export default function App() {
             </div>
           );
         })()}
-
-        
       </main>
 
       {showLoginModal && (
