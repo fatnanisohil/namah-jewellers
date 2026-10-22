@@ -927,9 +927,11 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Under Process DOD Status List (Chronological Order) */}
+              {/* Under Process Orders / Filtered Tracker List (Chronological Order) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">Under Process Orders - Karigar DOD Status Tracker (Chronological Order)</h4>
+                <h4 className="text-sm font-black text-amber-400 uppercase">
+                  {dashboardStatusFilter !== 'ALL' ? `${dashboardStatusFilter} Orders - Karigar DOD Status Tracker` : `Under Process Orders - Karigar DOD Status Tracker (Chronological Order)`}
+                </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
@@ -943,7 +945,7 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {underProcessOrders.length === 0 ? (
-                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No Under Process live orders found.</td></tr>
+                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No orders found matching the selected filter.</td></tr>
                       ) : (
                         underProcessOrders.map((ord, idx) => {
                           const dodStatus = getDODStatus(ord.karigarDod);
