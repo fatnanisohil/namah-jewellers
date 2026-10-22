@@ -781,6 +781,18 @@ export default function App() {
             }
           };
 
+          // Strict Under Process Tracker list (only true "Under Process" items)
+          const strictUnderProcessOrders = dashboardFilteredOrders.filter(o => {
+            const st = getStatusStr(o);
+            return st === 'Under Process';
+          }).sort((a, b) => {
+            const dateA = extractDateOnly(a.karigarDod);
+            const dateB = extractDateOnly(b.karigarDod);
+            if (dateA === 'N/A') return 1;
+            if (dateB === 'N/A') return -1;
+            return dateA.localeCompare(dateB);
+          });
+
           const customerGroups = {};
           dashboardFilteredOrders.forEach(o => {
             const custKey = o.contactNumber || o.customerName || 'Unknown';
@@ -916,10 +928,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Orders / Tracker List (Chronological Order) */}
+              {/* Strict Under Process Tracker List (Chronological Order) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
-                  {dashboardStatusFilter !== 'ALL' ? `${dashboardStatusFilter.toUpperCase()} ORDERS - KARIGAR DOD STATUS TRACKER` : `UNDER PROCESS ORDERS - KARIGAR DOD STATUS TRACKER (CHRONOLOGICAL ORDER)`}
+                  UNDER PROCESS ORDERS - KARIGAR DOD STATUS TRACKER (CHRONOLOGICAL ORDER)
                 </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
@@ -933,10 +945,10 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {dashboardFilteredOrders.length === 0 ? (
-                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No orders found matching the selected filter.</td></tr>
+                      {strictUnderProcessOrders.length === 0 ? (
+                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
                       ) : (
-                        dashboardFilteredOrders.map((ord, idx) => {
+                        strictUnderProcessOrders.map((ord, idx) => {
                           const dodStatus = getDODStatus(ord.karigarDod);
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
@@ -999,37 +1011,38 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Total Unique Live Orders with All Items Details */}
+              {/* Master List of All Orders with Customer Name, Order Sheet, DOD, Karigar Name, Karigar DOD, Daily Remarks */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">Unique Live Orders & Complete Item Breakdown</h4>
-                <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {Object.keys(uniqueLiveOrdersMap).map((sheetNo, idx) => {
-                    const sheetOrders = dashboardFilteredOrders.filter(o => {
-                      const k = String(o.orderSheetNo || o.tagNumber || '').trim().toUpperCase();
-                      return k === sheetNo;
-                    });
-                    const sample = sheetOrders[0] || {};
-                    return (
-                      <div key={idx} className="bg-[#111318] border border-slate-800 p-4 rounded-xl space-y-2">
-                        <div className="flex justify-between items-center border-b border-slate-800/80 pb-2 text-xs">
-                          <div>
-                            <span className="font-black text-amber-400 text-sm">Order Sheet: {sheetNo}</span>
-                            <span className="text-slate-400 ml-3">Customer: <strong className="text-slate-200">{sample.customerName || 'N/A'}</strong></span>
-                          </div>
-                          <span className="px-2 py-0.5 bg-amber-500/10 text-amber-300 rounded text-[10px] font-bold">{sheetOrders.length} Item(s)</span>
-                        </div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-1">
-                          {sheetOrders.map((item, i) => (
-                            <div key={i} className="bg-[#181b22] p-2.5 rounded-lg border border-slate-800/60 text-[11px] space-y-1">
-                              <p className="font-bold text-slate-200">🏷️ Tag: {item.tagNumber || 'N/A'} — {item.jewelleryItem}</p>
-                              <p className="text-slate-400">Purity: <strong className="text-amber-300">{item.purity || 'N/A'}</strong> | Gold: <strong className="text-amber-400">{item.goldWeight || '0'}g</strong></p>
-                              <p className="text-slate-400">Status: <strong className="text-emerald-400">{item.productStatus || 'Under Process'}</strong></p>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <h4 className="text-sm font-black text-amber-400 uppercase">Master List of All Active Live Orders</h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[850px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Order Sheet</th>
+                        <th className="p-3">DOD (Promised)</th>
+                        <th className="p-3">Karigar Name</th>
+                        <th className="p-3">Karigar DOD</th>
+                        <th className="p-3">Daily Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {dashboardFilteredOrders.length === 0 ? (
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No orders found.</td></tr>
+                      ) : (
+                        dashboardFilteredOrders.map((ord, idx) => (
+                          <tr key={idx} className="hover:bg-[#111318]/50">
+                            <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
+                            <td className="p-3 text-amber-400 font-bold">{ord.orderSheetNo || 'N/A'} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
+                            <td className="p-3">{extractDateOnly(ord.deliveryDate)}</td>
+                            <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
+                            <td className="p-3">{extractDateOnly(ord.karigarDod)}</td>
+                            <td className="p-3 text-purple-300">{ord.dailyRemarks || '--'}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
             </div>
