@@ -781,18 +781,6 @@ export default function App() {
             }
           };
 
-          // Strict Under Process Tracker list (only true "Under Process" items)
-          const strictUnderProcessOrders = dashboardFilteredOrders.filter(o => {
-            const st = getStatusStr(o);
-            return st === 'Under Process';
-          }).sort((a, b) => {
-            const dateA = extractDateOnly(a.karigarDod);
-            const dateB = extractDateOnly(b.karigarDod);
-            if (dateA === 'N/A') return 1;
-            if (dateB === 'N/A') return -1;
-            return dateA.localeCompare(dateB);
-          });
-
           const customerGroups = {};
           dashboardFilteredOrders.forEach(o => {
             const custKey = o.contactNumber || o.customerName || 'Unknown';
@@ -817,6 +805,16 @@ export default function App() {
               return st === 'packed';
             });
             if (allPacked) packedCustomers.push(cust);
+          });
+
+          // Dedicated Under Process orders sorted by Karigar DOD chronologically
+          const underProcessOrdersList = allLiveOrders.filter(o => getStatusStr(o) === 'Under Process').sort((a, b) => {
+            const dateA = extractDateOnly(a.karigarDod);
+            const dateB = extractDateOnly(b.karigarDod);
+            if (dateA === 'N/A' && dateB === 'N/A') return 0;
+            if (dateA === 'N/A') return 1;
+            if (dateB === 'N/A') return -1;
+            return dateA.localeCompare(dateB);
           });
 
           return (
@@ -928,7 +926,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Strict Under Process Tracker List (Chronological Order) */}
+              {/* Under Process Orders Tracker (Strictly Under Process & Sorted by Karigar DOD) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
                   UNDER PROCESS ORDERS - KARIGAR DOD STATUS TRACKER (CHRONOLOGICAL ORDER)
@@ -945,10 +943,10 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {strictUnderProcessOrders.length === 0 ? (
+                      {underProcessOrdersList.length === 0 ? (
                         <tr><td colSpan="5" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
                       ) : (
-                        strictUnderProcessOrders.map((ord, idx) => {
+                        underProcessOrdersList.map((ord, idx) => {
                           const dodStatus = getDODStatus(ord.karigarDod);
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
@@ -1011,29 +1009,29 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Master List of All Orders with Customer Name, Order Sheet, DOD, Karigar Name, Karigar DOD, Daily Remarks */}
+              {/* Complete List of All Orders at the Bottom */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">Master List of All Active Live Orders</h4>
+                <h4 className="text-sm font-black text-amber-400 uppercase">Complete List of All Active Live Orders</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[850px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Order Sheet</th>
-                        <th className="p-3">DOD (Promised)</th>
+                        <th className="p-3">Promised Delivery Date (DOD)</th>
                         <th className="p-3">Karigar Name</th>
                         <th className="p-3">Karigar DOD</th>
                         <th className="p-3">Daily Remarks</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {dashboardFilteredOrders.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No orders found.</td></tr>
+                      {allLiveOrders.length === 0 ? (
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
-                        dashboardFilteredOrders.map((ord, idx) => (
+                        allLiveOrders.map((ord, idx) => (
                           <tr key={idx} className="hover:bg-[#111318]/50">
                             <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
-                            <td className="p-3 text-amber-400 font-bold">{ord.orderSheetNo || 'N/A'} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
+                            <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo || 'N/A'} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
                             <td className="p-3">{extractDateOnly(ord.deliveryDate)}</td>
                             <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
                             <td className="p-3">{extractDateOnly(ord.karigarDod)}</td>
