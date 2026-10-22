@@ -23,7 +23,8 @@ import {
   LogOut,
   ShieldCheck,
   LogIn,
-  PowerOff
+  PowerOff,
+  RotateCcw
 } from 'lucide-react';
 
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
@@ -109,7 +110,6 @@ export default function App() {
     const rawUrl = order.productImageLink || '';
     if (!rawUrl || typeof rawUrl !== 'string') return '';
 
-    // Ignore massive base64 strings in the web view to prevent browser crashes
     if (rawUrl.startsWith('data:image')) return ''; 
     if (rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
       return rawUrl;
@@ -125,7 +125,6 @@ export default function App() {
     }
 
     if (fileId) {
-      // Request a small thumbnail size (&sz=w150) to save memory
       return `https://drive.google.com/thumbnail?id=${fileId}&sz=w150`;
     }
     return '';
@@ -188,7 +187,6 @@ export default function App() {
     }
   }, [orders]);
 
-  // Preload high-res images silently in the background so they open instantly
   useEffect(() => {
     orders.forEach(order => {
       const url = formatDriveUrl(order);
@@ -210,7 +208,6 @@ export default function App() {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    
     try {
       const payload = new URLSearchParams();
       payload.append('action', 'verifyLogin');
@@ -516,6 +513,15 @@ export default function App() {
     });
   }, [orders]);
 
+  const offOrders = useMemo(() => {
+    return orders.filter(order => {
+      if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
+        return false;
+      }
+      return !order.isOn;
+    });
+  }, [orders]);
+
   const filteredOrders = useMemo(() => {
     return orders.filter(order => {
       if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
@@ -557,15 +563,6 @@ export default function App() {
       return true;
     });
   }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType, filterStatus]);
-
-  const offOrders = useMemo(() => {
-    return orders.filter(order => {
-      if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
-        return false;
-      }
-      return !order.isOn;
-    });
-  }, [orders]);
 
   return (
     <div className="min-h-screen bg-[#111318] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-16 md:pb-0">
@@ -734,6 +731,12 @@ export default function App() {
           const underProcessOrders = liveOrders.filter(o => {
             const pStatus = (o.productStatus || '').toLowerCase();
             return pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
+          }).sort((a, b) => {
+            const dateA = extractDateOnly(a.karigarDod);
+            const dateB = extractDateOnly(b.karigarDod);
+            if (dateA === 'N/A') return 1;
+            if (dateB === 'N/A') return -1;
+            return dateA.localeCompare(dateB);
           });
 
           const customerGroups = {};
@@ -768,13 +771,27 @@ export default function App() {
                 <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
                   <Sparkles className="w-5 h-5" /> Comprehensive Business Dashboard
                 </h3>
-                <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
-                  Active Live Metrics
-                </span>
+                <div className="flex items-center gap-3">
+                  {(filterSalesperson !== 'ALL' || filterExecutive !== 'ALL' || filterStatus !== 'ALL') && (
+                    <button
+                      onClick={() => {
+                        setFilterSalesperson('ALL');
+                        setFilterExecutive('ALL');
+                        setFilterStatus('ALL');
+                      }}
+                      className="px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" /> Clear Filters
+                    </button>
+                  )}
+                  <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
+                    Active Live Metrics
+                  </span>
+                </div>
               </div>
 
               {/* Summary Cards */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
                   <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders</p>
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
@@ -791,15 +808,29 @@ export default function App() {
                   <p className="text-xs text-slate-400 font-bold uppercase">Fully Packed Customers</p>
                   <h4 className="text-2xl font-black text-purple-400 mt-1">{packedCustomers.length}</h4>
                 </div>
+                <div 
+                  onClick={() => setActiveTab('off-orders')}
+                  className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-amber-500/50 transition-all"
+                >
+                  <p className="text-xs text-slate-400 font-bold uppercase">OFF Orders</p>
+                  <h4 className="text-2xl font-black text-amber-500 mt-1">{offOrders.length}</h4>
+                </div>
               </div>
 
-              {/* Breakdown Grid */}
+              {/* Breakdown Grid with Cross Filtering */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveBySales).map(([sp, count], i) => (
-                      <div key={i} className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80">
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFilterSalesperson(sp);
+                          setActiveTab('orders');
+                        }}
+                        className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80 hover:border-amber-500 cursor-pointer transition-all"
+                      >
                         <span>{sp}</span>
                         <strong className="text-amber-400">{count}</strong>
                       </div>
@@ -808,10 +839,17 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person (Click to Filter)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveByExec).map(([ep, count], i) => (
-                      <div key={i} className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80">
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFilterExecutive(ep);
+                          setActiveTab('orders');
+                        }}
+                        className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80 hover:border-amber-500 cursor-pointer transition-all"
+                      >
                         <span>{ep}</span>
                         <strong className="text-amber-400">{count}</strong>
                       </div>
@@ -820,10 +858,17 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise (Click to Filter)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveByStatus).map(([st, count], i) => (
-                      <div key={i} className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80">
+                      <div 
+                        key={i} 
+                        onClick={() => {
+                          setFilterStatus(st);
+                          setActiveTab('orders');
+                        }}
+                        className="flex justify-between text-xs text-slate-300 bg-[#111318] px-3 py-2 rounded-xl border border-slate-800/80 hover:border-amber-500 cursor-pointer transition-all"
+                      >
                         <span>{st}</span>
                         <strong className="text-amber-400">{count}</strong>
                       </div>
@@ -832,9 +877,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Under Process DOD Status List */}
+              {/* Under Process DOD Status List (Sorted by Date) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">Under Process Orders - Karigar DOD Status Tracker</h4>
+                <h4 className="text-sm font-black text-amber-400 uppercase">Under Process Orders - Karigar DOD Status Tracker (Chronological Order)</h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
@@ -1372,29 +1417,19 @@ export default function App() {
                             <p className="text-[11px] font-bold text-amber-400">Sales: {order.salesPerson}</p>
                           </td>
                           <td className="p-4 space-y-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-slate-200 text-sm">{order.jewelleryItem || 'Necklace'}</span>
-                            {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
-                          </div>
-                          <div className="text-[11px] text-slate-300 space-x-1">
-                            {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
-                            {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
-                            {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
-                          </div>
-                          <p className="text-[11px] text-slate-400">
-                            {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
-                          </p>
-                          
-                          <div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
-                            <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
-                            <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
-                          </div>
-
-                          <div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
-                            <span className="font-medium text-purple-400">DAILY REMARKS - </span>
-                            <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
-                          </div>
-                        </td>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-bold text-slate-200 text-sm">{order.jewelleryItem || 'Necklace'}</span>
+                              {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
+                            </div>
+                            <div className="text-[11px] text-slate-300 space-x-1">
+                              {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
+                              {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
+                              {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
+                            </p>
+                          </td>
                           <td className="p-4">
                             <span className="px-3 py-1.5 rounded-xl bg-[#232d42] text-blue-300 border border-blue-500/30 text-xs font-bold inline-block">
                               {order.orderPerson || 'Amardeep'}
@@ -2121,7 +2156,6 @@ export default function App() {
               <X className="w-6 h-6" />
             </button>
             
-            {/* Instant Full-Size HD Preview (Pre-cached) */}
             <div className="relative flex items-center justify-center">
               <img 
                 src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
