@@ -693,26 +693,26 @@ export default function App() {
             return !isDelivered;
           });
 
-          // Unfiltered base list for computing breakdown totals independently
-          const liveBySales = {};
+          // Step 1: Base unfiltered breakdown lists for displaying breakdown card counts correctly
+          const liveBySalesAll = {};
           allLiveOrders.forEach(o => {
             const sp = o.salesPerson || 'Unassigned';
-            liveBySales[sp] = (liveBySales[sp] || 0) + 1;
+            liveBySalesAll[sp] = (liveBySalesAll[sp] || 0) + 1;
           });
 
-          const liveByExec = {};
+          const liveByExecAll = {};
           allLiveOrders.forEach(o => {
             const ep = o.orderPerson || 'Unassigned';
-            liveByExec[ep] = (liveByExec[ep] || 0) + 1;
+            liveByExecAll[ep] = (liveByExecAll[ep] || 0) + 1;
           });
 
-          const liveByStatus = {};
+          const liveByStatusAll = {};
           allLiveOrders.forEach(o => {
             const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
-            liveByStatus[st] = (liveByStatus[st] || 0) + 1;
+            liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
           });
 
-          // Apply Dashboard specific cross filters
+          // Step 2: Apply Dashboard specific cross filters to main metrics & table
           const dashboardFilteredOrders = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
@@ -734,6 +734,9 @@ export default function App() {
             }
           });
           const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
+
+          // OFF orders dynamically filtered by current dashboard selections
+          const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
 
           const todayStr = new Date().toISOString().split('T')[0];
           const getDODStatus = (dodStr) => {
@@ -834,7 +837,7 @@ export default function App() {
                   className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-amber-500/50 transition-all"
                 >
                   <p className="text-xs text-slate-400 font-bold uppercase">OFF Orders</p>
-                  <h4 className="text-2xl font-black text-amber-500 mt-1">{offOrders.length}</h4>
+                  <h4 className="text-2xl font-black text-amber-500 mt-1">{dashboardOffOrdersCount}</h4>
                 </div>
               </div>
 
@@ -843,7 +846,7 @@ export default function App() {
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
                   <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter Dashboard)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {Object.entries(liveBySales).map(([sp, count], i) => (
+                    {Object.entries(liveBySalesAll).map(([sp, count], i) => (
                       <div 
                         key={i} 
                         onClick={() => setDashboardSalesFilter(dashboardSalesFilter === sp ? 'ALL' : sp)}
@@ -861,7 +864,7 @@ export default function App() {
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
                   <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person (Click to Filter Dashboard)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {Object.entries(liveByExec).map(([ep, count], i) => (
+                    {Object.entries(liveByExecAll).map(([ep, count], i) => (
                       <div 
                         key={i} 
                         onClick={() => setDashboardExecFilter(dashboardExecFilter === ep ? 'ALL' : ep)}
@@ -879,7 +882,7 @@ export default function App() {
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
                   <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise (Click to Filter Dashboard)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {Object.entries(liveByStatus).map(([st, count], i) => (
+                    {Object.entries(liveByStatusAll).map(([st, count], i) => (
                       <div 
                         key={i} 
                         onClick={() => setDashboardStatusFilter(dashboardStatusFilter === st ? 'ALL' : st)}
