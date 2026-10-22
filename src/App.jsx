@@ -995,7 +995,7 @@ export default function App() {
                         <th className="p-3">Karigar Name</th>
                         <th className="p-3">Karigar DOD</th>
                         <th className="p-3">Daily Remarks</th>
-                        <th className="p-3 text-center">States</th>
+                        <th className="p-3 text-center">State</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
