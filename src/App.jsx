@@ -706,10 +706,13 @@ export default function App() {
             liveByExecAll[ep] = (liveByExecAll[ep] || 0) + 1;
           });
 
+          // Product Status Wise counts restricted to ON orders (or active live orders)
           const liveByStatusAll = {};
           allLiveOrders.forEach(o => {
-            const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
-            liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
+            if (o.isOn) {
+              const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
+              liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
+            }
           });
 
           // Step 2: Apply Dashboard specific cross filters to main metrics & table
