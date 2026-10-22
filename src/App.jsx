@@ -1850,7 +1850,7 @@ export default function App() {
               <X className="w-6 h-6" />
             </button>
             
-            {/* Instant Thumbnail Placeholder + Background HD Loader */}
+            {/* Instant Thumbnail Placeholder + HD Loader */}
             <div className="relative flex items-center justify-center">
               {/* Small preview loads instantly */}
               <img 
@@ -1858,9 +1858,9 @@ export default function App() {
                 alt="Product Preview Loading" 
                 className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
               />
-              {/* HD image loads smoothly on top once ready */}
+              {/* HD large image loads smoothly on top */}
               <img 
-                src={previewImage.replace('&sz=w150', '&sz=w1000')} 
+                src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
                 alt="Product Preview HD" 
                 className="absolute inset-0 max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900 transition-opacity duration-300"
                 onClick={(e) => e.stopPropagation()} 
