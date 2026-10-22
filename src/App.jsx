@@ -192,6 +192,20 @@ export default function App() {
     console.error("Local storage quota exceeded:", error);
   }
 }, [orders]);
+
+// Preload high-res images silently in the background so they open instantly
+  useEffect(() => {
+    orders.forEach(order => {
+      const url = formatDriveUrl(order);
+      if (url) {
+        const hdUrl = url.includes('sz=') ? url.replace(/sz=w\d+/, 'sz=w1200') : url + '&sz=w1200';
+        const img = new Image();
+        img.src = hdUrl;
+      }
+    });
+  }, [orders]);
+
+
   useEffect(() => {
     localStorage.setItem('namah_logged_in', isLoggedIn);
     localStorage.setItem('namah_user_role', currentUserRole);
@@ -1850,23 +1864,13 @@ export default function App() {
               <X className="w-6 h-6" />
             </button>
             
-            {/* Instant Thumbnail Placeholder + HD Loader */}
+            {/* Instant Full-Size HD Preview (Pre-cached) */}
             <div className="relative flex items-center justify-center">
-              {/* Small preview loads instantly */}
-              <img 
-  src={previewImage ? previewImage.replace('&sz=w150', '&sz=w1000') : ''} 
-  alt="Product Preview" 
-  className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
-  onClick={(e) => e.stopPropagation()} 
-/>
-              {/* HD large image loads smoothly on top */}
               <img 
                 src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
                 alt="Product Preview HD" 
-                className="absolute inset-0 max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900 transition-opacity duration-300"
+                className="max-w-[85vw] max-h-[85vh] w-auto h-auto rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
                 onClick={(e) => e.stopPropagation()} 
-                onLoad={(e) => e.target.style.opacity = '1'}
-                style={{ opacity: 0 }}
               />
             </div>
           </div>
