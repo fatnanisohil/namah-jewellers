@@ -693,26 +693,7 @@ export default function App() {
             return !isDelivered;
           });
 
-          // Apply Dashboard specific cross filters
-          const dashboardFilteredOrders = allLiveOrders.filter(o => {
-            if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
-            if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
-            if (dashboardStatusFilter !== 'ALL') {
-              const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
-              if (st !== dashboardStatusFilter) return false;
-            }
-            return true;
-          });
-
-          const totalLiveOrders = dashboardFilteredOrders.length;
-
-          const uniqueLiveOrdersMap = {};
-          dashboardFilteredOrders.forEach(o => {
-            const key = o.orderSheetNo || o.tagNumber;
-            if (key) uniqueLiveOrdersMap[key] = true;
-          });
-          const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
-
+          // Unfiltered base list for computing breakdown totals independently
           const liveBySales = {};
           allLiveOrders.forEach(o => {
             const sp = o.salesPerson || 'Unassigned';
@@ -730,6 +711,29 @@ export default function App() {
             const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
             liveByStatus[st] = (liveByStatus[st] || 0) + 1;
           });
+
+          // Apply Dashboard specific cross filters
+          const dashboardFilteredOrders = allLiveOrders.filter(o => {
+            if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
+            if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
+            if (dashboardStatusFilter !== 'ALL') {
+              const st = o.productStatus && !o.productStatus.includes('Not Assign') ? o.productStatus : 'Under Process';
+              if (st !== dashboardStatusFilter) return false;
+            }
+            return true;
+          });
+
+          const totalLiveOrders = dashboardFilteredOrders.length;
+
+          const uniqueLiveOrdersMap = {};
+          dashboardFilteredOrders.forEach(o => {
+            const rawKey = o.orderSheetNo || o.tagNumber;
+            if (rawKey) {
+              const key = String(rawKey).trim().toUpperCase();
+              uniqueLiveOrdersMap[key] = true;
+            }
+          });
+          const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
 
           const todayStr = new Date().toISOString().split('T')[0];
           const getDODStatus = (dodStr) => {
@@ -976,8 +980,11 @@ export default function App() {
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">Unique Live Orders & Complete Item Breakdown</h4>
                 <div className="space-y-3 max-h-96 overflow-y-auto">
-                  {Object.entries(uniqueLiveOrdersMap).map(([sheetNo], idx) => {
-                    const sheetOrders = dashboardFilteredOrders.filter(o => (o.orderSheetNo || o.tagNumber) === sheetNo);
+                  {Object.keys(uniqueLiveOrdersMap).map((sheetNo, idx) => {
+                    const sheetOrders = dashboardFilteredOrders.filter(o => {
+                      const k = String(o.orderSheetNo || o.tagNumber || '').trim().toUpperCase();
+                      return k === sheetNo;
+                    });
                     const sample = sheetOrders[0] || {};
                     return (
                       <div key={idx} className="bg-[#111318] border border-slate-800 p-4 rounded-xl space-y-2">
