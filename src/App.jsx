@@ -1852,17 +1852,17 @@ export default function App() {
             
             {/* Instant Thumbnail Placeholder + HD Loader */}
             <div className="relative flex items-center justify-center">
-              {/* Small preview loads instantly */}
+              {/* Small preview forced to large view dimensions so it never looks small */}
               <img 
                 src={previewImage} 
                 alt="Product Preview Loading" 
-                className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
+                className="w-auto h-auto max-w-[85vw] max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
               />
-              {/* Optimized HD image loads almost instantly using w800 instead of heavy w1200 */}
+              {/* HD large image loads smoothly on top and fills the full size */}
               <img 
-                src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w800') : previewImage + '&sz=w800'} 
+                src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
                 alt="Product Preview HD" 
-                className="absolute inset-0 max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900 transition-opacity duration-300"
+                className="absolute inset-0 w-auto h-auto max-w-[85vw] max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900 transition-opacity duration-300"
                 onClick={(e) => e.stopPropagation()} 
                 onLoad={(e) => e.target.style.opacity = '1'}
                 style={{ opacity: 0 }}
