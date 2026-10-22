@@ -1854,10 +1854,11 @@ export default function App() {
             <div className="relative flex items-center justify-center">
               {/* Small preview loads instantly */}
               <img 
-                src={previewImage} 
-                alt="Product Preview Loading" 
-                className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
-              />
+  src={previewImage ? previewImage.replace('&sz=w150', '&sz=w1000') : ''} 
+  alt="Product Preview" 
+  className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
+  onClick={(e) => e.stopPropagation()} 
+/>
               {/* HD large image loads smoothly on top */}
               <img 
                 src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
