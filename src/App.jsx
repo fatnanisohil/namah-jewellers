@@ -687,19 +687,19 @@ export default function App() {
 
       <main className="flex-1 p-4 sm:p-6 max-w-[1450px] w-full mx-auto space-y-6">
         {activeTab === 'dashboard' && (() => {
-          // Total live orders (both ON and OFF active non-delivered orders)
+          // Total active live orders (isOn === true and not delivered)
           const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
-            return !isDelivered;
+            return !isDelivered && o.isOn;
           });
 
-          // Helper to get normalized product status (Only count Under Process if isOn is true)
+          // Helper to get normalized product status for live orders
           const getStatusStr = (o) => {
             const pStatus = (o.productStatus || '').toLowerCase();
             const isUnderProcess = pStatus.includes('process') || pStatus === 'assigned' || pStatus === '' || pStatus.includes('not assign');
             
             if (isUnderProcess) {
-              return o.isOn ? 'Under Process' : null; // Exclude OFF unassigned orders from status breakdown
+              return 'Under Process';
             } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
               return 'Ready but bill pending';
             } else if (pStatus === 'packed') {
@@ -708,18 +708,16 @@ export default function App() {
             return toProperCase(o.productStatus);
           };
 
-          // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter each other
+          // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter correctly
           const ordersForSalesBreakdown = allLiveOrders.filter(o => {
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
-            const st = getStatusStr(o);
-            if (dashboardStatusFilter !== 'ALL' && st !== dashboardStatusFilter) return false;
+            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
             return true;
           });
 
           const ordersForExecBreakdown = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
-            const st = getStatusStr(o);
-            if (dashboardStatusFilter !== 'ALL' && st !== dashboardStatusFilter) return false;
+            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
             return true;
           });
 
@@ -744,19 +742,14 @@ export default function App() {
           const liveByStatusAll = {};
           ordersForStatusBreakdown.forEach(o => {
             const st = getStatusStr(o);
-            if (st) {
-              liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
-            }
+            liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
           });
 
           // Step 2: Fully filtered orders for summary metrics, tables and lists
           const dashboardFilteredOrders = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
-            if (dashboardStatusFilter !== 'ALL') {
-              const matchedStatus = getStatusStr(o);
-              if (matchedStatus !== dashboardStatusFilter) return false;
-            }
+            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
             return true;
           });
 
@@ -772,7 +765,7 @@ export default function App() {
           });
           const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
 
-          const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
+          const dashboardOffOrdersCount = offOrders.length;
 
           const todayStr = new Date().toISOString().split('T')[0];
           const getDODStatus = (dodStr) => {
@@ -842,7 +835,7 @@ export default function App() {
               {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders (ON+OFF)</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Orders (ON)</p>
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
