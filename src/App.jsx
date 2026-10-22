@@ -768,7 +768,7 @@ export default function App() {
             return true;
           });
 
-          const totalLiveOrders = allLiveOrders.length;
+          const totalLiveOrders = dashboardFilteredOrders.length;
 
           const uniqueLiveOrdersMap = {};
           dashboardFilteredOrders.forEach(o => {
@@ -780,7 +780,7 @@ export default function App() {
           });
           const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
 
-          const dashboardOffOrdersCount = offOrders.length;
+          const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
 
           const todayStr = new Date().toISOString().split('T')[0];
           const getDODStatus = (dodStr) => {
@@ -1003,10 +1003,10 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {allLiveOrders.length === 0 ? (
+                      {dashboardFilteredOrders.length === 0 ? (
                         <tr><td colSpan="7" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
-                        allLiveOrders.map((ord, idx) => (
+                        dashboardFilteredOrders.map((ord, idx) => (
                           <tr key={idx} className="hover:bg-[#111318]/50">
                             <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
                             <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo || 'N/A'} <span className="text-slate-500 font-mono text-[10px]">({ord.tagNumber})</span></td>
