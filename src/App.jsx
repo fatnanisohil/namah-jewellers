@@ -749,7 +749,14 @@ export default function App() {
           const dashboardFilteredOrders = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
-            if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            if (dashboardStatusFilter !== 'ALL') {
+              const matchedStatus = getStatusStr(o);
+              if (dashboardStatusFilter === 'Under Process') {
+                if (matchedStatus !== 'Under Process') return false;
+              } else if (matchedStatus !== dashboardStatusFilter) {
+                return false;
+              }
+            }
             return true;
           });
 
@@ -927,10 +934,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Under Process Orders / Filtered Tracker List (Chronological Order) */}
+              {/* Orders / Tracker List (Chronological Order) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
-                  {dashboardStatusFilter !== 'ALL' ? `${dashboardStatusFilter} Orders - Karigar DOD Status Tracker` : `Under Process Orders - Karigar DOD Status Tracker (Chronological Order)`}
+                  {dashboardStatusFilter !== 'ALL' ? `${dashboardStatusFilter.toUpperCase()} ORDERS - KARIGAR DOD STATUS TRACKER` : `UNDER PROCESS ORDERS - KARIGAR DOD STATUS TRACKER (CHRONOLOGICAL ORDER)`}
                 </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
@@ -944,10 +951,10 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {underProcessOrders.length === 0 ? (
+                      {dashboardFilteredOrders.length === 0 ? (
                         <tr><td colSpan="5" className="p-6 text-center text-slate-500">No orders found matching the selected filter.</td></tr>
                       ) : (
-                        underProcessOrders.map((ord, idx) => {
+                        dashboardFilteredOrders.map((ord, idx) => {
                           const dodStatus = getDODStatus(ord.karigarDod);
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
