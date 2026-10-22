@@ -796,7 +796,7 @@ export default function App() {
             }
           };
 
-          // Strict Under Process Tracker sorted by True Calendar Date Chronologically
+          // Strict Under Process Tracker sorted chronologically by Karigar DOD (earliest first, N/A at end)
           const underProcessTrackerOrders = dashboardFilteredOrders.filter(o => {
             return getStatusStr(o) === 'Under Process';
           }).sort((a, b) => {
@@ -1014,10 +1014,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Under Process Orders - Karigar DOD Status Tracker (Chronological Order with DD/MM) */}
+              {/* UNDER PROCESS ORDERS CHRONOLOGICAL ORDER */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
-                  UNDER PROCESS ORDERS - KARIGAR DOD STATUS TRACKER (CHRONOLOGICAL ORDER)
+                  UNDER PROCESS ORDERS CHRONOLOGICAL ORDER
                 </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
