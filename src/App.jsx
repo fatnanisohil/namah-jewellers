@@ -104,6 +104,16 @@ export default function App() {
   const extractDateOnly = (dateStr) => {
     if (!dateStr) return 'N/A';
     const val = String(dateStr).trim();
+    // If it's a full JS Date string like "Wed Oct 21 2026 00:00:00 GMT", parse it reliably:
+    if (val.includes('Oct') || val.includes('Jan') || val.includes('Feb') || val.includes('Mar') || val.includes('Apr') || val.includes('May') || val.includes('Jun') || val.includes('Jul') || val.includes('Aug') || val.includes('Sep') || val.includes('Nov') || val.includes('Dec')) {
+      const parsed = new Date(val);
+      if (!isNaN(parsed.getTime())) {
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      }
+    }
     if (val.includes('T')) return val.split('T')[0];
     if (val.includes(' ')) return val.split(' ')[0];
     return val;
