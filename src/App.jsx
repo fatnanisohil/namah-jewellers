@@ -809,6 +809,19 @@ export default function App() {
             return timeA - timeB;
           });
 
+          // Dedicated Ready But Bill Pending Orders List
+          const readyBillPendingTrackerOrders = dashboardFilteredOrders.filter(o => {
+            return getStatusStr(o) === 'Ready but bill pending';
+          }).sort((a, b) => {
+            const dateStrA = extractDateOnly(a.karigarDod);
+            const dateStrB = extractDateOnly(b.karigarDod);
+
+            const timeA = (!dateStrA || dateStrA === 'N/A') ? Infinity : new Date(dateStrA).getTime();
+            const timeB = (!dateStrB || dateStrB === 'N/A') ? Infinity : new Date(dateStrB).getTime();
+
+            return timeA - timeB;
+          });
+
           const customerGroups = {};
           dashboardFilteredOrders.forEach(o => {
             const custKey = o.contactNumber || o.customerName || 'Unknown';
@@ -941,6 +954,45 @@ export default function App() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </div>
+
+              {/* Ready But Bill Pending Orders Tracker */}
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-emerald-400 uppercase">
+                  READY BUT BILL PENDING ORDERS (CHRONOLOGICAL ORDER)
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3">Customer</th>
+                        <th className="p-3">Karigar Name</th>
+                        <th className="p-3">Karigar DOD (DD/MM)</th>
+                        <th className="p-3 text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {readyBillPendingTrackerOrders.length === 0 ? (
+                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No ready but bill pending orders found.</td></tr>
+                      ) : (
+                        readyBillPendingTrackerOrders.map((ord, idx) => (
+                          <tr key={idx} className="hover:bg-[#111318]/50">
+                            <td className="p-3 font-bold text-amber-400">{ord.orderSheetNo} <span className="text-slate-500 font-normal">({ord.tagNumber})</span></td>
+                            <td className="p-3">{ord.customerName}</td>
+                            <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
+                            <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
+                            <td className="p-3 text-center">
+                              <span className="px-2.5 py-1 rounded-xl text-[10px] font-black border text-emerald-400 bg-emerald-500/10 border-emerald-500/30">
+                                Ready but bill pending
+                              </span>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
