@@ -904,7 +904,7 @@ export default function App() {
                   onClick={() => setActiveTab('off-orders')}
                   className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-amber-500/50 transition-all"
                 >
-                  <p className="text-xs text-slate-400 font-bold uppercase">OFF Orders</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">NOT PLACED TO KARIGAR ORDERS</p>
                   <h4 className="text-2xl font-black text-amber-500 mt-1">{dashboardOffOrdersCount}</h4>
                 </div>
               </div>
