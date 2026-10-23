@@ -160,6 +160,7 @@ export default function App() {
               karigarName: toProperCase(serverOrder.karigarName),
               colorTone: toProperCase(serverOrder.colorTone),
               orderDescription: toProperCase(serverOrder.orderDescription),
+              dailyRemarks: serverOrder.dailyRemarks || '',
               imagePreviewLocal: localMatch?.imagePreviewLocal || serverOrder.imagePreviewLocal,
               imageBase64: localMatch?.imageBase64 || serverOrder.imageBase64,
               productImageLink: localMatch?.imagePreviewLocal || localMatch?.imageBase64 || serverOrder.productImageLink,
@@ -1090,7 +1091,7 @@ export default function App() {
                                 </span>
                               </td>
                               <td className="p-3 text-slate-300 max-w-xs truncate">
-                                {ord.dailyRemarks || ord.orderDescription || '--'}
+                                {ord.dailyRemarks || '--'}
                               </td>
                             </tr>
                           );
