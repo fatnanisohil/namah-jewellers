@@ -889,7 +889,7 @@ export default function App() {
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Unique Live Orders</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Customers</p>
                   <h4 className="text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
