@@ -971,12 +971,14 @@ export default function App() {
                   UNDER PROCESS ORDERS ({underProcessOrdersList.length})
                 </h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[800px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3 w-20">IMAGE</th>
                         <th className="p-3">Order / Tag</th>
                         <th className="p-3">Customer Name</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
                         <th className="p-3">Karigar Name</th>
                         <th className="p-3">Karigar DOD</th>
                         <th className="p-3 text-center">DOD Timeline Update</th>
@@ -984,7 +986,7 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {underProcessOrdersList.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
+                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
                       ) : (
                         underProcessOrdersList.map((ord, idx) => {
                           const timeline = getDODTimelineStatus(ord.karigarDod);
@@ -1009,6 +1011,8 @@ export default function App() {
                                 {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
                               </td>
                               <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
+                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
                               <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
                               <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
                               <td className="p-3 text-center">
@@ -1031,12 +1035,14 @@ export default function App() {
                   Master List of All Active Live Orders ({dashboardFilteredOrders.length})
                 </h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3 w-20">IMAGE</th>
                         <th className="p-3">Order / Tag</th>
                         <th className="p-3">Customer Name</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
                         <th className="p-3">DOD (Promised)</th>
                         <th className="p-3">Product Status</th>
                         <th className="p-3">Daily Remarks</th>
@@ -1044,7 +1050,7 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {dashboardFilteredOrders.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
+                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
                         dashboardFilteredOrders.map((ord, idx) => {
                           const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
@@ -1071,6 +1077,8 @@ export default function App() {
                                 {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
                               </td>
                               <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
+                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
                               <td className="p-3 font-mono">{formatDateDDMM(ord.deliveryDate)}</td>
                               <td className="p-3">
                                 <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
