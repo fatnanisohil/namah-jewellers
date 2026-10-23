@@ -104,7 +104,6 @@ export default function App() {
   const extractDateOnly = (dateStr) => {
     if (!dateStr) return 'N/A';
     const val = String(dateStr).trim();
-    // If it's a full JS Date string like "Wed Oct 21 2026 00:00:00 GMT", parse it reliably:
     if (val.includes('Oct') || val.includes('Jan') || val.includes('Feb') || val.includes('Mar') || val.includes('Apr') || val.includes('May') || val.includes('Jun') || val.includes('Jul') || val.includes('Aug') || val.includes('Sep') || val.includes('Nov') || val.includes('Dec')) {
       const parsed = new Date(val);
       if (!isNaN(parsed.getTime())) {
@@ -972,9 +971,10 @@ export default function App() {
                   UNDER PROCESS ORDERS ({underProcessOrdersList.length})
                 </h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[750px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[800px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
+                        <th className="p-3 w-20">IMAGE</th>
                         <th className="p-3">Order / Tag</th>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Karigar Name</th>
@@ -984,12 +984,27 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {underProcessOrdersList.length === 0 ? (
-                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
                       ) : (
                         underProcessOrdersList.map((ord, idx) => {
                           const timeline = getDODTimelineStatus(ord.karigarDod);
+                          const imageUrl = formatDriveUrl(ord);
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3">
+                                {imageUrl ? (
+                                  <img
+                                    src={imageUrl}
+                                    alt=""
+                                    onClick={() => setPreviewImage(imageUrl)}
+                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
+                                    Product
+                                  </div>
+                                )}
+                              </td>
                               <td className="p-3 font-bold text-amber-400">
                                 {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
                               </td>
@@ -1016,9 +1031,10 @@ export default function App() {
                   Master List of All Active Live Orders ({dashboardFilteredOrders.length})
                 </h4>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
+                        <th className="p-3 w-20">IMAGE</th>
                         <th className="p-3">Order / Tag</th>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">DOD (Promised)</th>
@@ -1028,14 +1044,29 @@ export default function App() {
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {dashboardFilteredOrders.length === 0 ? (
-                        <tr><td colSpan="5" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
                         dashboardFilteredOrders.map((ord, idx) => {
                           const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                           const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
+                          const imageUrl = formatDriveUrl(ord);
 
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3">
+                                {imageUrl ? (
+                                  <img
+                                    src={imageUrl}
+                                    alt=""
+                                    onClick={() => setPreviewImage(imageUrl)}
+                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
+                                    Product
+                                  </div>
+                                )}
+                              </td>
                               <td className="p-3 font-bold text-amber-400">
                                 {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
                               </td>
