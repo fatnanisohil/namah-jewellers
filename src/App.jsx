@@ -966,10 +966,10 @@ export default function App() {
                 </div>
               </div>
 
-              {/* UNDER PROCESS ORDERS LIST */}
+              {/* UNDER PROCESS ORDERS ON KARIGAR LIST */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
-                  UNDER PROCESS ORDERS ({underProcessOrdersList.length})
+                  ORDERS ON KARIGAR ({underProcessOrdersList.length})
                 </h4>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
