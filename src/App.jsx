@@ -505,49 +505,49 @@ export default function App() {
       name: 'Yogita', 
       books: [
         { start: 8151, end: 8225 },
-        { start: 7476, end: 7550 }
+        { start: 9001, end: 9075 }
       ] 
     },
     { 
       name: 'Hema', 
       books: [
         { start: 8226, end: 8300 },
-        // { start: 0, end: 0 }
+        { start: 9101, end: 9175 }
       ] 
     },
     { 
       name: 'Sohil', 
       books: [
-        { start: 7626, end: 7700 },
-        // { start: 0, end: 0 }
+        { start: 1, end: 75 },
+        { start: 76, end: 150 }
       ] 
     },
     { 
       name: 'Mohit', 
       books: [
         { start: 7551, end: 7625 },
-        // { start: 0, end: 0 }
+        { start: 7626, end: 7700 }
       ] 
     },
     { 
       name: 'Akansha', 
       books: [
         { start: 8451, end: 8525 },
-        // { start: 0, end: 0 }
+        { start: 9201, end: 9275 }
       ] 
     },
     { 
       name: 'Deepika', 
       books: [
         { start: 8526, end: 8600 },
-        // { start: 9301, end: 9375 }
+        { start: 9301, end: 9375 }
       ] 
     },
     { 
       name: 'Ziya', 
       books: [
         { start: 7101, end: 7175 },
-        // { start: 7176, end: 7250 }
+        { start: 7176, end: 7250 }
       ] 
     }
   ];
@@ -563,7 +563,12 @@ export default function App() {
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
+    // Find the last (highest) page number entered in system
+    const enteredArray = Array.from(enteredNumbers);
+    const maxEntered = enteredArray.length > 0 ? Math.max(...enteredArray) : 0;
+
     const allMissingPages = [];
+    const skippedPages = []; // Blank pages occurring BEFORE the last entered number (real gaps)
     const allEnteredPagesPresent = [];
 
     books.forEach(book => {
@@ -572,17 +577,24 @@ export default function App() {
           allEnteredPagesPresent.push(i);
         } else {
           allMissingPages.push(i);
+          // If this missing page is less than the max entered page, it's a real skipped gap!
+          if (maxEntered > 0 && i < maxEntered) {
+            skippedPages.push(i);
+          }
         }
       }
     });
 
+    allEnteredPagesPresent.sort((a, b) => a - b);
     const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
 
     auditResults[name] = {
       expectedRange: rangeDisplay,
       totalEntriesFound: personOrders.length,
+      maxEntered,
       enteredPages: allEnteredPagesPresent,
-      missingPages: allMissingPages
+      missingPages: allMissingPages,
+      skippedPages // Only the blank pages before the last entry
     };
   });
 
@@ -1784,14 +1796,14 @@ export default function App() {
     <div className="flex justify-between items-center border-b border-slate-800 pb-4">
       <div>
         <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" /> Order Book & Page Audit
+          <AlertTriangle className="w-5 h-5" /> Order Book & Sequential Gap Audit
         </h3>
         <p className="text-xs text-slate-400 mt-0.5">
-          Tracks both entered pages and blank/unentered order sheet pages across books.
+          Detects missing pages that were skipped *before* the last entered serial number.
         </p>
       </div>
       <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
-        Range Inspection Active
+        Sequential Inspection Active
       </span>
     </div>
 
@@ -1807,18 +1819,18 @@ export default function App() {
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">TOTAL ITEMS ENTERED</span>
-              <strong className="text-white text-sm">{data.totalEntriesFound} items</strong>
+              <span className="text-slate-400 block text-[10px]">LAST ENTERED PAGE</span>
+              <strong className="text-amber-400 text-sm">#{data.maxEntered || 'None'}</strong>
             </div>
             <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">BLANK / MISSING PAGES</span>
-              <strong className={data.missingPages.length > 0 ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
-                {data.missingPages.length} pages
+              <span className="text-slate-400 block text-[10px]">SKIPPED GAPS FOUND</span>
+              <strong className={data.skippedPages.length > 0 ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
+                {data.skippedPages.length} pages
               </strong>
             </div>
           </div>
 
-          {/* Entered / Available Pages List */}
+          {/* Entered Pages List */}
           <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1">
             <span className="text-[11px] font-bold text-emerald-400 block">Entered Page Numbers Found in System:</span>
             <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
@@ -1826,17 +1838,17 @@ export default function App() {
             </p>
           </div>
 
-          {/* Missing / Blank Pages List */}
-          {data.missingPages.length > 0 ? (
+          {/* Skipped / Gap Pages (Highlighting blanks before the last entry) */}
+          {data.skippedPages.length > 0 ? (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
-              <span className="text-[11px] font-bold text-red-400 block">Blank Page Numbers (Never Entered):</span>
+              <span className="text-[11px] font-bold text-red-400 block">⚠️ Skipped Gap Pages (Blank pages before last entry #{data.maxEntered}):</span>
               <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
-                {data.missingPages.join(', ')}
+                {data.skippedPages.join(', ')}
               </p>
             </div>
           ) : (
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
-              ✨ Complete Sequence! No blank pages found.
+              ✨ No Gaps! All pages up to #{data.maxEntered} are filled properly.
             </div>
           )}
         </div>
