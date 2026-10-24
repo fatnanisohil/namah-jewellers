@@ -2012,6 +2012,7 @@ export default function App() {
                     <input 
                       type="file" 
                       accept="image/*" 
+                      required
                       onChange={handleImageCapture} 
                       className="hidden" 
                     />
