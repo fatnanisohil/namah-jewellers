@@ -479,13 +479,20 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Find the exact master order from your global orders state using sheet number and tag
   const rawOrder = (orders || []).find(o => 
     String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
     String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
   ) || order;
 
-  // Grab weights from the master order using sheet keys, object keys, or any variation
+  // Print all keys of this rawOrder object to the console
+  console.log("RAWAORDER KEYS:", Object.keys(rawOrder));
+  console.log("RAWAORDER VALUES FOR WEIGHT:", {
+    gold: rawOrder["Gold Weight"],
+    diamond: rawOrder["Diamond Weight"],
+    gw: rawOrder.goldweight,
+    dw: rawOrder.diamondWeight
+  });
+
   const goldWt = rawOrder["Gold Weight"] || rawOrder.goldweight || rawOrder.goldWeight || rawOrder.netWeight || '';
   const diamondWt = rawOrder["Diamond Weight"] || rawOrder.diamondWeight || rawOrder.diamond_weight || '';
 
