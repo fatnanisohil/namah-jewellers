@@ -500,54 +500,55 @@ export default function App() {
   };
 
   const orderBookAudits = useMemo(() => {
+  // Define your exact order book ranges for each salesperson
   const bookRanges = [
     { 
       name: 'Yogita', 
       books: [
         { start: 8151, end: 8225 },
-        // { start: 9001, end: 9075 }
+        { start: 9001, end: 9075 }
       ] 
     },
     { 
       name: 'Hema', 
       books: [
         { start: 8226, end: 8300 },
-        { start: 7776, end: 7850 }
+        { start: 9101, end: 9175 }
       ] 
     },
     { 
       name: 'Sohil', 
       books: [
-        { start: 7626, end: 7700 },
-        // { start: 76, end: 150 }
+        { start: 1, end: 75 },
+        { start: 76, end: 150 }
       ] 
     },
     { 
       name: 'Mohit', 
       books: [
         { start: 7551, end: 7625 },
-        // { start: 7626, end: 7700 }
+        { start: 7626, end: 7700 }
       ] 
     },
     { 
       name: 'Akansha', 
       books: [
         { start: 8451, end: 8525 },
-        // { start: 9201, end: 9275 }
+        { start: 9201, end: 9275 }
       ] 
     },
     { 
       name: 'Deepika', 
       books: [
         { start: 8526, end: 8600 },
-        // { start: 9301, end: 9375 }
+        { start: 9301, end: 9375 }
       ] 
     },
     { 
       name: 'Ziya', 
       books: [
         { start: 7101, end: 7175 },
-        // { start: 7176, end: 7250 }
+        { start: 7176, end: 7250 }
       ] 
     }
   ];
@@ -563,28 +564,17 @@ export default function App() {
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
-    const allEnteredPagesPresent = Array.from(enteredNumbers).sort((a, b) => a - b);
-    const maxEntered = allEnteredPagesPresent.length > 0 ? Math.max(...allEnteredPagesPresent) : 0;
-    const minEntered = allEnteredPagesPresent.length > 0 ? Math.min(...allEnteredPagesPresent) : 0;
+    const enteredArray = Array.from(enteredNumbers).sort((a, b) => a - b);
+    const maxEntered = enteredArray.length > 0 ? Math.max(...enteredArray) : 0;
 
     const skippedPages = [];
 
-    // Check each book for true gaps only
+    // Loop through each book range and check for blanks from the start of the book up to the highest entered page
     books.forEach(book => {
       for (let i = book.start; i <= book.end; i++) {
-        // Check if a later book has entries (meaning this earlier book is completely finished/passed)
-        const isBookFinished = books.some(b => b.start > book.end && allEnteredPagesPresent.some(num => num >= b.start && num <= b.end));
-        
-        if (isBookFinished) {
-          // If a later book has entries, any unentered page in this earlier book is a true blank gap
-          if (!enteredNumbers.has(i)) {
-            skippedPages.push(i);
-          }
-        } else {
-          // For the current active book, ONLY look for blank pages between min and max entered (ignore future unreached pages)
-          if (i >= minEntered && i <= maxEntered && !enteredNumbers.has(i)) {
-            skippedPages.push(i);
-          }
+        // If this page is less than or equal to the person's highest entry, and it's not in the system, it's a skipped gap!
+        if (maxEntered > 0 && i <= maxEntered && !enteredNumbers.has(i)) {
+          skippedPages.push(i);
         }
       }
     });
@@ -595,8 +585,8 @@ export default function App() {
       expectedRange: rangeDisplay,
       totalEntriesFound: personOrders.length,
       maxEntered,
-      enteredPages: allEnteredPagesPresent,
-      skippedPages // Only actual missing pages between entries, never future pages
+      enteredPages: enteredArray,
+      skippedPages
     };
   });
 
