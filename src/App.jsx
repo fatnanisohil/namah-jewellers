@@ -544,8 +544,7 @@ export default function App() {
   return auditResults;
 }, [orders]);
 
-  return auditResults;
-}, [orders]);
+
 
   const uniqueCustomers = useMemo(() => {
     const map = {};
