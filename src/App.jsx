@@ -512,7 +512,7 @@ export default function App() {
       name: 'Hema', 
       books: [
         { start: 8226, end: 8300 },
-        { start: 0, end: 0 }
+        // { start: 0, end: 0 }
       ] 
     },
     { 
@@ -533,7 +533,7 @@ export default function App() {
       name: 'Akansha', 
       books: [
         { start: 8451, end: 8525 },
-        { start: 0, end: 0 }
+        // { start: 0, end: 0 }
       ] 
     },
     { 
