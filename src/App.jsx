@@ -479,29 +479,29 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-    // Check multiple possible key names for weights
-    const goldWt = order.goldWeight || order.goldWt || order.netWeight || order.grossWeight;
-    const diamondWt = order.diamondWeight || order.diamondWt;
+  // Temporary: Check what keys exist in your order object
+  console.log("FULL ORDER OBJECT:", order);
 
-    let msg = `*Karigar Work Order*\n\n` +
-      `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
-      `💍 *Jewellery Item:* ${order.jewelleryItem || 'N/A'}\n` +
-      `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
-      `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
+  let msg = `*Karigar Work Order*\n\n` +
+    `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
+    `💍 *Jewellery Item:* ${order.jewelleryItem || 'N/A'}\n` +
+    `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
+    `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
 
-    if (goldWt) msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
-    if (diamondWt) msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
-    if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
-    if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
-    if (order.size) msg += `📏 *Size:* ${order.size}\n`;
-    if (order.orderDescription) msg += `📝 *Order Description:* ${order.orderDescription}\n`;
-    if (order.alterationDetails) msg += `🔄 *Alternation If Any:* ${order.alterationDetails}\n`;
-    
-    msg += `⏱️ *Karigar DOD:* ${extractDateOnly(order.karigarDod)}\n\n` +
-      `📷 *Image URL:* ${formatDriveUrl(order)}`;
+  // Use whatever keys show up in your console log
+  if (order.goldWeight) msg += `🟡 *Gold Weight:* ${order.goldWeight}g\n`;
+  if (order.diamondWeight) msg += `💎 *Diamond Weight:* ${order.diamondWeight}ct\n`;
+  if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
+  if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
+  if (order.size) msg += `📏 *Size:* ${order.size}\n`;
+  if (order.orderDescription) msg += `📝 *Order Description:* ${order.orderDescription}\n`;
+  if (order.alterationDetails) msg += `🔄 *Alternation If Any:* ${order.alterationDetails}\n`;
+  
+  msg += `⏱️ *Karigar DOD:* ${extractDateOnly(order.karigarDod)}\n\n` +
+    `📷 *Image URL:* ${formatDriveUrl(order)}`;
 
-    return msg;
-  };
+  return msg;
+};
 
   const orderBookAudits = useMemo(() => {
   // Define your exact order book ranges for each salesperson
