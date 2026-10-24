@@ -1210,74 +1210,90 @@ export default function App() {
               </div>
 
               {/* KPI 1: Customers With All Items "Ready but Bill Pending" */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-emerald-400 uppercase">
-                  CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
-                </h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Contact Number</th>
-                        <th className="p-3">Total Items</th>
-                        <th className="p-3">Order Sheets / Tags</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {billPendingCustomers.length === 0 ? (
-                        <tr><td colSpan="4" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
-                      ) : (
-                        billPendingCustomers.map((cust, idx) => (
-                          <tr key={idx} className="hover:bg-[#111318]/50">
-                            <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
-                            <td className="p-3 font-mono">{cust.contactNumber}</td>
-                            <td className="p-3">{cust.items.length}</td>
-                            <td className="p-3 text-amber-400 font-mono">
-                              {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+<div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+  <h4 className="text-sm font-black text-emerald-400 uppercase">
+    CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
+  </h4>
+  <div className="overflow-x-auto">
+    <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+      <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+        <tr>
+          <th className="p-3">Customer Name</th>
+          <th className="p-3">Contact Number</th>
+          <th className="p-3">Sales Person</th>
+          <th className="p-3">Order Person</th>
+          <th className="p-3">Total Items</th>
+          <th className="p-3">Order Sheets / Tags</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-slate-800/50">
+        {billPendingCustomers.length === 0 ? (
+          <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
+        ) : (
+          billPendingCustomers.map((cust, idx) => {
+            const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+            const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+            return (
+              <tr key={idx} className="hover:bg-[#111318]/50">
+                <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
+                <td className="p-3 font-mono">{cust.contactNumber}</td>
+                <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
+                <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                <td className="p-3">{cust.items.length}</td>
+                <td className="p-3 text-amber-400 font-mono">
+                  {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
 
               {/* KPI 2: Customers With All Items "Packed" */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-purple-400 uppercase">
-                  CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
-                </h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[700px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Contact Number</th>
-                        <th className="p-3">Total Items</th>
-                        <th className="p-3">Order Sheets / Tags</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {packedCustomers.length === 0 ? (
-                        <tr><td colSpan="4" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
-                      ) : (
-                        packedCustomers.map((cust, idx) => (
-                          <tr key={idx} className="hover:bg-[#111318]/50">
-                            <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
-                            <td className="p-3 font-mono">{cust.contactNumber}</td>
-                            <td className="p-3">{cust.items.length}</td>
-                            <td className="p-3 text-amber-400 font-mono">
-                              {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+<div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+  <h4 className="text-sm font-black text-purple-400 uppercase">
+    CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
+  </h4>
+  <div className="overflow-x-auto">
+    <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+      <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+        <tr>
+          <th className="p-3">Customer Name</th>
+          <th className="p-3">Contact Number</th>
+          <th className="p-3">Sales Person</th>
+          <th className="p-3">Order Person</th>
+          <th className="p-3">Total Items</th>
+          <th className="p-3">Order Sheets / Tags</th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-slate-800/50">
+        {packedCustomers.length === 0 ? (
+          <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
+        ) : (
+          packedCustomers.map((cust, idx) => {
+            const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+            const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+            return (
+              <tr key={idx} className="hover:bg-[#111318]/50">
+                <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
+                <td className="p-3 font-mono">{cust.contactNumber}</td>
+                <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
+                <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                <td className="p-3">{cust.items.length}</td>
+                <td className="p-3 text-amber-400 font-mono">
+                  {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                </td>
+              </tr>
+            );
+          })
+        )}
+      </tbody>
+    </table>
+  </div>
+</div>
             </div>
           );
         })()}
