@@ -563,29 +563,32 @@ export default function App() {
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
-    // Find the last (highest) page number entered in system
-    const enteredArray = Array.from(enteredNumbers);
-    const maxEntered = enteredArray.length > 0 ? Math.max(...enteredArray) : 0;
+    const allEnteredPagesPresent = Array.from(enteredNumbers).sort((a, b) => a - b);
+    const maxEntered = allEnteredPagesPresent.length > 0 ? Math.max(...allEnteredPagesPresent) : 0;
+    const minEntered = allEnteredPagesPresent.length > 0 ? Math.min(...allEnteredPagesPresent) : 0;
 
-    const allMissingPages = [];
-    const skippedPages = []; // Blank pages occurring BEFORE the last entered number (real gaps)
-    const allEnteredPagesPresent = [];
+    const skippedPages = [];
 
+    // Check each book for true gaps only
     books.forEach(book => {
       for (let i = book.start; i <= book.end; i++) {
-        if (enteredNumbers.has(i)) {
-          allEnteredPagesPresent.push(i);
+        // Check if a later book has entries (meaning this earlier book is completely finished/passed)
+        const isBookFinished = books.some(b => b.start > book.end && allEnteredPagesPresent.some(num => num >= b.start && num <= b.end));
+        
+        if (isBookFinished) {
+          // If a later book has entries, any unentered page in this earlier book is a true blank gap
+          if (!enteredNumbers.has(i)) {
+            skippedPages.push(i);
+          }
         } else {
-          allMissingPages.push(i);
-          // If this missing page is less than the max entered page, it's a real skipped gap!
-          if (maxEntered > 0 && i < maxEntered) {
+          // For the current active book, ONLY look for blank pages between min and max entered (ignore future unreached pages)
+          if (i >= minEntered && i <= maxEntered && !enteredNumbers.has(i)) {
             skippedPages.push(i);
           }
         }
       }
     });
 
-    allEnteredPagesPresent.sort((a, b) => a - b);
     const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
 
     auditResults[name] = {
@@ -593,8 +596,7 @@ export default function App() {
       totalEntriesFound: personOrders.length,
       maxEntered,
       enteredPages: allEnteredPagesPresent,
-      missingPages: allMissingPages,
-      skippedPages // Only the blank pages before the last entry
+      skippedPages // Only actual missing pages between entries, never future pages
     };
   });
 
@@ -1796,14 +1798,14 @@ export default function App() {
     <div className="flex justify-between items-center border-b border-slate-800 pb-4">
       <div>
         <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" /> Order Book & Sequential Gap Audit
+          <AlertTriangle className="w-5 h-5" /> Order Book & Active Gap Audit
         </h3>
         <p className="text-xs text-slate-400 mt-0.5">
-          Detects missing pages that were skipped *before* the last entered serial number.
+          Detects skipped blank pages only within active entry ranges (ignoring unreached future pages).
         </p>
       </div>
       <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
-        Sequential Inspection Active
+        Smart Range Inspection Active
       </span>
     </div>
 
@@ -1838,7 +1840,7 @@ export default function App() {
             </p>
           </div>
 
-          {/* Skipped / Gap Pages (Highlighting blanks before the last entry) */}
+          {/* Skipped / Gap Pages */}
           {data.skippedPages.length > 0 ? (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
               <span className="text-[11px] font-bold text-red-400 block">⚠️ Skipped Gap Pages (Blank pages before last entry #{data.maxEntered}):</span>
