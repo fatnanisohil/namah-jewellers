@@ -505,7 +505,7 @@ export default function App() {
     { name: 'Yogita', start: 8151, end: 8225 },
     { name: 'Hema', start: 8226, end: 8300 },
     { name: 'Sohil', start: 1, end: 75 }, // Update ranges later as needed
-    { name: 'Mohit', start: 7551, end: 7625 }, // Fixed start/end order
+    { name: 'Mohit', start: 7551, end: 7625 },
     { name: 'Akansha', start: 8451, end: 8525 },
     { name: 'Deepika', start: 8526, end: 8600 },
     { name: 'Ziya', start: 7101, end: 7175 }
@@ -519,14 +519,14 @@ export default function App() {
       o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
     );
 
-    // Collect all sheet numbers that have been entered into the system
+    // Collect all unique sheet numbers that have at least one entry
     const enteredNumbers = new Set(
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
     const missingPages = [];
 
-    // Loop through the assigned range to check which pages were never used
+    // Check every page in the physical book range
     for (let i = start; i <= end; i++) {
       if (!enteredNumbers.has(i)) {
         missingPages.push(i);
@@ -1739,10 +1739,10 @@ export default function App() {
     <div className="flex justify-between items-center border-b border-slate-800 pb-4">
       <div>
         <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" /> Order Book & Page Sequence Audit
+          <AlertTriangle className="w-5 h-5" /> Order Book & Blank Page Audit
         </h3>
         <p className="text-xs text-slate-400 mt-0.5">
-          Tracks missing pages and duplicate entries across team order book ranges.
+          Tracks entirely blank/unentered order sheet pages across team book ranges.
         </p>
       </div>
       <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
@@ -1762,11 +1762,11 @@ export default function App() {
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">TOTAL ENTERED</span>
-              <strong className="text-white text-sm">{data.totalEntered} sheets</strong>
+              <span className="text-slate-400 block text-[10px]">TOTAL ENTRIES</span>
+              <strong className="text-white text-sm">{data.totalEntriesFound} items</strong>
             </div>
             <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">MISSING PAGES</span>
+              <span className="text-slate-400 block text-[10px]">BLANK / MISSING PAGES</span>
               <strong className={data.missingPages.length > 0 ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
                 {data.missingPages.length} pages
               </strong>
@@ -1775,23 +1775,14 @@ export default function App() {
 
           {data.missingPages.length > 0 ? (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
-              <span className="text-[11px] font-bold text-red-400 block">Missing Page Numbers:</span>
-              <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
+              <span className="text-[11px] font-bold text-red-400 block">Blank Page Numbers (Never Entered):</span>
+              <p className="text-xs font-mono text-slate-300 max-h-24 overflow-y-auto">
                 {data.missingPages.join(', ')}
               </p>
             </div>
           ) : (
             <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
-              ✨ Complete Sequence! No pages missing.
-            </div>
-          )}
-
-          {data.duplicatePages.length > 0 && (
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-1">
-              <span className="text-[11px] font-bold text-amber-400 block">Duplicate Sheet Entries Found:</span>
-              <p className="text-xs font-mono text-slate-300">
-                {data.duplicatePages.join(', ')}
-              </p>
+              ✨ Complete Sequence! No blank pages found.
             </div>
           )}
         </div>
