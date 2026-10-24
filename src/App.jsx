@@ -506,10 +506,10 @@ export default function App() {
     { name: 'Hema', start: 8226, end: 8300 },
     // Add ranges for other team members as needed (e.g. 74-75 pages each)
     { name: 'Sohil', start: 1, end: 75 },
-    { name: 'Mohit', start: 1, end: 75 },
-    { name: 'Akansha', start: 1, end: 75 },
-    { name: 'Deepika', start: 1, end: 75 },
-    { name: 'Ziya', start: 1, end: 75 }
+    { name: 'Mohit', start: 7551, end: 2625 },
+    { name: 'Akansha', start: 8451, end: 8525 },
+    { name: 'Deepika', start: 8526, end: 8600 },
+    { name: 'Ziya', start: 7101, end: 7175 }
   ];
 
   const auditResults = {};
