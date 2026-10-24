@@ -500,44 +500,63 @@ export default function App() {
   };
 
   const orderBookAudits = useMemo(() => {
-  // Define book ranges based on your exact specifications
+  // Define book ranges. 
+  // You can use a single { start, end } or an array 'books: [{start, end}, {start, end}]' if they have multiple books.
   const bookRanges = [
-    { name: 'Yogita', start: 8151, end: 8225 },
-    { name: 'Hema', start: 8226, end: 8300 },
-    { name: 'Sohil', start: 1, end: 75 }, // Update ranges later as needed
-    { name: 'Mohit', start: 7551, end: 7625 },
-    { name: 'Akansha', start: 8451, end: 8525 },
-    { name: 'Deepika', start: 8526, end: 8600 },
-    { name: 'Ziya', start: 7101, end: 7175 }
+    { 
+      name: 'Yogita', 
+      books: [
+        { start: 8151, end: 8225 }, // Book 1
+        { start: 9001, end: 9075 }  // Book 2 (Example if she started a new book)
+      ] 
+    },
+    { 
+      name: 'Hema', 
+      books: [
+        { start: 8226, end: 8300 }  // Book 1
+      ] 
+    },
+    { name: 'Sohil', books: [{ start: 1, end: 75 }] },
+    { name: 'Mohit', books: [{ start: 7551, end: 7625 }] },
+    { name: 'Akansha', books: [{ start: 8451, end: 8525 }] },
+    { name: 'Deepika', books: [{ start: 8526, end: 8600 }] },
+    { name: 'Ziya', books: [{ start: 7101, end: 7175 }] }
   ];
 
   const auditResults = {};
 
-  bookRanges.forEach(({ name, start, end }) => {
+  bookRanges.forEach(({ name, books }) => {
     // Filter orders belonging to this salesperson
     const personOrders = orders.filter(
       o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
     );
 
-    // Collect all unique sheet numbers that have at least one entry
+    // Collect all unique sheet numbers entered for this person
     const enteredNumbers = new Set(
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
-    const missingPages = [];
+    const allMissingPages = [];
+    let totalExpectedPages = 0;
 
-    // Check every page in the physical book range
-    for (let i = start; i <= end; i++) {
-      if (!enteredNumbers.has(i)) {
-        missingPages.push(i);
+    // Loop through each physical book assigned to this person
+    books.forEach(book => {
+      for (let i = book.start; i <= book.end; i++) {
+        totalExpectedPages++;
+        if (!enteredNumbers.has(i)) {
+          allMissingPages.push(i);
+        }
       }
-    }
+    });
+
+    // Format the ranges string for UI display (e.g., "8151 - 8225, 9001 - 9075")
+    const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
 
     auditResults[name] = {
-      expectedRange: `${start} - ${end}`,
+      expectedRange: rangeDisplay,
       totalEntriesFound: personOrders.length,
       uniqueSheetsUsed: enteredNumbers.size,
-      missingPages
+      missingPages: allMissingPages
     };
   });
 
