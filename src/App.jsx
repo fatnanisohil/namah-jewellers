@@ -479,15 +479,14 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Find the exact item from global orders array
   const fullOrder = (orders || []).find(o => 
     String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
     String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
   ) || order;
 
-  // Grab weights from any possible property variant
-  const goldWt = fullOrder["Gold Weight"] || fullOrder.goldWeight || fullOrder.goldweight || fullOrder.netWeight || '';
-  const diamondWt = fullOrder["Diamond Weight"] || fullOrder.diamondWeight || fullOrder.diamond_weight || '';
+  // Grab weights safely using the keys found in your state
+  const goldWt = fullOrder.goldweight !== undefined ? fullOrder.goldweight : (fullOrder.goldWeight || fullOrder["Gold Weight"] || '');
+  const diamondWt = fullOrder.diamondWeight !== undefined ? fullOrder.diamondWeight : (fullOrder["Diamond Weight"] || '');
 
   let msg = `*Karigar Work Order*\n\n` +
     `🔢 *Order Sheet:* ${fullOrder.orderSheetNo || 'N/A'}\n` +
@@ -495,10 +494,10 @@ export default function App() {
     `🏷️ *Tag Number:* ${fullOrder.tagNumber || 'N/A'}\n` +
     `🛠️ *Karigar:* ${fullOrder.karigarName || 'N/A'}\n`;
 
-  if (goldWt) {
+  if (goldWt !== null && goldWt !== undefined && String(goldWt).trim() !== '') {
     msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
   }
-  if (diamondWt) {
+  if (diamondWt !== null && diamondWt !== undefined && String(diamondWt).trim() !== '') {
     msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
   }
 
