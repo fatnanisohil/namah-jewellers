@@ -499,6 +499,64 @@ export default function App() {
     return msg;
   };
 
+  const orderBookAudits = useMemo(() => {
+  // Define book ranges based on your exact specifications
+  const bookRanges = [
+    { name: 'Yogita', start: 8151, end: 8225 },
+    { name: 'Hema', start: 8226, end: 8300 },
+    // Add ranges for other team members as needed (e.g. 74-75 pages each)
+    { name: 'Sohil', start: 1, end: 75 },
+    { name: 'Mohit', start: 1, end: 75 },
+    { name: 'Akansha', start: 1, end: 75 },
+    { name: 'Deepika', start: 1, end: 75 },
+    { name: 'Ziya', start: 1, end: 75 }
+  ];
+
+  const auditResults = {};
+
+  bookRanges.forEach(({ name, start, end }) => {
+    const personOrders = orders.filter(
+      o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
+    );
+
+    const enteredNumbers = new Set(
+      personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
+    );
+
+    const missingPages = [];
+    const duplicatePages = [];
+    const frequencyMap = {};
+
+    personOrders.forEach(o => {
+      const num = parseInt(o.orderSheetNo, 10);
+      if (!isNaN(num)) {
+        frequencyMap[num] = (frequencyMap[num] || 0) + 1;
+      }
+    });
+
+    Object.keys(frequencyMap).forEach(numStr => {
+      if (frequencyMap[numStr] > 1) {
+        duplicatePages.push(parseInt(numStr, 10));
+      }
+    });
+
+    for (let i = start; i <= end; i++) {
+      if (!enteredNumbers.has(i)) {
+        missingPages.push(i);
+      }
+    }
+
+    auditResults[name] = {
+      expectedRange: `${start} - ${end}`,
+      totalEntered: personOrders.length,
+      missingPages,
+      duplicatePages
+    };
+  });
+
+  return auditResults;
+}, [orders]);
+
   const uniqueCustomers = useMemo(() => {
     const map = {};
     orders.forEach(o => {
@@ -672,6 +730,16 @@ export default function App() {
           >
             <Send className="w-3.5 h-3.5" /> Karigar ({activeKarigarOrders.length})
           </button>
+          <button
+  onClick={() => setActiveTab('audit')}
+  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+    activeTab === 'audit'
+      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
+      : 'text-slate-400 hover:text-slate-200'
+  }`}
+>
+  <AlertTriangle className="w-3.5 h-3.5" /> Book Audit
+</button>
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
@@ -1676,6 +1744,72 @@ export default function App() {
             </div>
           </div>
         )}
+
+        {activeTab === 'audit' && (
+  <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
+    <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+      <div>
+        <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5" /> Order Book & Page Sequence Audit
+        </h3>
+        <p className="text-xs text-slate-400 mt-0.5">
+          Tracks missing pages and duplicate entries across team order book ranges.
+        </p>
+      </div>
+      <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
+        Range Inspection Active
+      </span>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {Object.entries(orderBookAudits).map(([name, data], idx) => (
+        <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
+          <div className="flex justify-between items-center">
+            <h4 className="text-sm font-black text-slate-100">{name}</h4>
+            <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+              Range: {data.expectedRange}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
+              <span className="text-slate-400 block text-[10px]">TOTAL ENTERED</span>
+              <strong className="text-white text-sm">{data.totalEntered} sheets</strong>
+            </div>
+            <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
+              <span className="text-slate-400 block text-[10px]">MISSING PAGES</span>
+              <strong className={data.missingPages.length > 0 ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
+                {data.missingPages.length} pages
+              </strong>
+            </div>
+          </div>
+
+          {data.missingPages.length > 0 ? (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
+              <span className="text-[11px] font-bold text-red-400 block">Missing Page Numbers:</span>
+              <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
+                {data.missingPages.join(', ')}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
+              ✨ Complete Sequence! No pages missing.
+            </div>
+          )}
+
+          {data.duplicatePages.length > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 space-y-1">
+              <span className="text-[11px] font-bold text-amber-400 block">Duplicate Sheet Entries Found:</span>
+              <p className="text-xs font-mono text-slate-300">
+                {data.duplicatePages.join(', ')}
+              </p>
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+)}
 
         {activeTab === 'crm' && (
           <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
