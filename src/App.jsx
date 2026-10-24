@@ -479,21 +479,23 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // If the passed order object lacks weights, try finding the full order data from your global orders list using orderSheetNo or tagNumber
-  const matchingOrder = (orders || []).find(
-    o => String(o.orderSheetNo).trim() === String(order.orderSheetNo).trim() && 
-         String(o.tagNumber).trim() === String(order.tagNumber).trim()
-  ) || order;
+  // Debug: print every single property key and its value to your console
+  console.log("--- DEBUGGING ORDER OBJECT ---");
+  Object.entries(order).forEach(([key, val]) => {
+    console.log(`Key: "${key}" | Value:`, val);
+  });
 
-  const goldWt = matchingOrder.goldWeight || matchingOrder.gold_weight || matchingOrder["Gold Weight"] || matchingOrder["goldWeight"] || matchingOrder.netWeight || matchingOrder.grossWeight || matchingOrder.gwt || '';
-  const diamondWt = matchingOrder.diamondWeight || matchingOrder.diamond_weight || matchingOrder["Diamond Weight"] || matchingOrder["diamondWeight"] || matchingOrder.dwt || '';
+  // Pull weights from any possible property name
+  const goldWt = order.goldWeight || order.gold_weight || order["Gold Weight"] || order["goldWeight"] || order.netWeight || order.grossWeight || order.gwt || order.Gold_Weight || '';
+  const diamondWt = order.diamondWeight || order.diamond_weight || order["Diamond Weight"] || order["diamondWeight"] || order.dwt || order.Diamond_Weight || '';
 
   let msg = `*Karigar Work Order*\n\n` +
-    `🔢 *Order Sheet:* ${matchingOrder.orderSheetNo || 'N/A'}\n` +
-    `💍 *Jewellery Item:* ${matchingOrder.jewelleryItem || 'N/A'}\n` +
-    `🏷️ *Tag Number:* ${matchingOrder.tagNumber || 'N/A'}\n` +
-    `🛠️ *Karigar:* ${matchingOrder.karigarName || 'N/A'}\n`;
+    `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
+    `💍 *Jewellery Item:* ${order.jewelleryItem || 'N/A'}\n` +
+    `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
+    `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
 
+  // If goldWt or diamondWt exist, display them. Otherwise, let's also check if any key contains "weight" or "wt"
   if (goldWt) {
     msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
   }
@@ -501,14 +503,14 @@ export default function App() {
     msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
   }
 
-  if (matchingOrder.colorTone) msg += `🎨 *Color Tone:* ${matchingOrder.colorTone}\n`;
-  if (matchingOrder.purity) msg += `✨ *Purity:* ${matchingOrder.purity}\n`;
-  if (matchingOrder.size) msg += `📏 *Size:* ${matchingOrder.size}\n`;
-  if (matchingOrder.orderDescription) msg += `📝 *Order Description:* ${matchingOrder.orderDescription}\n`;
-  if (matchingOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${matchingOrder.alterationDetails}\n`;
+  if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
+  if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
+  if (order.size) msg += `📏 *Size:* ${order.size}\n`;
+  if (order.orderDescription) msg += `📝 *Order Description:* ${order.orderDescription}\n`;
+  if (order.alterationDetails) msg += `🔄 *Alternation If Any:* ${order.alterationDetails}\n`;
   
-  msg += `⏱️ *Karigar DOD:* ${extractDateOnly(matchingOrder.karigarDod)}\n\n` +
-    `📷 *Image URL:* ${formatDriveUrl(matchingOrder)}`;
+  msg += `⏱️ *Karigar DOD:* ${extractDateOnly(order.karigarDod)}\n\n` +
+    `📷 *Image URL:* ${formatDriveUrl(order)}`;
 
   return msg;
 };
