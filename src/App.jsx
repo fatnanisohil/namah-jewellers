@@ -500,27 +500,57 @@ export default function App() {
   };
 
   const orderBookAudits = useMemo(() => {
-  // Define book ranges. 
-  // You can use a single { start, end } or an array 'books: [{start, end}, {start, end}]' if they have multiple books.
+  // 2 Order Books configured for every salesperson
   const bookRanges = [
     { 
       name: 'Yogita', 
       books: [
         { start: 8151, end: 8225 }, // Book 1
-        { start: 9001, end: 9075 }  // Book 2 (Example if she started a new book)
+        { start: 9001, end: 9075 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Hema', 
       books: [
-        { start: 8226, end: 8300 }  // Book 1
+        { start: 8226, end: 8300 }, // Book 1
+        { start: 9101, end: 9175 }  // Book 2 (Update numbers as needed)
       ] 
     },
-    { name: 'Sohil', books: [{ start: 1, end: 75 }] },
-    { name: 'Mohit', books: [{ start: 7551, end: 7625 }] },
-    { name: 'Akansha', books: [{ start: 8451, end: 8525 }] },
-    { name: 'Deepika', books: [{ start: 8526, end: 8600 }] },
-    { name: 'Ziya', books: [{ start: 7101, end: 7175 }] }
+    { 
+      name: 'Sohil', 
+      books: [
+        { start: 1, end: 75 },      // Book 1
+        { start: 76, end: 150 }     // Book 2 (Update numbers as needed)
+      ] 
+    },
+    { 
+      name: 'Mohit', 
+      books: [
+        { start: 7551, end: 7625 }, // Book 1
+        { start: 7626, end: 7700 }  // Book 2 (Update numbers as needed)
+      ] 
+    },
+    { 
+      name: 'Akansha', 
+      books: [
+        { start: 8451, end: 8525 }, // Book 1
+        { start: 9201, end: 9275 }  // Book 2 (Update numbers as needed)
+      ] 
+    },
+    { 
+      name: 'Deepika', 
+      books: [
+        { start: 8526, end: 8600 }, // Book 1
+        { start: 9301, end: 9375 }  // Book 2 (Update numbers as needed)
+      ] 
+    },
+    { 
+      name: 'Ziya', 
+      books: [
+        { start: 7101, end: 7175 }, // Book 1
+        { start: 7176, end: 7250 }  // Book 2 (Update numbers as needed)
+      ] 
+    }
   ];
 
   const auditResults = {};
@@ -537,19 +567,17 @@ export default function App() {
     );
 
     const allMissingPages = [];
-    let totalExpectedPages = 0;
 
-    // Loop through each physical book assigned to this person
+    // Loop through both books assigned to this person to check for blank pages
     books.forEach(book => {
       for (let i = book.start; i <= book.end; i++) {
-        totalExpectedPages++;
         if (!enteredNumbers.has(i)) {
           allMissingPages.push(i);
         }
       }
     });
 
-    // Format the ranges string for UI display (e.g., "8151 - 8225, 9001 - 9075")
+    // Format ranges for clean display on the dashboard card
     const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
 
     auditResults[name] = {
