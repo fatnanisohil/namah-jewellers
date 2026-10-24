@@ -479,9 +479,13 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Check every possible variation of property names (camelCase, spaces, exact sheet headers)
-  const goldWt = order.goldWeight || order.gold_weight || order["Gold Weight"] || order["goldWeight"] || order.netWeight;
-  const diamondWt = order.diamondWeight || order.diamond_weight || order["Diamond Weight"] || order["diamondWeight"];
+  // Debug: print all keys and values in this order object to the console
+  console.log("ALL ORDER KEYS:", Object.keys(order));
+  console.log("FULL ORDER DATA:", order);
+
+  // Fallback checks across every imaginable key variant
+  const goldWt = order.goldWeight || order.gold_weight || order["Gold Weight"] || order["goldWeight"] || order.netWeight || order.gwt;
+  const diamondWt = order.diamondWeight || order.diamond_weight || order["Diamond Weight"] || order["diamondWeight"] || order.dwt;
 
   let msg = `*Karigar Work Order*\n\n` +
     `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
