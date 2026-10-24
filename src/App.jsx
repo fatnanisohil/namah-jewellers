@@ -479,12 +479,8 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Debug: print all keys and values in this order object to the console
-  console.log("ALL ORDER KEYS:", Object.keys(order));
-  console.log("FULL ORDER DATA:", order);
-
-  // Fallback checks across every imaginable key variant
-  const goldWt = order.goldWeight || order.gold_weight || order["Gold Weight"] || order["goldWeight"] || order.netWeight || order.gwt;
+  // Grab weights from any possible property name
+  const goldWt = order.goldWeight || order.gold_weight || order["Gold Weight"] || order["goldWeight"] || order.netWeight || order.grossWeight || order.gwt;
   const diamondWt = order.diamondWeight || order.diamond_weight || order["Diamond Weight"] || order["diamondWeight"] || order.dwt;
 
   let msg = `*Karigar Work Order*\n\n` +
@@ -493,8 +489,14 @@ export default function App() {
     `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
     `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
 
-  if (goldWt) msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
-  if (diamondWt) msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
+  // Always include these lines if the variables exist (even if 0, check with Boolean/undefined)
+  if (goldWt !== undefined && goldWt !== null && goldWt !== '') {
+    msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
+  }
+  if (diamondWt !== undefined && diamondWt !== null && diamondWt !== '') {
+    msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
+  }
+
   if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
   if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
   if (order.size) msg += `📏 *Size:* ${order.size}\n`;
