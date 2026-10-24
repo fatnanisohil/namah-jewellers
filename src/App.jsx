@@ -479,14 +479,18 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
+    // Check multiple possible key names for weights
+    const goldWt = order.goldWeight || order.goldWt || order.netWeight || order.grossWeight;
+    const diamondWt = order.diamondWeight || order.diamondWt;
+
     let msg = `*Karigar Work Order*\n\n` +
       `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
       `💍 *Jewellery Item:* ${order.jewelleryItem || 'N/A'}\n` +
       `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
       `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
 
-    if (order.goldWeight) msg += `🟡 *Gold Weight:* ${order.goldWeight}g\n`;
-    if (order.diamondWeight) msg += `💎 *Diamond Weight:* ${order.diamondWeight}ct\n`;
+    if (goldWt) msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
+    if (diamondWt) msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
     if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
     if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
     if (order.size) msg += `📏 *Size:* ${order.size}\n`;
