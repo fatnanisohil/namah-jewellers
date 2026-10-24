@@ -504,9 +504,8 @@ export default function App() {
   const bookRanges = [
     { name: 'Yogita', start: 8151, end: 8225 },
     { name: 'Hema', start: 8226, end: 8300 },
-    // Add ranges for other team members as needed (e.g. 74-75 pages each)
-    { name: 'Sohil', start: 1, end: 75 },
-    { name: 'Mohit', start: 7551, end: 2625 },
+    { name: 'Sohil', start: 1, end: 75 }, // Update ranges later as needed
+    { name: 'Mohit', start: 7551, end: 7625 }, // Fixed start/end order
     { name: 'Akansha', start: 8451, end: 8525 },
     { name: 'Deepika', start: 8526, end: 8600 },
     { name: 'Ziya', start: 7101, end: 7175 }
@@ -515,31 +514,19 @@ export default function App() {
   const auditResults = {};
 
   bookRanges.forEach(({ name, start, end }) => {
+    // Filter orders belonging to this salesperson
     const personOrders = orders.filter(
       o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
     );
 
+    // Collect all sheet numbers that have been entered into the system
     const enteredNumbers = new Set(
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
     const missingPages = [];
-    const duplicatePages = [];
-    const frequencyMap = {};
 
-    personOrders.forEach(o => {
-      const num = parseInt(o.orderSheetNo, 10);
-      if (!isNaN(num)) {
-        frequencyMap[num] = (frequencyMap[num] || 0) + 1;
-      }
-    });
-
-    Object.keys(frequencyMap).forEach(numStr => {
-      if (frequencyMap[numStr] > 1) {
-        duplicatePages.push(parseInt(numStr, 10));
-      }
-    });
-
+    // Loop through the assigned range to check which pages were never used
     for (let i = start; i <= end; i++) {
       if (!enteredNumbers.has(i)) {
         missingPages.push(i);
@@ -548,11 +535,14 @@ export default function App() {
 
     auditResults[name] = {
       expectedRange: `${start} - ${end}`,
-      totalEntered: personOrders.length,
-      missingPages,
-      duplicatePages
+      totalEntriesFound: personOrders.length,
+      uniqueSheetsUsed: enteredNumbers.size,
+      missingPages
     };
   });
+
+  return auditResults;
+}, [orders]);
 
   return auditResults;
 }, [orders]);
