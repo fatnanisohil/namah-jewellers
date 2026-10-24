@@ -479,8 +479,9 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Temporary: Check what keys exist in your order object
-  console.log("FULL ORDER OBJECT:", order);
+  // Check every possible variation of property names (camelCase, spaces, exact sheet headers)
+  const goldWt = order.goldWeight || order.gold_weight || order["Gold Weight"] || order["goldWeight"] || order.netWeight;
+  const diamondWt = order.diamondWeight || order.diamond_weight || order["Diamond Weight"] || order["diamondWeight"];
 
   let msg = `*Karigar Work Order*\n\n` +
     `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
@@ -488,9 +489,8 @@ export default function App() {
     `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
     `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
 
-  // Use whatever keys show up in your console log
-  if (order.goldWeight) msg += `🟡 *Gold Weight:* ${order.goldWeight}g\n`;
-  if (order.diamondWeight) msg += `💎 *Diamond Weight:* ${order.diamondWeight}ct\n`;
+  if (goldWt) msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
+  if (diamondWt) msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
   if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
   if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
   if (order.size) msg += `📏 *Size:* ${order.size}\n`;
