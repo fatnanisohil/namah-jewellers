@@ -500,55 +500,54 @@ export default function App() {
   };
 
   const orderBookAudits = useMemo(() => {
-  // 2 Order Books configured for every salesperson
   const bookRanges = [
     { 
       name: 'Yogita', 
       books: [
-        { start: 8151, end: 8225 }, // Book 1
-        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        { start: 8151, end: 8225 },
+        { start: 9001, end: 9075 }
       ] 
     },
     { 
       name: 'Hema', 
       books: [
-        { start: 8226, end: 8300 }, // Book 1
-        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        { start: 8226, end: 8300 },
+        { start: 9101, end: 9175 }
       ] 
     },
     { 
       name: 'Sohil', 
       books: [
-        { start: 1, end: 75 },      // Book 1
-        // { start: 0, end: 0 }     // Book 2 (Update numbers as needed)
+        { start: 1, end: 75 },
+        { start: 76, end: 150 }
       ] 
     },
     { 
       name: 'Mohit', 
       books: [
-        { start: 7551, end: 7625 }, // Book 1
-        // { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        { start: 7551, end: 7625 },
+        { start: 7626, end: 7700 }
       ] 
     },
     { 
       name: 'Akansha', 
       books: [
-        { start: 8451, end: 8525 }, // Book 1
-        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        { start: 8451, end: 8525 },
+        { start: 9201, end: 9275 }
       ] 
     },
     { 
       name: 'Deepika', 
       books: [
-        { start: 8526, end: 8600 }, // Book 1
-        // { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        { start: 8526, end: 8600 },
+        { start: 9301, end: 9375 }
       ] 
     },
     { 
       name: 'Ziya', 
       books: [
-        { start: 7101, end: 7175 }, // Book 1
-        // { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        { start: 7101, end: 7175 },
+        { start: 7176, end: 7250 }
       ] 
     }
   ];
@@ -556,34 +555,33 @@ export default function App() {
   const auditResults = {};
 
   bookRanges.forEach(({ name, books }) => {
-    // Filter orders belonging to this salesperson
     const personOrders = orders.filter(
       o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
     );
 
-    // Collect all unique sheet numbers entered for this person
     const enteredNumbers = new Set(
       personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
     );
 
     const allMissingPages = [];
+    const allEnteredPagesPresent = [];
 
-    // Loop through both books assigned to this person to check for blank pages
     books.forEach(book => {
       for (let i = book.start; i <= book.end; i++) {
-        if (!enteredNumbers.has(i)) {
+        if (enteredNumbers.has(i)) {
+          allEnteredPagesPresent.push(i);
+        } else {
           allMissingPages.push(i);
         }
       }
     });
 
-    // Format ranges for clean display on the dashboard card
     const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
 
     auditResults[name] = {
       expectedRange: rangeDisplay,
       totalEntriesFound: personOrders.length,
-      uniqueSheetsUsed: enteredNumbers.size,
+      enteredPages: allEnteredPagesPresent,
       missingPages: allMissingPages
     };
   });
@@ -1786,10 +1784,10 @@ export default function App() {
     <div className="flex justify-between items-center border-b border-slate-800 pb-4">
       <div>
         <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" /> Order Book & Blank Page Audit
+          <AlertTriangle className="w-5 h-5" /> Order Book & Page Audit
         </h3>
         <p className="text-xs text-slate-400 mt-0.5">
-          Tracks entirely blank/unentered order sheet pages across team book ranges.
+          Tracks both entered pages and blank/unentered order sheet pages across books.
         </p>
       </div>
       <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
@@ -1809,7 +1807,7 @@ export default function App() {
 
           <div className="grid grid-cols-2 gap-2 text-xs">
             <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">TOTAL ENTRIES</span>
+              <span className="text-slate-400 block text-[10px]">TOTAL ITEMS ENTERED</span>
               <strong className="text-white text-sm">{data.totalEntriesFound} items</strong>
             </div>
             <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
@@ -1820,10 +1818,19 @@ export default function App() {
             </div>
           </div>
 
+          {/* Entered / Available Pages List */}
+          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1">
+            <span className="text-[11px] font-bold text-emerald-400 block">Entered Page Numbers Found in System:</span>
+            <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
+              {data.enteredPages.length > 0 ? data.enteredPages.join(', ') : 'None entered yet'}
+            </p>
+          </div>
+
+          {/* Missing / Blank Pages List */}
           {data.missingPages.length > 0 ? (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
               <span className="text-[11px] font-bold text-red-400 block">Blank Page Numbers (Never Entered):</span>
-              <p className="text-xs font-mono text-slate-300 max-h-24 overflow-y-auto">
+              <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
                 {data.missingPages.join(', ')}
               </p>
             </div>
