@@ -506,49 +506,49 @@ export default function App() {
       name: 'Yogita', 
       books: [
         { start: 8151, end: 8225 }, // Book 1
-        { start: 9001, end: 9075 }  // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Hema', 
       books: [
         { start: 8226, end: 8300 }, // Book 1
-        { start: 9101, end: 9175 }  // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Sohil', 
       books: [
         { start: 1, end: 75 },      // Book 1
-        { start: 76, end: 150 }     // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }     // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Mohit', 
       books: [
         { start: 7551, end: 7625 }, // Book 1
-        { start: 7626, end: 7700 }  // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Akansha', 
       books: [
         { start: 8451, end: 8525 }, // Book 1
-        { start: 9201, end: 9275 }  // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Deepika', 
       books: [
         { start: 8526, end: 8600 }, // Book 1
-        { start: 9301, end: 9375 }  // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Ziya', 
       books: [
         { start: 7101, end: 7175 }, // Book 1
-        { start: 7176, end: 7250 }  // Book 2 (Update numbers as needed)
+        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     }
   ];
