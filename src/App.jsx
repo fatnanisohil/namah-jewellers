@@ -506,49 +506,49 @@ export default function App() {
       name: 'Yogita', 
       books: [
         { start: 8151, end: 8225 },
-        { start: 9001, end: 9075 }
+        // { start: 9001, end: 9075 }
       ] 
     },
     { 
       name: 'Hema', 
       books: [
         { start: 8226, end: 8300 },
-        { start: 9101, end: 9175 }
+        { start: 7776, end: 7850 }
       ] 
     },
     { 
       name: 'Sohil', 
       books: [
-        { start: 1, end: 75 },
-        { start: 76, end: 150 }
+        { start: 7626, end: 7700 },
+        // { start: 76, end: 150 }
       ] 
     },
     { 
       name: 'Mohit', 
       books: [
         { start: 7551, end: 7625 },
-        { start: 7626, end: 7700 }
+        // { start: 7626, end: 7700 }
       ] 
     },
     { 
       name: 'Akansha', 
       books: [
         { start: 8451, end: 8525 },
-        { start: 9201, end: 9275 }
+        // { start: 9201, end: 9275 }
       ] 
     },
     { 
       name: 'Deepika', 
       books: [
         { start: 8526, end: 8600 },
-        { start: 9301, end: 9375 }
+        // { start: 9301, end: 9375 }
       ] 
     },
     { 
       name: 'Ziya', 
       books: [
         { start: 7101, end: 7175 },
-        { start: 7176, end: 7250 }
+        // { start: 7176, end: 7250 }
       ] 
     }
   ];
