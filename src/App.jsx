@@ -479,9 +479,9 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Use exact keys found in your console log
-  const goldWt = order.goldweight || order.goldWeight || order.netWeight || '';
-  const diamondWt = order.diamondWeight || order.diamond_weight || '';
+  // Grab weights using exact Google Sheet column keys with spaces
+  const goldWt = order["Gold Weight"] || order.goldweight || order.goldWeight || order.netWeight || '';
+  const diamondWt = order["Diamond Weight"] || order.diamondWeight || order.diamond_weight || '';
 
   let msg = `*Karigar Work Order*\n\n` +
     `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
