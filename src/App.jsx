@@ -479,15 +479,21 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  // Grab weights using exact Google Sheet column keys with spaces
-  const goldWt = order["Gold Weight"] || order.goldweight || order.goldWeight || order.netWeight || '';
-  const diamondWt = order["Diamond Weight"] || order.diamondWeight || order.diamond_weight || '';
+  // Find the exact master order from your global orders state using sheet number and tag
+  const rawOrder = (orders || []).find(o => 
+    String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
+    String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
+  ) || order;
+
+  // Grab weights from the master order using sheet keys, object keys, or any variation
+  const goldWt = rawOrder["Gold Weight"] || rawOrder.goldweight || rawOrder.goldWeight || rawOrder.netWeight || '';
+  const diamondWt = rawOrder["Diamond Weight"] || rawOrder.diamondWeight || rawOrder.diamond_weight || '';
 
   let msg = `*Karigar Work Order*\n\n` +
-    `🔢 *Order Sheet:* ${order.orderSheetNo || 'N/A'}\n` +
-    `💍 *Jewellery Item:* ${order.jewelleryItem || 'N/A'}\n` +
-    `🏷️ *Tag Number:* ${order.tagNumber || 'N/A'}\n` +
-    `🛠️ *Karigar:* ${order.karigarName || 'N/A'}\n`;
+    `🔢 *Order Sheet:* ${rawOrder.orderSheetNo || 'N/A'}\n` +
+    `💍 *Jewellery Item:* ${rawOrder.jewelleryItem || 'N/A'}\n` +
+    `🏷️ *Tag Number:* ${rawOrder.tagNumber || 'N/A'}\n` +
+    `🛠️ *Karigar:* ${rawOrder.karigarName || 'N/A'}\n`;
 
   if (goldWt) {
     msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
@@ -496,14 +502,14 @@ export default function App() {
     msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
   }
 
-  if (order.colorTone) msg += `🎨 *Color Tone:* ${order.colorTone}\n`;
-  if (order.purity) msg += `✨ *Purity:* ${order.purity}\n`;
-  if (order.size) msg += `📏 *Size:* ${order.size}\n`;
-  if (order.orderDescription) msg += `📝 *Order Description:* ${order.orderDescription}\n`;
-  if (order.alterationDetails) msg += `🔄 *Alternation If Any:* ${order.alterationDetails}\n`;
+  if (rawOrder.colorTone) msg += `🎨 *Color Tone:* ${rawOrder.colorTone}\n`;
+  if (rawOrder.purity) msg += `✨ *Purity:* ${rawOrder.purity}\n`;
+  if (rawOrder.size) msg += `📏 *Size:* ${rawOrder.size}\n`;
+  if (rawOrder.orderDescription) msg += `📝 *Order Description:* ${rawOrder.orderDescription}\n`;
+  if (rawOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${rawOrder.alterationDetails}\n`;
   
-  msg += `⏱️ *Karigar DOD:* ${extractDateOnly(order.karigarDod)}\n\n` +
-    `📷 *Image URL:* ${formatDriveUrl(order)}`;
+  msg += `⏱️ *Karigar DOD:* ${extractDateOnly(rawOrder.karigarDod)}\n\n` +
+    `📷 *Image URL:* ${formatDriveUrl(rawOrder)}`;
 
   return msg;
 };
