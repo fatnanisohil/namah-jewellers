@@ -484,9 +484,9 @@ export default function App() {
     String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
   ) || order;
 
-  // Grab weights safely using the keys found in your state
-  const goldWt = fullOrder.goldweight !== undefined ? fullOrder.goldweight : (fullOrder.goldWeight || fullOrder["Gold Weight"] || '');
-  const diamondWt = fullOrder.diamondWeight !== undefined ? fullOrder.diamondWeight : (fullOrder["Diamond Weight"] || '');
+  // Direct fallback check across all possible casing variations
+  const goldWt = fullOrder.goldweight || fullOrder.goldWeight || fullOrder["Gold Weight"] || fullOrder["gold weight"] || fullOrder.netWeight || '';
+  const diamondWt = fullOrder.diamondWeight || fullOrder.diamond_weight || fullOrder["Diamond Weight"] || fullOrder["diamond weight"] || '';
 
   let msg = `*Karigar Work Order*\n\n` +
     `🔢 *Order Sheet:* ${fullOrder.orderSheetNo || 'N/A'}\n` +
