@@ -506,7 +506,8 @@ export default function App() {
       name: 'Yogita', 
       books: [
         { start: 8151, end: 8225 },
-        // { start: 9001, end: 9075 }
+        { start: 7476, end: 7550 },
+        { start: 7776, end: 7850 }
       ] 
     },
     { 
