@@ -520,14 +520,14 @@ export default function App() {
       name: 'Sohil', 
       books: [
         { start: 1, end: 75 },      // Book 1
-        { start: 0, end: 0 }     // Book 2 (Update numbers as needed)
+        // { start: 0, end: 0 }     // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Mohit', 
       books: [
         { start: 7551, end: 7625 }, // Book 1
-        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        // { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
@@ -541,14 +541,14 @@ export default function App() {
       name: 'Deepika', 
       books: [
         { start: 8526, end: 8600 }, // Book 1
-        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        // { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     },
     { 
       name: 'Ziya', 
       books: [
         { start: 7101, end: 7175 }, // Book 1
-        { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
+        // { start: 0, end: 0 }  // Book 2 (Update numbers as needed)
       ] 
     }
   ];
