@@ -1082,6 +1082,7 @@ export default function App() {
                 </div>
               </div>
 
+              {/* 1. ORDERS ON KARIGAR */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
                   ORDERS ON KARIGAR ({underProcessOrdersList.length})
@@ -1145,6 +1146,160 @@ export default function App() {
                 </div>
               </div>
 
+              {/* 2. CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-emerald-400 uppercase">
+                  CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Contact Number</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
+                        <th className="p-3">Total Items</th>
+                        <th className="p-3">Order Sheets / Tags</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {billPendingCustomers.length === 0 ? (
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
+                      ) : (
+                        billPendingCustomers.map((cust, idx) => {
+                          const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+                          const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                          return (
+                            <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
+                              <td className="p-3 font-mono">{cust.contactNumber}</td>
+                              <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                              <td className="p-3">{cust.items.length}</td>
+                              <td className="p-3 text-amber-400 font-mono">
+                                {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 3. CUSTOMERS WITH ALL ITEMS "PACKED" */}
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-purple-400 uppercase">
+                  CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Contact Number</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
+                        <th className="p-3">Total Items</th>
+                        <th className="p-3">Order Sheets / Tags</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {packedCustomers.length === 0 ? (
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
+                      ) : (
+                        packedCustomers.map((cust, idx) => {
+                          const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+                          const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                          return (
+                            <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
+                              <td className="p-3 font-mono">{cust.contactNumber}</td>
+                              <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                              <td className="p-3">{cust.items.length}</td>
+                              <td className="p-3 text-amber-400 font-mono">
+                                {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 4. 🚨 URGENT ORDERS DOD (<= 2 DAYS) */}
+              <div className="bg-[#181b22] border border-orange-500/30 p-5 rounded-2xl space-y-4 shadow-xl">
+                <div className="flex justify-between items-center border-b border-orange-500/20 pb-3">
+                  <h4 className="text-sm font-black text-orange-400 flex items-center gap-2 uppercase tracking-wide">
+                    <AlertTriangle className="w-4 h-4 text-orange-400" /> 🚨 Urgent Orders (DOD Due in 2 Days or Less / Overdue) ({urgentDODOrdersList.length})
+                  </h4>
+                  <span className="px-3 py-1 bg-orange-500/10 border border-orange-500/30 text-orange-300 rounded-xl text-xs font-bold">
+                    Action Required
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3 w-20">IMAGE</th>
+                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Karigar Name</th>
+                        <th className="p-3">Karigar DOD</th>
+                        <th className="p-3 text-center">Timeline Status</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {urgentDODOrdersList.length === 0 ? (
+                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
+                      ) : (
+                        urgentDODOrdersList.map((ord, idx) => {
+                          const timeline = getDODTimelineStatus(ord.karigarDod);
+                          const imageUrl = formatDriveUrl(ord);
+                          return (
+                            <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3">
+                                {imageUrl ? (
+                                  <img
+                                    src={imageUrl}
+                                    alt=""
+                                    onClick={() => setPreviewImage(imageUrl)}
+                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
+                                    Product
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-3 font-bold text-amber-400">
+                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
+                              </td>
+                              <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
+                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
+                              <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
+                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
+                              <td className="p-3 text-center">
+                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${timeline.color}`}>
+                                  {timeline.text}
+                                </span>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* 5. MASTER LIST OF ALL ACTIVE LIVE ORDERS (LAST) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
                   Master List of All Active Live Orders ({dashboardFilteredOrders.length})
@@ -1206,157 +1361,6 @@ export default function App() {
                               </td>
                               <td className="p-3 text-slate-300 max-w-xs truncate">
                                 {ord.dailyRemarks || '--'}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-emerald-400 uppercase">
-                  CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
-                </h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Contact Number</th>
-                        <th className="p-3">Sales Person</th>
-                        <th className="p-3">Order Person</th>
-                        <th className="p-3">Total Items</th>
-                        <th className="p-3">Order Sheets / Tags</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {billPendingCustomers.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
-                      ) : (
-                        billPendingCustomers.map((cust, idx) => {
-                          const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
-                          const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
-                          return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
-                              <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
-                              <td className="p-3 font-mono">{cust.contactNumber}</td>
-                              <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
-                              <td className="p-3">{cust.items.length}</td>
-                              <td className="p-3 text-amber-400 font-mono">
-                                {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-purple-400 uppercase">
-                  CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
-                </h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Contact Number</th>
-                        <th className="p-3">Sales Person</th>
-                        <th className="p-3">Order Person</th>
-                        <th className="p-3">Total Items</th>
-                        <th className="p-3">Order Sheets / Tags</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {packedCustomers.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
-                      ) : (
-                        packedCustomers.map((cust, idx) => {
-                          const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
-                          const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
-                          return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
-                              <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
-                              <td className="p-3 font-mono">{cust.contactNumber}</td>
-                              <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
-                              <td className="p-3">{cust.items.length}</td>
-                              <td className="p-3 text-amber-400 font-mono">
-                                {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* URGENT ORDERS DOD (<= 2 DAYS) SECTION PLACED LAST */}
-              <div className="bg-[#181b22] border border-orange-500/30 p-5 rounded-2xl space-y-4 shadow-xl">
-                <div className="flex justify-between items-center border-b border-orange-500/20 pb-3">
-                  <h4 className="text-sm font-black text-orange-400 flex items-center gap-2 uppercase tracking-wide">
-                    <AlertTriangle className="w-4 h-4 text-orange-400" /> 🚨 Urgent Orders (DOD Due in 2 Days or Less / Overdue) ({urgentDODOrdersList.length})
-                  </h4>
-                  <span className="px-3 py-1 bg-orange-500/10 border border-orange-500/30 text-orange-300 rounded-xl text-xs font-bold">
-                    Action Required
-                  </span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3 w-20">IMAGE</th>
-                        <th className="p-3">Order / Tag</th>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Sales Person</th>
-                        <th className="p-3">Karigar Name</th>
-                        <th className="p-3">Karigar DOD</th>
-                        <th className="p-3 text-center">Timeline Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {urgentDODOrdersList.length === 0 ? (
-                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
-                      ) : (
-                        urgentDODOrdersList.map((ord, idx) => {
-                          const timeline = getDODTimelineStatus(ord.karigarDod);
-                          const imageUrl = formatDriveUrl(ord);
-                          return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
-                              <td className="p-3">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt=""
-                                    onClick={() => setPreviewImage(imageUrl)}
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Product
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3 font-bold text-amber-400">
-                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
-                              </td>
-                              <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
-                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
-                              <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
-                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
-                              <td className="p-3 text-center">
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${timeline.color}`}>
-                                  {timeline.text}
-                                </span>
                               </td>
                             </tr>
                           );
