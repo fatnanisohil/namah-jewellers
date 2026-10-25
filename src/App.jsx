@@ -484,8 +484,10 @@ export default function App() {
       String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
     ) || order;
 
-    const goldWt = fullOrder['Gold Weight(g)'] || fullOrder.goldWeight || fullOrder.goldweight || fullOrder['Gold Weight'] || '';
-    const diamondWt = fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight || fullOrder.diamond_weight || fullOrder['Diamond Weight'] || '';
+    // Force exact fields from Form Responses 1 / primary order object
+    const goldWt = fullOrder['Gold Weight(g)'] || fullOrder.goldWeight || '';
+    const diamondWt = fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight || '';
+    const orderDesc = fullOrder.orderDescription || '';
 
     let msg = `*Karigar Work Order*\n\n` +
       `🔢 *Order Sheet:* ${fullOrder.orderSheetNo || 'N/A'}\n` +
@@ -493,17 +495,13 @@ export default function App() {
       `🏷️ *Tag Number:* ${fullOrder.tagNumber || 'N/A'}\n` +
       `🛠️ *Karigar:* ${fullOrder.karigarName || 'N/A'}\n`;
 
-    if (goldWt !== null && goldWt !== undefined && String(goldWt).trim() !== '') {
-      msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
-    }
-    if (diamondWt !== null && diamondWt !== undefined && String(diamondWt).trim() !== '') {
-      msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
-    }
+    if (goldWt) msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
+    if (diamondWt) msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
 
     if (fullOrder.colorTone) msg += `🎨 *Color Tone:* ${fullOrder.colorTone}\n`;
     if (fullOrder.purity) msg += `✨ *Purity:* ${fullOrder.purity}\n`;
     if (fullOrder.size) msg += `📏 *Size:* ${fullOrder.size}\n`;
-    if (fullOrder.orderDescription) msg += `📝 *Order Description:* ${fullOrder.orderDescription}\n`;
+    if (orderDesc) msg += `📝 *Order Description:* ${orderDesc}\n`;
     if (fullOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${fullOrder.alterationDetails}\n`;
     
     msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n` +
