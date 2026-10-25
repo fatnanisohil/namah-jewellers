@@ -674,11 +674,11 @@ export default function App() {
             return false;
           }
         } else if (filterStatus === 'Ready but bill pending') {
-          if (!(pStatus === 'ready but bill pending' || pStatus.includes('bill pending'))) {
+          if (!(pStatus === 'ready but bill pending' || pStatus.includes('bill pending') || pStatus.includes('ready'))) {
             return false;
           }
         } else if (filterStatus === 'Packed') {
-          if (!(pStatus === 'packed')) {
+          if (!(pStatus === 'packed' || pStatus.includes('packed'))) {
             return false;
           }
         } else if (filterStatus === '--Not Assign--') {
@@ -846,9 +846,9 @@ export default function App() {
               return '--Not Assign--';
             } else if (pStatus.includes('process') || pStatus === 'assigned') {
               return 'Under Process';
-            } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
+            } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending') || pStatus.includes('ready')) {
               return 'Ready but bill pending';
-            } else if (pStatus === 'packed') {
+            } else if (pStatus === 'packed' || pStatus.includes('packed')) {
               return 'Packed';
             }
             return toProperCase(o.productStatus);
@@ -967,13 +967,13 @@ export default function App() {
           Object.values(customerGroups).forEach(cust => {
             const allBillPending = cust.items.length > 0 && cust.items.every(item => {
               const st = (item.productStatus || '').toLowerCase();
-              return st === 'ready but bill pending' || st.includes('bill pending');
+              return st === 'ready but bill pending' || st.includes('bill pending') || st.includes('ready');
             });
             if (allBillPending) billPendingCustomers.push(cust);
 
             const allPacked = cust.items.length > 0 && cust.items.every(item => {
               const st = (item.productStatus || '').toLowerCase();
-              return st === 'packed';
+              return st === 'packed' || st.includes('packed');
             });
             if (allPacked) packedCustomers.push(cust);
           });
@@ -1359,7 +1359,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending');
+                      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending') || pStatus.includes('ready');
                     }).length}
                   </h3>
                 </div>
@@ -1378,7 +1378,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus === 'packed';
+                      return pStatus === 'packed' || pStatus.includes('packed');
                     }).length}
                   </h3>
                 </div>
@@ -1595,7 +1595,7 @@ export default function App() {
                                     Place order
                                   </button>
                                 );
-                              } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
+                              } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending") || productStatus.includes("ready")) {
                                 return (
                                   <div className="px-3 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
                                     Received from Karigar<br />
@@ -1661,7 +1661,7 @@ export default function App() {
                               <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
                                 !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
                                   ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
-                                  : (order.productStatus || '').toLowerCase() === 'packed'
+                                  : (order.productStatus || '').toLowerCase().includes('packed')
                                   ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                                   : (order.productStatus || '').toLowerCase().includes('bill pending')
                                   ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
@@ -1795,7 +1795,7 @@ export default function App() {
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
                               !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
                                 ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
-                                : (order.productStatus || '').toLowerCase() === 'packed'
+                                : (order.productStatus || '').toLowerCase().includes('packed')
                                 ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                                 : (order.productStatus || '').toLowerCase().includes('bill pending')
                                 ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
@@ -2333,7 +2333,7 @@ export default function App() {
                     <span className={`px-2.5 py-1 rounded-lg border font-bold text-xs ${
                       !ord.productStatus || ord.productStatus.includes('Not Assign')
                         ? 'bg-slate-900 text-slate-400 border-slate-700'
-                        : ord.productStatus.toLowerCase() === 'packed'
+                        : ord.productStatus.toLowerCase().includes('packed')
                         ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                         : ord.productStatus.toLowerCase().includes('bill pending')
                         ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
