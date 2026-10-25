@@ -420,8 +420,8 @@ export default function App() {
       ...selectedOrderForKarigar,
       karigarName: data.get('karigarName'),
       karigarDod: extractDateOnly(data.get('karigarDod')),
-      goldWeight: data.get('goldWeight'),
-      diamondWeight: data.get('diamondWeight'),
+      'Gold Weight(g)': data.get('goldWeight'),
+      'Diamond Weight(ct)': data.get('diamondWeight'),
       colorTone: data.get('colorTone'),
       purity: data.get('purity'),
       size: data.get('size'),
@@ -445,8 +445,8 @@ export default function App() {
         jewelleryItem: updatedOrder.jewelleryItem || '',
         tagNumber: updatedOrder.tagNumber || '',
         karigarName: updatedOrder.karigarName || '',
-        goldWeight: updatedOrder.goldWeight || '',
-        diamondWeight: updatedOrder.diamondWeight || '',
+        'Gold Weight(g)': updatedOrder['Gold Weight(g)'] || '',
+        'Diamond Weight(ct)': updatedOrder['Diamond Weight(ct)'] || '',
         colorTone: updatedOrder.colorTone || '',
         purity: updatedOrder.purity || '',
         size: updatedOrder.size || '',
@@ -469,7 +469,7 @@ export default function App() {
 
   const exportCSV = () => {
     const headers = "Order Sheet,Tag Number,Customer,Contact,Item,Purity,Gold Wt,Diamond Wt,Sales,Executive,Status\n";
-    const rows = orders.map(o => `${o.orderSheetNo},${o.tagNumber},${o.customerName},${o.contactNumber},${o.jewelleryItem},${o.purity},${o.goldWeight},${o.diamondWeight},${o.salesPerson},${o.orderPerson},${o.productStatus}`).join("\n");
+    const rows = orders.map(o => `${o.orderSheetNo},${o.tagNumber},${o.customerName},${o.contactNumber},${o.jewelleryItem},${o.purity},${o['Gold Weight(g)'] || o.goldWeight},${o['Diamond Weight(ct)'] || o.diamondWeight},${o.salesPerson},${o.orderPerson},${o.productStatus}`).join("\n");
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -479,136 +479,125 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-  const fullOrder = (orders || []).find(o => 
-    String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
-    String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
-  ) || order;
+    const fullOrder = (orders || []).find(o => 
+      String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
+      String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
+    ) || order;
 
-  // Direct fallback check across all possible casing variations
-  const goldWt = fullOrder.goldweight || fullOrder.goldWeight || fullOrder["Gold Weight"] || fullOrder["gold weight"] || fullOrder.netWeight || '';
-  const diamondWt = fullOrder.diamondWeight || fullOrder.diamond_weight || fullOrder["Diamond Weight"] || fullOrder["diamond weight"] || '';
+    const goldWt = fullOrder['Gold Weight(g)'] || fullOrder.goldWeight || fullOrder.goldweight || fullOrder['Gold Weight'] || '';
+    const diamondWt = fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight || fullOrder.diamond_weight || fullOrder['Diamond Weight'] || '';
 
-  let msg = `*Karigar Work Order*\n\n` +
-    `🔢 *Order Sheet:* ${fullOrder.orderSheetNo || 'N/A'}\n` +
-    `💍 *Jewellery Item:* ${fullOrder.jewelleryItem || 'N/A'}\n` +
-    `🏷️ *Tag Number:* ${fullOrder.tagNumber || 'N/A'}\n` +
-    `🛠️ *Karigar:* ${fullOrder.karigarName || 'N/A'}\n`;
+    let msg = `*Karigar Work Order*\n\n` +
+      `🔢 *Order Sheet:* ${fullOrder.orderSheetNo || 'N/A'}\n` +
+      `💍 *Jewellery Item:* ${fullOrder.jewelleryItem || 'N/A'}\n` +
+      `🏷️ *Tag Number:* ${fullOrder.tagNumber || 'N/A'}\n` +
+      `🛠️ *Karigar:* ${fullOrder.karigarName || 'N/A'}\n`;
 
-  if (goldWt !== null && goldWt !== undefined && String(goldWt).trim() !== '') {
-    msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
-  }
-  if (diamondWt !== null && diamondWt !== undefined && String(diamondWt).trim() !== '') {
-    msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
-  }
+    if (goldWt !== null && goldWt !== undefined && String(goldWt).trim() !== '') {
+      msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
+    }
+    if (diamondWt !== null && diamondWt !== undefined && String(diamondWt).trim() !== '') {
+      msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
+    }
 
-  if (fullOrder.colorTone) msg += `🎨 *Color Tone:* ${fullOrder.colorTone}\n`;
-  if (fullOrder.purity) msg += `✨ *Purity:* ${fullOrder.purity}\n`;
-  if (fullOrder.size) msg += `📏 *Size:* ${fullOrder.size}\n`;
-  if (fullOrder.orderDescription) msg += `📝 *Order Description:* ${fullOrder.orderDescription}\n`;
-  if (fullOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${fullOrder.alterationDetails}\n`;
-  
-  msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n` +
-    `📷 *Image URL:* ${formatDriveUrl(fullOrder)}`;
+    if (fullOrder.colorTone) msg += `🎨 *Color Tone:* ${fullOrder.colorTone}\n`;
+    if (fullOrder.purity) msg += `✨ *Purity:* ${fullOrder.purity}\n`;
+    if (fullOrder.size) msg += `📏 *Size:* ${fullOrder.size}\n`;
+    if (fullOrder.orderDescription) msg += `📝 *Order Description:* ${fullOrder.orderDescription}\n`;
+    if (fullOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${fullOrder.alterationDetails}\n`;
+    
+    msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n` +
+      `📷 *Image URL:* ${formatDriveUrl(fullOrder)}`;
 
-  return msg;
-};
+    return msg;
+  };
 
   const orderBookAudits = useMemo(() => {
-  // Define your exact order book ranges for each salesperson
-  const bookRanges = [
-    { 
-      name: 'Yogita', 
-      books: [
-        { start: 8151, end: 8225 },
-        { start: 7476, end: 7550 },
-        { start: 7776, end: 7850 }
-      ] 
-    },
-    { 
-      name: 'Hema', 
-      books: [
-        { start: 8226, end: 8300 },
-        { start: 7776, end: 7850 }
-      ] 
-    },
-    { 
-      name: 'Sohil', 
-      books: [
-        { start: 7626, end: 7700 },
-        // { start: 76, end: 150 }
-      ] 
-    },
-    { 
-      name: 'Mohit', 
-      books: [
-        { start: 7551, end: 7625 },
-        // { start: 7626, end: 7700 }
-      ] 
-    },
-    { 
-      name: 'Akansha', 
-      books: [
-        { start: 8451, end: 8525 },
-        // { start: 9201, end: 9275 }
-      ] 
-    },
-    { 
-      name: 'Deepika', 
-      books: [
-        { start: 8526, end: 8600 },
-        // { start: 9301, end: 9375 }
-      ] 
-    },
-    { 
-      name: 'Ziya', 
-      books: [
-        { start: 7101, end: 7175 },
-        // { start: 7176, end: 7250 }
-      ] 
-    }
-  ];
-
-  const auditResults = {};
-
-  bookRanges.forEach(({ name, books }) => {
-    const personOrders = orders.filter(
-      o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
-    );
-
-    const enteredNumbers = new Set(
-      personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
-    );
-
-    const enteredArray = Array.from(enteredNumbers).sort((a, b) => a - b);
-    const maxEntered = enteredArray.length > 0 ? Math.max(...enteredArray) : 0;
-
-    const skippedPages = [];
-
-    // Loop through each book range and check for blanks from the start of the book up to the highest entered page
-    books.forEach(book => {
-      for (let i = book.start; i <= book.end; i++) {
-        // If this page is less than or equal to the person's highest entry, and it's not in the system, it's a skipped gap!
-        if (maxEntered > 0 && i <= maxEntered && !enteredNumbers.has(i)) {
-          skippedPages.push(i);
-        }
+    const bookRanges = [
+      { 
+        name: 'Yogita', 
+        books: [
+          { start: 8151, end: 8225 },
+          { start: 7476, end: 7550 },
+          { start: 7776, end: 7850 }
+        ] 
+      },
+      { 
+        name: 'Hema', 
+        books: [
+          { start: 8226, end: 8300 },
+          { start: 7776, end: 7850 }
+        ] 
+      },
+      { 
+        name: 'Sohil', 
+        books: [
+          { start: 7626, end: 7700 }
+        ] 
+      },
+      { 
+        name: 'Mohit', 
+        books: [
+          { start: 7551, end: 7625 }
+        ] 
+      },
+      { 
+        name: 'Akansha', 
+        books: [
+          { start: 8451, end: 8525 }
+        ] 
+      },
+      { 
+        name: 'Deepika', 
+        books: [
+          { start: 8526, end: 8600 }
+        ] 
+      },
+      { 
+        name: 'Ziya', 
+        books: [
+          { start: 7101, end: 7175 }
+        ] 
       }
+    ];
+
+    const auditResults = {};
+
+    bookRanges.forEach(({ name, books }) => {
+      const personOrders = orders.filter(
+        o => (o.salesPerson || '').toLowerCase() === name.toLowerCase()
+      );
+
+      const enteredNumbers = new Set(
+        personOrders.map(o => parseInt(o.orderSheetNo, 10)).filter(num => !isNaN(num))
+      );
+
+      const enteredArray = Array.from(enteredNumbers).sort((a, b) => a - b);
+      const maxEntered = enteredArray.length > 0 ? Math.max(...enteredArray) : 0;
+
+      const skippedPages = [];
+
+      books.forEach(book => {
+        for (let i = book.start; i <= book.end; i++) {
+          if (maxEntered > 0 && i <= maxEntered && !enteredNumbers.has(i)) {
+            skippedPages.push(i);
+          }
+        }
+      });
+
+      const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
+
+      auditResults[name] = {
+        expectedRange: rangeDisplay,
+        totalEntriesFound: personOrders.length,
+        maxEntered,
+        enteredPages: enteredArray,
+        skippedPages
+      };
     });
 
-    const rangeDisplay = books.map(b => `${b.start} - ${b.end}`).join(', ');
-
-    auditResults[name] = {
-      expectedRange: rangeDisplay,
-      totalEntriesFound: personOrders.length,
-      maxEntered,
-      enteredPages: enteredArray,
-      skippedPages
-    };
-  });
-
-  return auditResults;
-}, [orders]);
-
-
+    return auditResults;
+  }, [orders]);
 
   const uniqueCustomers = useMemo(() => {
     const map = {};
@@ -674,11 +663,11 @@ export default function App() {
             return false;
           }
         } else if (filterStatus === 'Ready but bill pending') {
-          if (!(pStatus === 'ready but bill pending' || pStatus.includes('bill pending') || pStatus.includes('ready'))) {
+          if (!(pStatus === 'ready but bill pending' || pStatus.includes('bill pending'))) {
             return false;
           }
         } else if (filterStatus === 'Packed') {
-          if (!(pStatus === 'packed' || pStatus.includes('packed'))) {
+          if (!(pStatus === 'packed')) {
             return false;
           }
         } else if (filterStatus === '--Not Assign--') {
@@ -784,15 +773,15 @@ export default function App() {
             <Send className="w-3.5 h-3.5" /> Karigar ({activeKarigarOrders.length})
           </button>
           <button
-  onClick={() => setActiveTab('audit')}
-  className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
-    activeTab === 'audit'
-      ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
-      : 'text-slate-400 hover:text-slate-200'
-  }`}
->
-  <AlertTriangle className="w-3.5 h-3.5" /> Book Audit
-</button>
+            onClick={() => setActiveTab('audit')}
+            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              activeTab === 'audit'
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" /> Book Audit
+          </button>
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
@@ -822,13 +811,11 @@ export default function App() {
 
       <main className="flex-1 p-4 sm:p-6 max-w-[1450px] w-full mx-auto space-y-6">
         {activeTab === 'dashboard' && (() => {
-          // Total active live orders (ON + OFF, non-delivered)
           const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
             return !isDelivered;
           });
 
-          // Helper to format date into DD/MM for display
           const formatDateDDMM = (dateStr) => {
             const clean = extractDateOnly(dateStr);
             if (!clean || clean === 'N/A') return 'N/A';
@@ -839,22 +826,20 @@ export default function App() {
             return clean;
           };
 
-          // Helper to get normalized product status including --Not Assign--
           const getStatusStr = (o) => {
             const pStatus = (o.productStatus || '').toLowerCase();
             if (!o.productStatus || o.productStatus === '' || pStatus.includes('not assign')) {
               return '--Not Assign--';
             } else if (pStatus.includes('process') || pStatus === 'assigned') {
               return 'Under Process';
-            } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending') || pStatus.includes('ready')) {
+            } else if (pStatus === 'ready but bill pending' || pStatus.includes('bill pending')) {
               return 'Ready but bill pending';
-            } else if (pStatus === 'packed' || pStatus.includes('packed')) {
+            } else if (pStatus === 'packed') {
               return 'Packed';
             }
             return toProperCase(o.productStatus);
           };
 
-          // Step 1: Pre-filter lists for individual breakdown cards so they cross-filter correctly
           const ordersForSalesBreakdown = allLiveOrders.filter(o => {
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
             if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
@@ -891,7 +876,6 @@ export default function App() {
             liveByStatusAll[st] = (liveByStatusAll[st] || 0) + 1;
           });
 
-          // Step 2: Fully filtered orders for summary metrics and tables
           const dashboardFilteredOrders = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
@@ -913,7 +897,6 @@ export default function App() {
 
           const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
 
-          // Date evaluation helpers for Under Process DOD Timeline
           const todayDateStr = new Date().toISOString().split('T')[0];
           const todayTime = new Date(todayDateStr).getTime();
 
@@ -935,7 +918,6 @@ export default function App() {
             }
           };
 
-          // Under Process Orders sorted: Below today (Overdue) -> Today -> After today (Coming / On track)
           const underProcessOrdersList = dashboardFilteredOrders.filter(o => {
             const st = getStatusStr(o);
             return st === 'Under Process';
@@ -967,13 +949,13 @@ export default function App() {
           Object.values(customerGroups).forEach(cust => {
             const allBillPending = cust.items.length > 0 && cust.items.every(item => {
               const st = (item.productStatus || '').toLowerCase();
-              return st === 'ready but bill pending' || st.includes('bill pending') || st.includes('ready');
+              return st === 'ready but bill pending' || st.includes('bill pending');
             });
             if (allBillPending) billPendingCustomers.push(cust);
 
             const allPacked = cust.items.length > 0 && cust.items.every(item => {
               const st = (item.productStatus || '').toLowerCase();
-              return st === 'packed' || st.includes('packed');
+              return st === 'packed';
             });
             if (allPacked) packedCustomers.push(cust);
           });
@@ -1003,7 +985,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Summary Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
                   <p className="text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ORDERS (ON+OFF)</p>
@@ -1030,7 +1011,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Breakdown Grid with Cross Filtering */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
                   <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter Dashboard)</h4>
@@ -1087,7 +1067,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* UNDER PROCESS ORDERS ON KARIGAR LIST */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
                   ORDERS ON KARIGAR ({underProcessOrdersList.length})
@@ -1151,7 +1130,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-amber-400 uppercase">
                   Master List of All Active Live Orders ({dashboardFilteredOrders.length})
@@ -1223,91 +1201,89 @@ export default function App() {
                 </div>
               </div>
 
-              {/* KPI 1: Customers With All Items "Ready but Bill Pending" */}
-<div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-  <h4 className="text-sm font-black text-emerald-400 uppercase">
-    CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
-  </h4>
-  <div className="overflow-x-auto">
-    <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
-      <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-        <tr>
-          <th className="p-3">Customer Name</th>
-          <th className="p-3">Contact Number</th>
-          <th className="p-3">Sales Person</th>
-          <th className="p-3">Order Person</th>
-          <th className="p-3">Total Items</th>
-          <th className="p-3">Order Sheets / Tags</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-800/50">
-        {billPendingCustomers.length === 0 ? (
-          <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
-        ) : (
-          billPendingCustomers.map((cust, idx) => {
-            const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
-            const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
-            return (
-              <tr key={idx} className="hover:bg-[#111318]/50">
-                <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
-                <td className="p-3 font-mono">{cust.contactNumber}</td>
-                <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
-                <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
-                <td className="p-3">{cust.items.length}</td>
-                <td className="p-3 text-amber-400 font-mono">
-                  {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                </td>
-              </tr>
-            );
-          })
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-emerald-400 uppercase">
+                  CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Contact Number</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
+                        <th className="p-3">Total Items</th>
+                        <th className="p-3">Order Sheets / Tags</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {billPendingCustomers.length === 0 ? (
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
+                      ) : (
+                        billPendingCustomers.map((cust, idx) => {
+                          const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+                          const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                          return (
+                            <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
+                              <td className="p-3 font-mono">{cust.contactNumber}</td>
+                              <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                              <td className="p-3">{cust.items.length}</td>
+                              <td className="p-3 text-amber-400 font-mono">
+                                {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
 
-              {/* KPI 2: Customers With All Items "Packed" */}
-<div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-  <h4 className="text-sm font-black text-purple-400 uppercase">
-    CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
-  </h4>
-  <div className="overflow-x-auto">
-    <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
-      <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-        <tr>
-          <th className="p-3">Customer Name</th>
-          <th className="p-3">Contact Number</th>
-          <th className="p-3">Sales Person</th>
-          <th className="p-3">Order Person</th>
-          <th className="p-3">Total Items</th>
-          <th className="p-3">Order Sheets / Tags</th>
-        </tr>
-      </thead>
-      <tbody className="divide-y divide-slate-800/50">
-        {packedCustomers.length === 0 ? (
-          <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
-        ) : (
-          packedCustomers.map((cust, idx) => {
-            const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
-            const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
-            return (
-              <tr key={idx} className="hover:bg-[#111318]/50">
-                <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
-                <td className="p-3 font-mono">{cust.contactNumber}</td>
-                <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
-                <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
-                <td className="p-3">{cust.items.length}</td>
-                <td className="p-3 text-amber-400 font-mono">
-                  {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                </td>
-              </tr>
-            );
-          })
-        )}
-      </tbody>
-    </table>
-  </div>
-</div>
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <h4 className="text-sm font-black text-purple-400 uppercase">
+                  CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
+                </h4>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Contact Number</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
+                        <th className="p-3">Total Items</th>
+                        <th className="p-3">Order Sheets / Tags</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {packedCustomers.length === 0 ? (
+                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
+                      ) : (
+                        packedCustomers.map((cust, idx) => {
+                          const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+                          const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                          return (
+                            <tr key={idx} className="hover:bg-[#111318]/50">
+                              <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
+                              <td className="p-3 font-mono">{cust.contactNumber}</td>
+                              <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                              <td className="p-3">{cust.items.length}</td>
+                              <td className="p-3 text-amber-400 font-mono">
+                                {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           );
         })()}
@@ -1359,7 +1335,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending') || pStatus.includes('ready');
+                      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending');
                     }).length}
                   </h3>
                 </div>
@@ -1378,7 +1354,7 @@ export default function App() {
                     {orders.filter(o => {
                       if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
                       const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus === 'packed' || pStatus.includes('packed');
+                      return pStatus === 'packed';
                     }).length}
                   </h3>
                 </div>
@@ -1545,9 +1521,17 @@ export default function App() {
                               {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
                             </div>
                             <div className="text-[11px] text-slate-300 space-x-1">
-                              {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
-                              {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
-                              {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
+                              {(() => {
+                                const gWt = order['Gold Weight(g)'] || order.goldWeight;
+                                const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                                return (
+                                  <>
+                                    {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
+                                    {gWt && dWt && <span className="text-slate-600">|</span>}
+                                    {dWt && <span>Dia: <strong className="text-amber-400 font-bold">{dWt}ct</strong></span>}
+                                  </>
+                                );
+                              })()}
                             </div>
                             <p className="text-[11px] text-slate-400">
                               {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
@@ -1595,7 +1579,7 @@ export default function App() {
                                     Place order
                                   </button>
                                 );
-                              } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending") || productStatus.includes("ready")) {
+                              } else if (productStatus.includes("ready but bill pending") || productStatus.includes("bill pending")) {
                                 return (
                                   <div className="px-3 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-xs font-bold text-center">
                                     Received from Karigar<br />
@@ -1661,7 +1645,7 @@ export default function App() {
                               <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
                                 !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
                                   ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
-                                  : (order.productStatus || '').toLowerCase().includes('packed')
+                                  : (order.productStatus || '').toLowerCase() === 'packed'
                                   ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                                   : (order.productStatus || '').toLowerCase().includes('bill pending')
                                   ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
@@ -1743,9 +1727,17 @@ export default function App() {
                               {order.purity && <span className="text-[11px] font-black text-amber-300">({order.purity})</span>}
                             </div>
                             <div className="text-[11px] text-slate-300 space-x-1">
-                              {order.goldWeight && <span>Gold: <strong className="text-amber-400 font-bold">{order.goldWeight}g</strong></span>}
-                              {order.goldWeight && order.diamondWeight && <span className="text-slate-600">|</span>}
-                              {order.diamondWeight && <span>Dia: <strong className="text-amber-400 font-bold">{order.diamondWeight}ct</strong></span>}
+                              {(() => {
+                                const gWt = order['Gold Weight(g)'] || order.goldWeight;
+                                const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                                return (
+                                  <>
+                                    {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
+                                    {gWt && dWt && <span className="text-slate-600">|</span>}
+                                    {dWt && <span>Dia: <strong className="text-amber-400 font-bold">{dWt}ct</strong></span>}
+                                  </>
+                                );
+                              })()}
                             </div>
                             <p className="text-[11px] text-slate-400">
                               {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
@@ -1795,7 +1787,7 @@ export default function App() {
                             <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
                               !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
                                 ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
-                                : (order.productStatus || '').toLowerCase().includes('packed')
+                                : (order.productStatus || '').toLowerCase() === 'packed'
                                 ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                                 : (order.productStatus || '').toLowerCase().includes('bill pending')
                                 ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
@@ -1815,70 +1807,68 @@ export default function App() {
         )}
 
         {activeTab === 'audit' && (
-  <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
-    <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-      <div>
-        <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
-          <AlertTriangle className="w-5 h-5" /> Order Book & Active Gap Audit
-        </h3>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Detects skipped blank pages only within active entry ranges (ignoring unreached future pages).
-        </p>
-      </div>
-      <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
-        Smart Range Inspection Active
-      </span>
-    </div>
+          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+              <div>
+                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5" /> Order Book & Active Gap Audit
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Detects skipped blank pages only within active entry ranges (ignoring unreached future pages).
+                </p>
+              </div>
+              <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
+                Smart Range Inspection Active
+              </span>
+            </div>
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      {Object.entries(orderBookAudits).map(([name, data], idx) => (
-        <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
-          <div className="flex justify-between items-center">
-            <h4 className="text-sm font-black text-slate-100">{name}</h4>
-            <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
-              Range: {data.expectedRange}
-            </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Object.entries(orderBookAudits).map(([name, data], idx) => (
+                <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
+                  <div className="flex justify-between items-center">
+                    <h4 className="text-sm font-black text-slate-100">{name}</h4>
+                    <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                      Range: {data.expectedRange}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">LAST ENTERED PAGE</span>
+                      <strong className="text-amber-400 text-sm">#{data.maxEntered || 'None'}</strong>
+                    </div>
+                    <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
+                      <span className="text-slate-400 block text-[10px]">SKIPPED GAPS FOUND</span>
+                      <strong className={data.skippedPages.length > 0 ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
+                        {data.skippedPages.length} pages
+                      </strong>
+                    </div>
+                  </div>
+
+                  <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1">
+                    <span className="text-[11px] font-bold text-emerald-400 block">Entered Page Numbers Found in System:</span>
+                    <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
+                      {data.enteredPages.length > 0 ? data.enteredPages.join(', ') : 'None entered yet'}
+                    </p>
+                  </div>
+
+                  {data.skippedPages.length > 0 ? (
+                    <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
+                      <span className="text-[11px] font-bold text-red-400 block">⚠️ Skipped Gap Pages (Blank pages before last entry #{data.maxEntered}):</span>
+                      <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
+                        {data.skippedPages.join(', ')}
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
+                      ✨ No Gaps! All pages up to #{data.maxEntered} are filled properly.
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">LAST ENTERED PAGE</span>
-              <strong className="text-amber-400 text-sm">#{data.maxEntered || 'None'}</strong>
-            </div>
-            <div className="bg-[#181b22] p-2.5 rounded-xl border border-slate-800">
-              <span className="text-slate-400 block text-[10px]">SKIPPED GAPS FOUND</span>
-              <strong className={data.skippedPages.length > 0 ? 'text-red-400 text-sm' : 'text-emerald-400 text-sm'}>
-                {data.skippedPages.length} pages
-              </strong>
-            </div>
-          </div>
-
-          {/* Entered Pages List */}
-          <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 space-y-1">
-            <span className="text-[11px] font-bold text-emerald-400 block">Entered Page Numbers Found in System:</span>
-            <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
-              {data.enteredPages.length > 0 ? data.enteredPages.join(', ') : 'None entered yet'}
-            </p>
-          </div>
-
-          {/* Skipped / Gap Pages */}
-          {data.skippedPages.length > 0 ? (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-3 space-y-1">
-              <span className="text-[11px] font-bold text-red-400 block">⚠️ Skipped Gap Pages (Blank pages before last entry #{data.maxEntered}):</span>
-              <p className="text-xs font-mono text-slate-300 max-h-20 overflow-y-auto">
-                {data.skippedPages.join(', ')}
-              </p>
-            </div>
-          ) : (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
-              ✨ No Gaps! All pages up to #{data.maxEntered} are filled properly.
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  </div>
-)}
+        )}
 
         {activeTab === 'crm' && (
           <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
@@ -2333,7 +2323,7 @@ export default function App() {
                     <span className={`px-2.5 py-1 rounded-lg border font-bold text-xs ${
                       !ord.productStatus || ord.productStatus.includes('Not Assign')
                         ? 'bg-slate-900 text-slate-400 border-slate-700'
-                        : ord.productStatus.toLowerCase().includes('packed')
+                        : ord.productStatus.toLowerCase() === 'packed'
                         ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                         : ord.productStatus.toLowerCase().includes('bill pending')
                         ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
@@ -2406,7 +2396,7 @@ export default function App() {
                     <input
                       type="text"
                       name="goldWeight"
-                      defaultValue={selectedOrderForKarigar.goldWeight || ''}
+                      defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''}
                       placeholder="e.g. 45.2"
                       className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
                     />
@@ -2417,7 +2407,7 @@ export default function App() {
                     <input
                       type="text"
                       name="diamondWeight"
-                      defaultValue={selectedOrderForKarigar.diamondWeight || ''}
+                      defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''}
                       placeholder="e.g. 2.15"
                       className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
                     />
@@ -2530,7 +2520,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Fullscreen Image Preview Lightbox Modal */}
       {previewImage && (
         <div 
           className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-pointer"
