@@ -485,8 +485,9 @@ export default function App() {
     ) || order;
 
     // Force exact fields from Form Responses 1 / primary order object
-    const goldWt = fullOrder['Gold Weight(g)'] || fullOrder.goldWeight || '';
-    const diamondWt = fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight || '';
+    // Use the exact fields returned by the backend API response
+    const goldWt = fullOrder.goldWeight || '';
+    const diamondWt = fullOrder.diamondWeight || '';
     const orderDesc = fullOrder.orderDescription || '';
 
     let msg = `*Karigar Work Order*\n\n` +
