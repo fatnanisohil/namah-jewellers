@@ -484,8 +484,6 @@ export default function App() {
       String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
     ) || order;
 
-    // Force exact fields from Form Responses 1 / primary order object
-    // Use the exact fields returned by the backend API response
     const goldWt = fullOrder.goldWeight || '';
     const diamondWt = fullOrder.diamondWeight || '';
     const orderDesc = fullOrder.orderDescription || '';
@@ -502,7 +500,12 @@ export default function App() {
     if (fullOrder.colorTone) msg += `🎨 *Color Tone:* ${fullOrder.colorTone}\n`;
     if (fullOrder.purity) msg += `✨ *Purity:* ${fullOrder.purity}\n`;
     if (fullOrder.size) msg += `📏 *Size:* ${fullOrder.size}\n`;
-    if (orderDesc) msg += `📝 *Order Description:* ${orderDesc}\n`;
+    
+    // Only prints if Form Responses 2 contains an order description
+    if (orderDesc && orderDesc.trim() !== '') {
+      msg += `📝 *Order Description:* ${orderDesc}\n`;
+    }
+
     if (fullOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${fullOrder.alterationDetails}\n`;
     
     msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n` +
