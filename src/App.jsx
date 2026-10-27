@@ -29,6 +29,19 @@ import {
 
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
 
+// Salesperson Phone Directory Lookup
+const SALESPERSON_NUMBERS = {
+  'Sohil': '9999629792',
+  'Mohit': '9217714556',
+  'Hema': '7042136377',
+  'Akansha': '7042109377',
+  'Yogita': '9217403201',
+  'Deepika': '9217403202',
+  'Ziya': '8368582277'
+};
+
+const ORDER_DEPARTMENT_NUMBER = '9217403206'; // Amardeep & Gautam
+
 // Proper Case text helper function
 const toProperCase = (str) => {
   if (!str || typeof str !== 'string') return str;
@@ -98,6 +111,7 @@ export default function App() {
     colorStone: '',
     size: '',
     purity: '',
+    advanceAmount: '', // Added advance amount state
     orderDescription: '',
     orderTakenDate: new Date().toISOString().split('T')[0],
     deliveryDate: '',
@@ -326,11 +340,9 @@ export default function App() {
     }
   };
 
-  // Handler when user clicks "Add Another Item for this Customer" in Suggestion #2 popup
   const handleAddAnotherItemSameCustomer = () => {
     if (!lastSubmittedOrderData) return;
     
-    // Keep basic details locked, clear item specific details
     setFormData(prev => ({
       ...prev,
       jewelleryItem: '',
@@ -344,6 +356,7 @@ export default function App() {
       colorStone: '',
       size: '',
       purity: '',
+      advanceAmount: '',
       orderDescription: '',
       specialRemarks: ''
     }));
@@ -352,7 +365,6 @@ export default function App() {
     setActiveTab('new-order');
   };
 
-  // Handler when user finishes adding items
   const handleFinishAddingItems = () => {
     setSubmittedOrderSuccessModal(false);
     setLastSubmittedOrderData(null);
@@ -374,6 +386,7 @@ export default function App() {
       colorStone: '',
       size: '',
       purity: '',
+      advanceAmount: '',
       orderDescription: '',
       orderTakenDate: new Date().toISOString().split('T')[0],
       deliveryDate: '',
@@ -506,8 +519,8 @@ export default function App() {
   };
 
   const exportCSV = () => {
-    const headers = "Order Sheet,Tag Number,Customer,Contact,Item,Purity,Gold Wt,Diamond Wt,Sales,Executive,Status\n";
-    const rows = orders.map(o => `${o.orderSheetNo},${o.tagNumber},${o.customerName},${o.contactNumber},${o.jewelleryItem},${o.purity},${o['Gold Weight(g)'] || o.goldWeight},${o['Diamond Weight(ct)'] || o.diamondWeight},${o.salesPerson},${o.orderPerson},${o.productStatus}`).join("\n");
+    const headers = "Order Sheet,Tag Number,Customer,Contact,Item,Purity,Gold Wt,Diamond Wt,Advance,Sales,Executive,Status\n";
+    const rows = orders.map(o => `${o.orderSheetNo},${o.tagNumber},${o.customerName},${o.contactNumber},${o.jewelleryItem},${o.purity},${o['Gold Weight(g)'] || o.goldWeight},${o['Diamond Weight(ct)'] || o.diamondWeight},${o.advanceAmount || ''},${o.salesPerson},${o.orderPerson},${o.productStatus}`).join("\n");
     const blob = new Blob([headers + rows], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -551,34 +564,48 @@ export default function App() {
     return msg;
   };
 
+  // Consolidated Customer Slip Builder with Salesperson Number & Order Dept Number
   const buildConsolidatedCustomerMessage = (client) => {
-  let msg = `*Namah Jewellers - Consolidated Order Slip*\n\n` +
-    `👤 *Customer:* ${client.customerName}\n` +
-    `📞 *Contact:* ${client.contactNumber}\n` +
-    `📦 *Total Items Ordered:* ${client.ordersList.length}\n\n` +
-    `-----------------------------------\n\n`;
+    const firstOrder = client.ordersList[0] || {};
+    const salesPersonName = firstOrder.salesPerson || 'N/A';
+    const salesPersonPhone = SALESPERSON_NUMBERS[salesPersonName] || 'N/A';
+    const advanceTotal = client.ordersList.reduce((sum, ord) => sum + (parseFloat(ord.advanceAmount) || 0), 0);
 
-  client.ordersList.forEach((ord, index) => {
-    const goldWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
-    const diamondWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
-    const imgUrl = formatDriveUrl(ord);
+    let msg = `*Namah Jewellers - Consolidated Order Slip*\n\n` +
+      `👤 *Customer:* ${client.customerName}\n` +
+      `📞 *Contact:* ${client.contactNumber}\n` +
+      `🤝 *Sales Person:* ${salesPersonName} (${salesPersonPhone})\n` +
+      `🛠️ *Order Department:* ${ORDER_DEPARTMENT_NUMBER}\n`;
 
-    msg += `*Item #${index + 1}: ${ord.jewelleryItem || 'Jewellery'}*\n` +
-      `🔢 *Order Sheet:* ${ord.orderSheetNo || 'N/A'}\n` +
-      `🏷️ *Tag Number:* ${ord.tagNumber || 'N/A'}\n` +
-      `✨ *Purity:* ${ord.purity || 'N/A'}\n`;
+    if (advanceTotal > 0) {
+      msg += `💵 *Total Advance Paid:* ₹${advanceTotal}\n`;
+    }
 
-    if (goldWt) msg += `🟡 *Gold Wt:* ${goldWt}g\n`;
-    if (diamondWt) msg += `💎 *Diamond Wt:* ${diamondWt}ct\n`;
-    if (ord.productStatus) msg += `📌 *Status:* ${ord.productStatus}\n`;
-    if (imgUrl) msg += `📷 *Image:* ${imgUrl}\n`;
+    msg += `📦 *Total Items Ordered:* ${client.ordersList.length}\n\n` +
+      `-----------------------------------\n\n`;
 
-    msg += `\n-----------------------------------\n\n`;
-  });
+    client.ordersList.forEach((ord, index) => {
+      const goldWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
+      const diamondWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
+      const imgUrl = formatDriveUrl(ord);
 
-  msg += `Thank you for shopping with Namah Jewellers! ✨`;
-  return msg;
-};
+      msg += `*Item #${index + 1}: ${ord.jewelleryItem || 'Jewellery'}*\n` +
+        `🔢 *Order Sheet:* ${ord.orderSheetNo || 'N/A'}\n` +
+        `🏷️ *Tag Number:* ${ord.tagNumber || 'N/A'}\n` +
+        `✨ *Purity:* ${ord.purity || 'N/A'}\n`;
+
+      if (goldWt) msg += `🟡 *Gold Wt:* ${goldWt}g\n`;
+      if (diamondWt) msg += `💎 *Diamond Wt:* ${diamondWt}ct\n`;
+      if (ord.advanceAmount) msg += `💵 *Advance:* ₹${ord.advanceAmount}\n`;
+      if (ord.productStatus) msg += `📌 *Status:* ${ord.productStatus}\n`;
+      if (imgUrl) msg += `📷 *Image:* ${imgUrl}\n`;
+
+      msg += `\n-----------------------------------\n\n`;
+    });
+
+    msg += `Thank you for shopping with Namah Jewellers! ✨`;
+    return msg;
+  };
 
   const orderBookAudits = useMemo(() => {
     const bookRanges = [
@@ -1675,11 +1702,13 @@ export default function App() {
                               {(() => {
                                 const gWt = order['Gold Weight(g)'] || order.goldWeight;
                                 const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                                const adv = order.advanceAmount;
                                 return (
                                   <>
                                     {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
                                     {gWt && dWt && <span className="text-slate-600">|</span>}
                                     {dWt && <span>Dia: <strong className="text-amber-400 font-bold">{dWt}ct</strong></span>}
+                                    {adv && <><br /><span>Adv: <strong className="text-emerald-400 font-bold">₹{adv}</strong></span></>}
                                   </>
                                 );
                               })()}
@@ -2205,8 +2234,8 @@ export default function App() {
               </div>
 
               <div className="p-4 bg-[#111318] border border-slate-800/80 rounded-xl space-y-4">
-                <h4 className="text-xs font-bold text-amber-400 uppercase">Gold & Diamond Specifications</h4>
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <h4 className="text-xs font-bold text-amber-400 uppercase">Gold, Diamond & Advance Specifications</h4>
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Gold Wt (g)</label>
                     <input
@@ -2226,6 +2255,17 @@ export default function App() {
                       className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200"
                       value={formData.diamondWeight}
                       onChange={(e) => setFormData({ ...formData, diamondWeight: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Advance (₹)</label>
+                    <input
+                      type="number"
+                      placeholder="e.g. 5000"
+                      className="w-full bg-[#181b22] border border-amber-500/50 rounded-lg px-2 py-1.5 text-sm text-amber-300 font-bold"
+                      value={formData.advanceAmount}
+                      onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
                     />
                   </div>
 
@@ -2257,10 +2297,10 @@ export default function App() {
                   </div>
 
                   <div>
-                    <label className="block text-xs text-slate-400 mb-1">Size (Optional)</label>
+                    <label className="block text-xs text-slate-400 mb-1">Size</label>
                     <input
                       type="text"
-                      placeholder="e.g. 16 inch / 2.4"
+                      placeholder="e.g. 16 inch"
                       className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200"
                       value={formData.size}
                       onChange={(e) => setFormData({ ...formData, size: e.target.value })}
@@ -2502,12 +2542,12 @@ export default function App() {
 
             <div className="space-y-3">
               <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Order History ({selectedCustomerCRM.ordersList.length})</h4>
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-60 overflow-y-auto">
                 {selectedCustomerCRM.ordersList.map((ord, i) => (
                   <div key={i} className="bg-[#111318] border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
                     <div>
                       <p className="font-bold text-amber-400">{ord.orderSheetNo} - {ord.jewelleryItem}</p>
-                      <p className="text-[11px] text-slate-400">Tag: {ord.tagNumber} | Salesperson: {ord.salesPerson}</p>
+                      <p className="text-[11px] text-slate-400">Tag: {ord.tagNumber} | Salesperson: {ord.salesPerson} {ord.advanceAmount ? `| Advance: ₹${ord.advanceAmount}` : ''}</p>
                     </div>
                     <span className={`px-2.5 py-1 rounded-lg border font-bold text-xs ${
                       !ord.productStatus || ord.productStatus.includes('Not Assign')
@@ -2526,32 +2566,32 @@ export default function App() {
             </div>
 
             <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-slate-800">
-  <button
-    onClick={() => {
-      navigator.clipboard.writeText(buildConsolidatedCustomerMessage(selectedCustomerCRM));
-      alert("Consolidated client slip copied to clipboard!");
-    }}
-    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
-  >
-    <Copy className="w-3.5 h-3.5" /> Copy Full Slip
-  </button>
-  
-  <a
-    href={'https://wa.me/?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
-    target="_blank"
-    rel="noreferrer"
-    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
-  >
-    <Send className="w-4 h-4" /> Send Consolidated WhatsApp Slip
-  </a>
-  
-  <button 
-    onClick={() => setSelectedCustomerCRM(null)} 
-    className="px-4 py-2 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs font-semibold cursor-pointer border border-slate-800"
-  >
-    Close Profile
-  </button>
-</div>
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(buildConsolidatedCustomerMessage(selectedCustomerCRM));
+                  alert("Consolidated client slip copied to clipboard!");
+                }}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" /> Copy Full Slip
+              </button>
+              
+              <a
+                href={'https://wa.me/?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
+                target="_blank"
+                rel="noreferrer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
+              >
+                <Send className="w-4 h-4" /> Send Consolidated WhatsApp Slip
+              </a>
+              
+              <button 
+                onClick={() => setSelectedCustomerCRM(null)} 
+                className="px-4 py-2 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs font-semibold cursor-pointer border border-slate-800"
+              >
+                Close Profile
+              </button>
+            </div>
           </div>
         </div>
       )}
