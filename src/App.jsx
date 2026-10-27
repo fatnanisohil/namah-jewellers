@@ -75,6 +75,9 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // CRM specific search state
+  const [crmSearchQuery, setCrmSearchQuery] = useState('');
 
   const [filterSalesperson, setFilterSalesperson] = useState('ALL');
   const [filterExecutive, setFilterExecutive] = useState('ALL');
@@ -90,7 +93,7 @@ export default function App() {
   const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [selectedCustomerCRM, setSelectedCustomerCRM] = useState(null);
 
-  // New state for Suggestion #2: Success popup after submitting an item
+  // Success popup after submitting an item
   const [submittedOrderSuccessModal, setSubmittedOrderSuccessModal] = useState(false);
   const [lastSubmittedOrderData, setLastSubmittedOrderData] = useState(null);
 
@@ -193,7 +196,7 @@ export default function App() {
               imageBase64: localMatch?.imageBase64 || serverOrder.imageBase64,
               productImageLink: localMatch?.imagePreviewLocal || localMatch?.imageBase64 || serverOrder.productImageLink,
               isOn: serverOrder.isOn,
-              _fetchIndex: index // Keep track of original sheet order for sorting
+              _fetchIndex: index
             };
           });
           return merged;
@@ -326,7 +329,7 @@ export default function App() {
         productStatus: '',
         placingStatus: false,
         karigarName: '',
-        _fetchIndex: -999 // Put newly submitted orders right at the top
+        _fetchIndex: -999
       };
 
       setOrders(prev => [optimisticNewOrder, ...prev]);
@@ -725,6 +728,16 @@ export default function App() {
     return Object.values(map);
   }, [orders]);
 
+  // Filtered unique customers based on CRM search query
+  const filteredUniqueCustomers = useMemo(() => {
+    if (!crmSearchQuery.trim()) return uniqueCustomers;
+    const q = crmSearchQuery.toLowerCase();
+    return uniqueCustomers.filter(client => 
+      (client.customerName && client.customerName.toLowerCase().includes(q)) ||
+      (client.contactNumber && client.contactNumber.toLowerCase().includes(q))
+    );
+  }, [uniqueCustomers, crmSearchQuery]);
+
   const activeKarigarOrders = useMemo(() => {
     return orders.filter(o => {
       const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
@@ -787,7 +800,6 @@ export default function App() {
       return true;
     });
 
-    // Auto-sort newest / recently submitted orders first (top of the list)
     return filtered.sort((a, b) => {
       const idxA = a._fetchIndex !== undefined ? a._fetchIndex : 999999;
       const idxB = b._fetchIndex !== undefined ? b._fetchIndex : 999999;
@@ -1932,7 +1944,7 @@ export default function App() {
                             <div className="text-[11px] text-slate-300 space-x-1">
                               {(() => {
                                 const gWt = order['Gold Weight(g)'] || order.goldWeight;
-                                const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                                const dWt = order['Diamond Weight(ct)'];
                                 return (
                                   <>
                                     {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
@@ -2075,43 +2087,61 @@ export default function App() {
 
         {activeTab === 'crm' && (
           <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
               <div>
                 <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
                   <Users className="w-5 h-5" /> Client Directory & CRM History
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">Manage customer profiles, contact numbers, and complete order histories.</p>
               </div>
-              <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
-                Total Unique Clients: {uniqueCustomers.length}
-              </span>
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+                <div className="relative w-full sm:w-64">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Search client by name or number..."
+                    value={crmSearchQuery}
+                    onChange={(e) => setCrmSearchQuery(e.target.value)}
+                    className="w-full bg-[#111318] border border-slate-700/80 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold whitespace-nowrap">
+                  Clients: {filteredUniqueCustomers.length} / {uniqueCustomers.length}
+                </span>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {uniqueCustomers.map((client, idx) => (
-                <div key={idx} className="bg-[#111318] border border-slate-800/90 rounded-2xl p-4 space-y-3 shadow-xl hover:border-amber-500/40 transition-all">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h4 className="text-sm font-black text-slate-100">{client.customerName}</h4>
-                      <p className="text-xs text-amber-400 font-mono mt-0.5">{client.contactNumber}</p>
-                    </div>
-                    <span className="px-2 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 rounded-lg text-[10px] font-bold">
-                      {client.ordersCount} Order(s)
-                    </span>
-                  </div>
-
-                  <div className="text-xs text-slate-400 space-y-1">
-                    <p>Associated Sales: <strong className="text-slate-200">{Array.from(client.salesPersons).join(', ')}</strong></p>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedCustomerCRM(client)}
-                    className="w-full mt-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
-                  >
-                    View Client Purchase History
-                  </button>
+              {filteredUniqueCustomers.length === 0 ? (
+                <div className="col-span-3 py-12 text-center text-slate-500 text-sm font-medium">
+                  No clients found matching "{crmSearchQuery}".
                 </div>
-              ))}
+              ) : (
+                filteredUniqueCustomers.map((client, idx) => (
+                  <div key={idx} className="bg-[#111318] border border-slate-800/90 rounded-2xl p-4 space-y-3 shadow-xl hover:border-amber-500/40 transition-all">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h4 className="text-sm font-black text-slate-100">{client.customerName}</h4>
+                        <p className="text-xs text-amber-400 font-mono mt-0.5">{client.contactNumber}</p>
+                      </div>
+                      <span className="px-2 py-1 bg-indigo-500/10 text-indigo-300 border border-indigo-500/30 rounded-lg text-[10px] font-bold">
+                        {client.ordersCount} Order(s)
+                      </span>
+                    </div>
+
+                    <div className="text-xs text-slate-400 space-y-1">
+                      <p>Associated Sales: <strong className="text-slate-200">{Array.from(client.salesPersons).join(', ')}</strong></p>
+                    </div>
+
+                    <button
+                      onClick={() => setSelectedCustomerCRM(client)}
+                      className="w-full mt-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                    >
+                      View Client Purchase History
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
@@ -2460,7 +2490,6 @@ export default function App() {
         })()}
       </main>
 
-      {/* Suggestion #2: Success Prompt Modal after submitting an order item */}
       {submittedOrderSuccessModal && lastSubmittedOrderData && (
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
           <div className="bg-[#181b22] border border-amber-500/40 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl text-center">
