@@ -111,7 +111,7 @@ export default function App() {
     colorStone: '',
     size: '',
     purity: '',
-    advanceAmount: '', // Added advance amount state
+    advanceAmount: '',
     orderDescription: '',
     orderTakenDate: new Date().toISOString().split('T')[0],
     deliveryDate: '',
@@ -134,6 +134,16 @@ export default function App() {
     if (val.includes('T')) return val.split('T')[0];
     if (val.includes(' ')) return val.split(' ')[0];
     return val;
+  };
+
+  const formatDDMM = (dateStr) => {
+    const clean = extractDateOnly(dateStr);
+    if (!clean || clean === 'N/A') return 'N/A';
+    const parts = clean.split('-');
+    if (parts.length === 3) {
+      return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+    return clean;
   };
 
   const formatDriveUrl = (order) => {
@@ -169,7 +179,7 @@ export default function App() {
       const data = await response.json();
       if (Array.isArray(data)) {
         setOrders(prevOrders => {
-          const merged = data.map(serverOrder => {
+          const merged = data.map((serverOrder, index) => {
             const localMatch = prevOrders.find(o => o.orderSheetNo === serverOrder.orderSheetNo && o.tagNumber === serverOrder.tagNumber);
             return {
               ...serverOrder,
@@ -182,7 +192,8 @@ export default function App() {
               imagePreviewLocal: localMatch?.imagePreviewLocal || serverOrder.imagePreviewLocal,
               imageBase64: localMatch?.imageBase64 || serverOrder.imageBase64,
               productImageLink: localMatch?.imagePreviewLocal || localMatch?.imageBase64 || serverOrder.productImageLink,
-              isOn: serverOrder.isOn
+              isOn: serverOrder.isOn,
+              _fetchIndex: index // Keep track of original sheet order for sorting
             };
           });
           return merged;
@@ -314,7 +325,8 @@ export default function App() {
         isOn: false,
         productStatus: '',
         placingStatus: false,
-        karigarName: ''
+        karigarName: '',
+        _fetchIndex: -999 // Put newly submitted orders right at the top
       };
 
       setOrders(prev => [optimisticNewOrder, ...prev]);
@@ -564,7 +576,6 @@ export default function App() {
     return msg;
   };
 
-  // Consolidated Customer Slip Builder with Salesperson Number & Order Dept Number (No status included)
   const buildConsolidatedCustomerMessage = (client) => {
     const firstOrder = client.ordersList[0] || {};
     const salesPersonName = firstOrder.salesPerson || 'N/A';
@@ -732,7 +743,7 @@ export default function App() {
   }, [orders]);
 
   const filteredOrders = useMemo(() => {
-    return orders.filter(order => {
+    const filtered = orders.filter(order => {
       if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
         return false;
       }
@@ -774,6 +785,13 @@ export default function App() {
       }
 
       return true;
+    });
+
+    // Auto-sort newest / recently submitted orders first (top of the list)
+    return filtered.sort((a, b) => {
+      const idxA = a._fetchIndex !== undefined ? a._fetchIndex : 999999;
+      const idxB = b._fetchIndex !== undefined ? b._fetchIndex : 999999;
+      return idxA - idxB;
     });
   }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType, filterStatus]);
 
@@ -887,7 +905,7 @@ export default function App() {
               </div>
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
+                className="flex items-center gap-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" /> Logout
               </button>
@@ -1690,6 +1708,9 @@ export default function App() {
                             <p className="text-[11px] font-bold text-amber-400/90 pt-0.5">
                               Sales: {order.salesPerson || 'Sohil'}
                             </p>
+                            <p className="text-[11px] font-mono text-emerald-400 font-bold">
+                              Promised DOD: {formatDDMM(order.deliveryDate)}
+                            </p>
                           </td>
 
                           <td className="p-4 space-y-1">
@@ -1776,7 +1797,7 @@ export default function App() {
                                   <div className="px-3 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold text-center">
                                     Assigned to Karigar<br />
                                     <span className="text-[10px] font-normal opacity-90">{karigarName}</span>
-                                    {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-95">DOD: {extractDateOnly(karigarDOD)}</span></>}
+                                    {karigarDOD && <><br /><span className="text-[10px] font-normal opacity-95">DOD: {formatDDMM(karigarDOD)}</span></>}
                                   </div>
                                 );
                               }
@@ -1899,6 +1920,9 @@ export default function App() {
                             <h4 className="text-sm font-bold text-slate-100">{order.customerName}</h4>
                             <p className="text-[11px] text-slate-400">{order.contactNumber}</p>
                             <p className="text-[11px] font-bold text-amber-400">Sales: {order.salesPerson}</p>
+                            <p className="text-[11px] font-mono text-emerald-400 font-bold">
+                              Promised DOD: {formatDDMM(order.deliveryDate)}
+                            </p>
                           </td>
                           <td className="p-4 space-y-1">
                             <div className="flex items-center gap-1.5">
