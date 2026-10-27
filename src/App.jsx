@@ -41,6 +41,26 @@ const SALESPERSON_NUMBERS = {
 
 const ORDER_DEPARTMENT_NUMBER = '9217403206'; // Amardeep & Gautam
 
+// Jewellery Items Dropdown List
+const JEWELLERY_ITEMS_LIST = [
+  'CHAIN',
+  'CUFFLINKS',
+  'DIAMOND GENTS RING',
+  'DIAMOND LADIES RING',
+  'DIAMOND NOSE RING',
+  'EARRINGS',
+  'GENTS BRACELET',
+  'LADIES BRACELET',
+  'GOLD RING',
+  'GOLD SET',
+  'MANGALSUTRA CHAIN',
+  'MISCELLANEOUS',
+  'NECKLACE SET',
+  'PENDANT SET',
+  'STONE MALA',
+  'TIRMANI SET'
+];
+
 // Proper Case text helper function
 const toProperCase = (str) => {
   if (!str || typeof str !== 'string') return str;
@@ -346,7 +366,6 @@ export default function App() {
   const handleAddAnotherItemSameCustomer = () => {
     if (!lastSubmittedOrderData) return;
     
-    // Retain customer details & order sheet number for faster multi-item entry
     setFormData(prev => ({
       ...prev,
       jewelleryItem: '',
@@ -1688,10 +1707,12 @@ export default function App() {
                               {order.tagNumber || 'TAG-8821'}
                             </p>
                             <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
-                              (order.orderType || '').toUpperCase() === 'CUSTOMIZATION'
+                              (order.orderType || '').toUpperCase() === 'CUSTOMIZATION IN PRODUCT'
                                 ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
-                                : (order.orderType || '').toUpperCase() === 'REPAIR'
+                                : (order.orderType || '').toUpperCase() === 'CLIENT REPAIR'
                                 ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40'
+                                : (order.orderType || '').toUpperCase().includes('HM PENDING')
+                                ? 'bg-orange-600/30 text-orange-300 border border-orange-500/40'
                                 : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
                             }`}>
                               {order.orderType || 'NEW'}
@@ -2184,8 +2205,9 @@ export default function App() {
                   >
                     <option value="" disabled>Select Order Type</option>
                     <option value="NEW">NEW</option>
-                    <option value="REPAIR">REPAIR</option>
-                    <option value="CUSTOMIZATION">CUSTOMIZATION</option>
+                    <option value="AS IT IS (HM PENDING) NO CHANGE">AS IT IS (HM PENDING) NO CHANGE</option>
+                    <option value="CLIENT REPAIR">CLIENT REPAIR</option>
+                    <option value="CUSTOMIZATION IN PRODUCT">CUSTOMIZATION IN PRODUCT</option>
                   </select>
                 </div>
               </div>
@@ -2251,14 +2273,17 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Jewellery Item Name *</label>
-                  <input
-                    type="text"
+                  <select
                     required
-                    placeholder="e.g. Necklace, Bangle, Ring"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer"
                     value={formData.jewelleryItem}
                     onChange={(e) => setFormData({ ...formData, jewelleryItem: e.target.value })}
-                  />
+                  >
+                    <option value="" disabled>Select Jewellery Item</option>
+                    {JEWELLERY_ITEMS_LIST.map((item) => (
+                      <option key={item} value={item}>{item}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>
