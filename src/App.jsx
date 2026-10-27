@@ -77,6 +77,10 @@ export default function App() {
   const [whatsappModalData, setWhatsappModalData] = useState(null);
   const [selectedCustomerCRM, setSelectedCustomerCRM] = useState(null);
 
+  // New state for Suggestion #2: Success popup after submitting an item
+  const [submittedOrderSuccessModal, setSubmittedOrderSuccessModal] = useState(false);
+  const [lastSubmittedOrderData, setLastSubmittedOrderData] = useState(null);
+
   const [formData, setFormData] = useState({
     customerName: '',
     contactNumber: '',
@@ -306,35 +310,13 @@ export default function App() {
         body: payload
       });
 
-      alert("Sales Order saved successfully!");
+      setLastSubmittedOrderData({ ...submissionData });
+      setSubmittedOrderSuccessModal(true);
+
       setTimeout(() => {
         fetchOrdersFromSheet();
       }, 1500);
 
-      setActiveTab('orders');
-      setFormData({
-        customerName: '',
-        contactNumber: '',
-        orderType: '',
-        orderSheetNo: '',
-        salesPerson: '',
-        jewelleryItem: '',
-        tagNumber: '',
-        productImageLink: '',
-        imageBase64: '',
-        imagePreviewLocal: '',
-        goldWeight: '',
-        diamondWeight: '',
-        colorTone: '',
-        colorStone: '',
-        size: '',
-        purity: '',
-        orderDescription: '',
-        orderTakenDate: new Date().toISOString().split('T')[0],
-        deliveryDate: '',
-        orderPerson: '',
-        specialRemarks: ''
-      });
     } catch (err) {
       console.error("Failed to submit order:", err);
       alert("Order submission sent. Please verify Google Sheet.");
@@ -342,6 +324,62 @@ export default function App() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // Handler when user clicks "Add Another Item for this Customer" in Suggestion #2 popup
+  const handleAddAnotherItemSameCustomer = () => {
+    if (!lastSubmittedOrderData) return;
+    
+    // Keep basic details locked, clear item specific details
+    setFormData(prev => ({
+      ...prev,
+      jewelleryItem: '',
+      tagNumber: '',
+      productImageLink: '',
+      imageBase64: '',
+      imagePreviewLocal: '',
+      goldWeight: '',
+      diamondWeight: '',
+      colorTone: '',
+      colorStone: '',
+      size: '',
+      purity: '',
+      orderDescription: '',
+      specialRemarks: ''
+    }));
+
+    setSubmittedOrderSuccessModal(false);
+    setActiveTab('new-order');
+  };
+
+  // Handler when user finishes adding items
+  const handleFinishAddingItems = () => {
+    setSubmittedOrderSuccessModal(false);
+    setLastSubmittedOrderData(null);
+    setActiveTab('orders');
+    setFormData({
+      customerName: '',
+      contactNumber: '',
+      orderType: '',
+      orderSheetNo: '',
+      salesPerson: '',
+      jewelleryItem: '',
+      tagNumber: '',
+      productImageLink: '',
+      imageBase64: '',
+      imagePreviewLocal: '',
+      goldWeight: '',
+      diamondWeight: '',
+      colorTone: '',
+      colorStone: '',
+      size: '',
+      purity: '',
+      orderDescription: '',
+      orderTakenDate: new Date().toISOString().split('T')[0],
+      deliveryDate: '',
+      orderPerson: '',
+      specialRemarks: ''
+    });
   };
 
   const toggleOrderSwitch = async (targetOrder) => {
@@ -501,7 +539,6 @@ export default function App() {
     if (fullOrder.purity) msg += `✨ *Purity:* ${fullOrder.purity}\n`;
     if (fullOrder.size) msg += `📏 *Size:* ${fullOrder.size}\n`;
     
-    // Only prints if Form Responses 2 contains an order description
     if (orderDesc && orderDesc.trim() !== '') {
       msg += `📝 *Order Description:* ${orderDesc}\n`;
     }
@@ -920,7 +957,6 @@ export default function App() {
             }
           };
 
-          // Orders with DOD due in 2 days or less (or overdue)
           const urgentDODOrdersList = dashboardFilteredOrders.filter(o => {
             const cleanDOD = extractDateOnly(o.karigarDod);
             if (!cleanDOD || cleanDOD === 'N/A') return false;
@@ -2331,6 +2367,44 @@ export default function App() {
           );
         })()}
       </main>
+
+      {/* Suggestion #2: Success Prompt Modal after submitting an order item */}
+      {submittedOrderSuccessModal && lastSubmittedOrderData && (
+        <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-[#181b22] border border-amber-500/40 rounded-3xl max-w-md w-full p-6 space-y-5 shadow-2xl text-center">
+            <div className="w-12 h-12 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center justify-center text-emerald-400 mx-auto">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+
+            <div>
+              <h3 className="text-base font-black text-amber-400">Item Successfully Saved!</h3>
+              <p className="text-xs text-slate-300 mt-1">
+                Customer: <strong className="text-white">{lastSubmittedOrderData.customerName}</strong><br />
+                Sheet No: <strong className="text-amber-300">{lastSubmittedOrderData.orderSheetNo}</strong> | Item: <strong className="text-white">{lastSubmittedOrderData.jewelleryItem}</strong>
+              </p>
+            </div>
+
+            <div className="bg-[#111318] border border-slate-800 rounded-2xl p-3 text-xs text-slate-400">
+              Does this customer have **another item** under this same order sheet?
+            </div>
+
+            <div className="flex flex-col gap-2.5 pt-2">
+              <button
+                onClick={handleAddAnotherItemSameCustomer}
+                className="w-full py-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-amber-500/20 cursor-pointer flex items-center justify-center gap-2"
+              >
+                <PlusCircle className="w-4 h-4" /> Add Another Item (Keep Customer Details Locked)
+              </button>
+              <button
+                onClick={handleFinishAddingItems}
+                className="w-full py-2.5 bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+              >
+                Finish & View Orders Table
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showLoginModal && (
         <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
