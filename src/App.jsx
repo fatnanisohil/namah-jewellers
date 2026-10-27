@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   Send,
   PlusCircle,
-  UserCheck,
   Check,
   X,
   Camera,
@@ -235,17 +234,6 @@ export default function App() {
   }, [orders]);
 
   useEffect(() => {
-    orders.forEach(order => {
-      const url = formatDriveUrl(order);
-      if (url) {
-        const hdUrl = url.includes('sz=') ? url.replace(/sz=w\d+/, 'sz=w1200') : url + '&sz=w1200';
-        const img = new Image();
-        img.src = hdUrl;
-      }
-    });
-  }, [orders]);
-
-  useEffect(() => {
     localStorage.setItem('namah_logged_in', isLoggedIn);
     localStorage.setItem('namah_user_role', currentUserRole);
     localStorage.setItem('namah_user_name', currentUserName);
@@ -358,6 +346,7 @@ export default function App() {
   const handleAddAnotherItemSameCustomer = () => {
     if (!lastSubmittedOrderData) return;
     
+    // Retain customer details & order sheet number for faster multi-item entry
     setFormData(prev => ({
       ...prev,
       jewelleryItem: '',
@@ -728,7 +717,6 @@ export default function App() {
     return Object.values(map);
   }, [orders]);
 
-  // Filtered unique customers based on CRM search query
   const filteredUniqueCustomers = useMemo(() => {
     if (!crmSearchQuery.trim()) return uniqueCustomers;
     const q = crmSearchQuery.toLowerCase();
