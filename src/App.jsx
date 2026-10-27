@@ -564,7 +564,7 @@ export default function App() {
     return msg;
   };
 
-  // Consolidated Customer Slip Builder with Salesperson Number & Order Dept Number
+  // Consolidated Customer Slip Builder with Salesperson Number & Order Dept Number (No status included)
   const buildConsolidatedCustomerMessage = (client) => {
     const firstOrder = client.ordersList[0] || {};
     const salesPersonName = firstOrder.salesPerson || 'N/A';
@@ -597,7 +597,6 @@ export default function App() {
       if (goldWt) msg += `🟡 *Gold Wt:* ${goldWt}g\n`;
       if (diamondWt) msg += `💎 *Diamond Wt:* ${diamondWt}ct\n`;
       if (ord.advanceAmount) msg += `💵 *Advance:* ₹${ord.advanceAmount}\n`;
-      if (ord.productStatus) msg += `📌 *Status:* ${ord.productStatus}\n`;
       if (imgUrl) msg += `📷 *Image:* ${imgUrl}\n`;
 
       msg += `\n-----------------------------------\n\n`;
