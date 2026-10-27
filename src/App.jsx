@@ -551,6 +551,35 @@ export default function App() {
     return msg;
   };
 
+  const buildConsolidatedCustomerMessage = (client) => {
+  let msg = `*Namah Jewellers - Consolidated Order Slip*\n\n` +
+    `👤 *Customer:* ${client.customerName}\n` +
+    `📞 *Contact:* ${client.contactNumber}\n` +
+    `📦 *Total Items Ordered:* ${client.ordersList.length}\n\n` +
+    `-----------------------------------\n\n`;
+
+  client.ordersList.forEach((ord, index) => {
+    const goldWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
+    const diamondWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
+    const imgUrl = formatDriveUrl(ord);
+
+    msg += `*Item #${index + 1}: ${ord.jewelleryItem || 'Jewellery'}*\n` +
+      `🔢 *Order Sheet:* ${ord.orderSheetNo || 'N/A'}\n` +
+      `🏷️ *Tag Number:* ${ord.tagNumber || 'N/A'}\n` +
+      `✨ *Purity:* ${ord.purity || 'N/A'}\n`;
+
+    if (goldWt) msg += `🟡 *Gold Wt:* ${goldWt}g\n`;
+    if (diamondWt) msg += `💎 *Diamond Wt:* ${diamondWt}ct\n`;
+    if (ord.productStatus) msg += `📌 *Status:* ${ord.productStatus}\n`;
+    if (imgUrl) msg += `📷 *Image:* ${imgUrl}\n`;
+
+    msg += `\n-----------------------------------\n\n`;
+  });
+
+  msg += `Thank you for shopping with Namah Jewellers! ✨`;
+  return msg;
+};
+
   const orderBookAudits = useMemo(() => {
     const bookRanges = [
       { 
@@ -2496,9 +2525,33 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-800">
-              <button onClick={() => setSelectedCustomerCRM(null)} className="px-4 py-2 bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold cursor-pointer">Close Profile</button>
-            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-slate-800">
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(buildConsolidatedCustomerMessage(selectedCustomerCRM));
+      alert("Consolidated client slip copied to clipboard!");
+    }}
+    className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
+  >
+    <Copy className="w-3.5 h-3.5" /> Copy Full Slip
+  </button>
+  
+  <a
+    href={'https://wa.me/?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
+    target="_blank"
+    rel="noreferrer"
+    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
+  >
+    <Send className="w-4 h-4" /> Send Consolidated WhatsApp Slip
+  </a>
+  
+  <button 
+    onClick={() => setSelectedCustomerCRM(null)} 
+    className="px-4 py-2 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs font-semibold cursor-pointer border border-slate-800"
+  >
+    Close Profile
+  </button>
+</div>
           </div>
         </div>
       )}
