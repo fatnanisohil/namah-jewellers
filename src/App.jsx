@@ -48,19 +48,16 @@ const JEWELLERY_ITEMS_LIST = [
   'CUFFLINKS',
   'DIAMOND GENTS RING',
   'DIAMOND LADIES RING',
-  'DIAMOND NOSE PIN',
+  'DIAMOND NOSE RING',
   'EARRINGS',
   'GENTS BRACELET',
   'LADIES BRACELET',
   'GOLD RING',
   'GOLD SET',
-  // 'PENDANT SET',
-  // 'CHIK PATTI',
-  // 'LONG SET',
-  // 'CHOKERS',
   'MANGALSUTRA CHAIN',
   'MISCELLANEOUS',
   'NECKLACE SET',
+  'PENDANT SET',
   'STONE MALA',
   'TIRMANI SET',
   'OTHER (SPECIFY IN DESCRIPTION)'
@@ -243,7 +240,8 @@ export default function App() {
               imageBase64: localMatch?.imageBase64 || serverOrder.imageBase64,
               productImageLink: localMatch?.imagePreviewLocal || localMatch?.imageBase64 || serverOrder.productImageLink,
               isOn: serverOrder.isOn,
-              _fetchIndex: index
+              _fetchIndex: index,
+              _localTimestamp: localMatch?._localTimestamp || 0
             };
           });
           return merged;
@@ -373,7 +371,8 @@ export default function App() {
         productStatus: '',
         placingStatus: false,
         karigarName: '',
-        _fetchIndex: -999
+        _fetchIndex: -999,
+        _localTimestamp: Date.now() // High timestamp so it sorts to the very top
       };
 
       setOrders(prev => [optimisticNewOrder, ...prev]);
@@ -845,7 +844,13 @@ export default function App() {
       return true;
     });
 
+    // SORTING: Newly submitted/local orders first (highest timestamp), then sheet order index ascending
     return filtered.sort((a, b) => {
+      const timeA = a._localTimestamp || 0;
+      const timeB = b._localTimestamp || 0;
+      if (timeA !== timeB) {
+        return timeB - timeA; // Most recent local submissions on top
+      }
       const idxA = a._fetchIndex !== undefined ? a._fetchIndex : 999999;
       const idxB = b._fetchIndex !== undefined ? b._fetchIndex : 999999;
       return idxA - idxB;
@@ -1742,7 +1747,7 @@ export default function App() {
                               {order.orderSheetNo || `NJ-2026-00${idx + 1}`}
                             </h4>
                             <p className="text-[10px] text-slate-400 font-mono">
-                              {order.tagNumber || 'GS-NJ-1234'}
+                              {order.tagNumber || 'TAG-8821'}
                             </p>
                             <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                               (order.orderType || '').toUpperCase() === 'CUSTOMIZATION IN PRODUCT'
@@ -2376,7 +2381,7 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. GS-NJ-1234"
+                    placeholder="e.g. TAG-8821"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
                     value={formData.tagNumber}
                     onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })}
