@@ -371,8 +371,8 @@ export default function App() {
         productStatus: '',
         placingStatus: false,
         karigarName: '',
-        _fetchIndex: -999,
-        _localTimestamp: Date.now() // High timestamp so it sorts to the very top
+        _fetchIndex: -999999, // Guarantees top placement
+        _localTimestamp: Number.MAX_SAFE_INTEGER // Guarantees top placement over all existing items
       };
 
       setOrders(prev => [optimisticNewOrder, ...prev]);
@@ -844,12 +844,12 @@ export default function App() {
       return true;
     });
 
-    // SORTING: Newly submitted/local orders first (highest timestamp), then sheet order index ascending
+    // SORTING: Highest timestamp/top priority first, then sheet fetch index ascending
     return filtered.sort((a, b) => {
       const timeA = a._localTimestamp || 0;
       const timeB = b._localTimestamp || 0;
       if (timeA !== timeB) {
-        return timeB - timeA; // Most recent local submissions on top
+        return timeB - timeA; 
       }
       const idxA = a._fetchIndex !== undefined ? a._fetchIndex : 999999;
       const idxB = b._fetchIndex !== undefined ? b._fetchIndex : 999999;
