@@ -342,60 +342,53 @@ export default function App() {
     }
   };
 
-  const handleCreateOrder = async (e) => {
+  const handleCreateOrder = (e) => {
     e.preventDefault();
-    setSubmitting(true);
 
-    try {
-      const finalJewelleryItem = formData.jewelleryItem.includes('OTHER') 
-        ? (formData.otherJewelleryItem ? formData.otherJewelleryItem.toUpperCase() : 'OTHER')
-        : formData.jewelleryItem;
+    const finalJewelleryItem = formData.jewelleryItem.includes('OTHER') 
+      ? (formData.otherJewelleryItem ? formData.otherJewelleryItem.toUpperCase() : 'OTHER')
+      : formData.jewelleryItem;
 
-      const submissionData = {
-        ...formData,
-        jewelleryItem: finalJewelleryItem,
-        productImageLink: formData.imageBase64 || formData.imagePreviewLocal || ''
-      };
+    const submissionData = {
+      ...formData,
+      jewelleryItem: finalJewelleryItem,
+      productImageLink: formData.imageBase64 || formData.imagePreviewLocal || ''
+    };
 
-      const payload = new URLSearchParams();
-      Object.keys(submissionData).forEach(key => {
-        if (key !== 'otherJewelleryItem') {
-          payload.append(key, submissionData[key] || '');
-        }
-      });
+    // 1. INSTANT UI UPDATE (0 seconds delay)
+    const optimisticNewOrder = {
+      ...submissionData,
+      jewelleryItem: finalJewelleryItem,
+      isOn: false,
+      productStatus: '',
+      placingStatus: false,
+      karigarName: '',
+      _fetchIndex: -999999, 
+      _localTimestamp: Number.MAX_SAFE_INTEGER // Jumps directly to top
+    };
 
-      const optimisticNewOrder = {
-        ...submissionData,
-        jewelleryItem: finalJewelleryItem,
-        isOn: false,
-        productStatus: '',
-        placingStatus: false,
-        karigarName: '',
-        _fetchIndex: -999999, // Guarantees top placement
-        _localTimestamp: Number.MAX_SAFE_INTEGER // Guarantees top placement over all existing items
-      };
+    setOrders(prev => [optimisticNewOrder, ...prev]);
+    setLastSubmittedOrderData({ ...submissionData, jewelleryItem: finalJewelleryItem });
+    setSubmittedOrderSuccessModal(true);
 
-      setOrders(prev => [optimisticNewOrder, ...prev]);
+    // 2. FIRE BACKGROUND SYNC (Non-blocking Network Request)
+    setTimeout(async () => {
+      try {
+        const payload = new URLSearchParams();
+        Object.keys(submissionData).forEach(key => {
+          if (key !== 'otherJewelleryItem') {
+            payload.append(key, submissionData[key] || '');
+          }
+        });
 
-      await fetch(GOOGLE_SHEETS_API_URL, {
-        method: "POST",
-        body: payload
-      });
-
-      setLastSubmittedOrderData({ ...submissionData, jewelleryItem: finalJewelleryItem });
-      setSubmittedOrderSuccessModal(true);
-
-      setTimeout(() => {
-        fetchOrdersFromSheet();
-      }, 1500);
-
-    } catch (err) {
-      console.error("Failed to submit order:", err);
-      alert("Order submission sent. Please verify Google Sheet.");
-      fetchOrdersFromSheet();
-    } finally {
-      setSubmitting(false);
-    }
+        await fetch(GOOGLE_SHEETS_API_URL, {
+          method: "POST",
+          body: payload
+        });
+      } catch (err) {
+        console.error("Background sync error:", err);
+      }
+    }, 10);
   };
 
   const handleAddAnotherItemSameCustomer = () => {
@@ -1744,10 +1737,10 @@ export default function App() {
 
                           <td className="p-4 space-y-1">
                             <h4 className="text-sm font-black text-amber-400 tracking-wide">
-                              {order.orderSheetNo || `4321-00${idx + 1}`}
+                              {order.orderSheetNo || `NJ-2026-00${idx + 1}`}
                             </h4>
                             <p className="text-[10px] text-slate-400 font-mono">
-                              {order.tagNumber || 'GS-NJ-1234'}
+                              {order.tagNumber || 'TAG-8821'}
                             </p>
                             <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                               (order.orderType || '').toUpperCase() === 'CUSTOMIZATION IN PRODUCT'
@@ -2284,7 +2277,7 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 4321"
+                    placeholder="e.g. NJ-2026-004"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
                     value={formData.orderSheetNo}
                     onChange={(e) => setFormData({ ...formData, orderSheetNo: e.target.value })}
@@ -2381,7 +2374,7 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. GS-NJ-1234"
+                    placeholder="e.g. TAG-8821"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
                     value={formData.tagNumber}
                     onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })}
