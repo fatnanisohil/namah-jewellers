@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Package,
   Clock,
@@ -23,7 +23,8 @@ import {
   ShieldCheck,
   LogIn,
   PowerOff,
-  RotateCcw
+  RotateCcw,
+  ChevronDown
 } from 'lucide-react';
 
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
@@ -41,7 +42,7 @@ const SALESPERSON_NUMBERS = {
 
 const ORDER_DEPARTMENT_NUMBER = '9217403206'; // Amardeep & Gautam
 
-// Jewellery Items Dropdown List
+// Jewellery Items Dropdown List (including OTHER)
 const JEWELLERY_ITEMS_LIST = [
   'CHAIN',
   'CUFFLINKS',
@@ -58,7 +59,8 @@ const JEWELLERY_ITEMS_LIST = [
   'NECKLACE SET',
   'PENDANT SET',
   'STONE MALA',
-  'TIRMANI SET'
+  'TIRMANI SET',
+  'OTHER (SPECIFY IN DESCRIPTION)'
 ];
 
 // Proper Case text helper function
@@ -123,6 +125,7 @@ export default function App() {
     orderSheetNo: '',
     salesPerson: '',
     jewelleryItem: '',
+    otherJewelleryItem: '', // Custom text if 'OTHER' selected
     tagNumber: '',
     productImageLink: '',
     imageBase64: '',
@@ -140,6 +143,28 @@ export default function App() {
     orderPerson: '',
     specialRemarks: ''
   });
+
+  // Custom Searchable Dropdown state for Jewellery Item
+  const [jewelleryDropdownOpen, setJewelleryDropdownOpen] = useState(false);
+  const [jewellerySearchText, setJewellerySearchText] = useState('');
+  const jewelleryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (jewelleryDropdownRef.current && !jewelleryDropdownRef.current.contains(event.target)) {
+        setJewelleryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredJewelleryOptions = useMemo(() => {
+    if (!jewellerySearchText.trim()) return JEWELLERY_ITEMS_LIST;
+    return JEWELLERY_ITEMS_LIST.filter(item => 
+      item.toLowerCase().includes(jewellerySearchText.toLowerCase())
+    );
+  }, [jewellerySearchText]);
 
   const extractDateOnly = (dateStr) => {
     if (!dateStr) return 'N/A';
@@ -321,18 +346,26 @@ export default function App() {
     setSubmitting(true);
 
     try {
+      const finalJewelleryItem = formData.jewelleryItem.includes('OTHER') 
+        ? (formData.otherJewelleryItem ? formData.otherJewelleryItem.toUpperCase() : 'OTHER')
+        : formData.jewelleryItem;
+
       const submissionData = {
         ...formData,
+        jewelleryItem: finalJewelleryItem,
         productImageLink: formData.imageBase64 || formData.imagePreviewLocal || ''
       };
 
       const payload = new URLSearchParams();
       Object.keys(submissionData).forEach(key => {
-        payload.append(key, submissionData[key] || '');
+        if (key !== 'otherJewelleryItem') {
+          payload.append(key, submissionData[key] || '');
+        }
       });
 
       const optimisticNewOrder = {
         ...submissionData,
+        jewelleryItem: finalJewelleryItem,
         isOn: false,
         productStatus: '',
         placingStatus: false,
@@ -347,7 +380,7 @@ export default function App() {
         body: payload
       });
 
-      setLastSubmittedOrderData({ ...submissionData });
+      setLastSubmittedOrderData({ ...submissionData, jewelleryItem: finalJewelleryItem });
       setSubmittedOrderSuccessModal(true);
 
       setTimeout(() => {
@@ -369,6 +402,7 @@ export default function App() {
     setFormData(prev => ({
       ...prev,
       jewelleryItem: '',
+      otherJewelleryItem: '',
       tagNumber: '',
       productImageLink: '',
       imageBase64: '',
@@ -399,6 +433,7 @@ export default function App() {
       orderSheetNo: '',
       salesPerson: '',
       jewelleryItem: '',
+      otherJewelleryItem: '',
       tagNumber: '',
       productImageLink: '',
       imageBase64: '',
@@ -2271,19 +2306,66 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
+                {/* SEARCHABLE JEWELLERY ITEM DROPDOWN */}
+                <div className="relative" ref={jewelleryDropdownRef}>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Jewellery Item Name *</label>
-                  <select
-                    required
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer"
-                    value={formData.jewelleryItem}
-                    onChange={(e) => setFormData({ ...formData, jewelleryItem: e.target.value })}
+                  <div
+                    onClick={() => setJewelleryDropdownOpen(prev => !prev)}
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 flex items-center justify-between cursor-pointer"
                   >
-                    <option value="" disabled>Select Jewellery Item</option>
-                    {JEWELLERY_ITEMS_LIST.map((item) => (
-                      <option key={item} value={item}>{item}</option>
-                    ))}
-                  </select>
+                    <span className={formData.jewelleryItem ? 'text-white font-semibold' : 'text-slate-500'}>
+                      {formData.jewelleryItem || 'Select or search jewellery item...'}
+                    </span>
+                    <ChevronDown className="w-4 h-4 text-slate-400" />
+                  </div>
+
+                  {jewelleryDropdownOpen && (
+                    <div className="absolute z-20 top-full left-0 right-0 mt-1.5 bg-[#181b22] border border-amber-500/50 rounded-xl shadow-2xl p-2 space-y-2">
+                      <div className="relative">
+                        <Search className="w-3.5 h-3.5 absolute left-2.5 top-3 text-slate-400" />
+                        <input
+                          type="text"
+                          placeholder="Search item..."
+                          value={jewellerySearchText}
+                          onChange={(e) => setJewellerySearchText(e.target.value)}
+                          className="w-full bg-[#111318] border border-slate-700 rounded-lg pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div className="max-h-56 overflow-y-auto space-y-1">
+                        {filteredJewelleryOptions.length === 0 ? (
+                          <div className="p-2 text-xs text-slate-500 text-center">No items found</div>
+                        ) : (
+                          filteredJewelleryOptions.map(item => (
+                            <div
+                              key={item}
+                              onClick={() => {
+                                setFormData({ ...formData, jewelleryItem: item });
+                                setJewelleryDropdownOpen(false);
+                                setJewellerySearchText('');
+                              }}
+                              className="px-3 py-2 text-xs text-slate-200 hover:bg-amber-500/20 hover:text-amber-300 rounded-lg cursor-pointer transition-all font-medium"
+                            >
+                              {item}
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.jewelleryItem.includes('OTHER') && (
+                    <div className="mt-2.5">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Please specify custom jewellery item..."
+                        className="w-full bg-[#111318] border border-amber-500/60 rounded-xl px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none"
+                        value={formData.otherJewelleryItem}
+                        onChange={(e) => setFormData({ ...formData, otherJewelleryItem: e.target.value })}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <div>
