@@ -52,8 +52,7 @@ const JEWELLERY_ITEMS_LIST = [
   'EARRINGS',
   'GENTS BRACELET',
   'LADIES BRACELET',
-  'GOLD GENTS RING',
-  'GOLD LADIES RING',
+  'GOLD RING',
   'GOLD SET',
   'MANGALSUTRA CHAIN',
   'MISCELLANEOUS',
@@ -105,6 +104,9 @@ export default function App() {
   const [filterExecutive, setFilterExecutive] = useState('ALL');
   const [filterWorkType, setFilterWorkType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+
+  // OFF Orders specific Executive Filter State
+  const [offOrdersExecutiveFilter, setOffOrdersExecutiveFilter] = useState('ALL');
 
   // Dashboard specific local cross-filtering states
   const [dashboardSalesFilter, setDashboardSalesFilter] = useState('ALL');
@@ -356,7 +358,6 @@ export default function App() {
       productImageLink: formData.imageBase64 || formData.imagePreviewLocal || ''
     };
 
-    // 1. INSTANT UI UPDATE (0 seconds delay)
     const optimisticNewOrder = {
       ...submissionData,
       jewelleryItem: finalJewelleryItem,
@@ -365,14 +366,13 @@ export default function App() {
       placingStatus: false,
       karigarName: '',
       _fetchIndex: -999999, 
-      _localTimestamp: Number.MAX_SAFE_INTEGER // Jumps directly to top
+      _localTimestamp: Number.MAX_SAFE_INTEGER
     };
 
     setOrders(prev => [optimisticNewOrder, ...prev]);
     setLastSubmittedOrderData({ ...submissionData, jewelleryItem: finalJewelleryItem });
     setSubmittedOrderSuccessModal(true);
 
-    // 2. FIRE BACKGROUND SYNC (Non-blocking Network Request)
     setTimeout(async () => {
       try {
         const payload = new URLSearchParams();
@@ -789,9 +789,15 @@ export default function App() {
       if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
         return false;
       }
-      return !order.isOn;
+      if (!order.isOn) {
+        if (offOrdersExecutiveFilter !== 'ALL' && order.orderPerson !== offOrdersExecutiveFilter) {
+          return false;
+        }
+        return true;
+      }
+      return false;
     });
-  }, [orders]);
+  }, [orders, offOrdersExecutiveFilter]);
 
   const filteredOrders = useMemo(() => {
     const filtered = orders.filter(order => {
@@ -838,7 +844,6 @@ export default function App() {
       return true;
     });
 
-    // SORTING: Highest timestamp/top priority first, then sheet fetch index ascending
     return filtered.sort((a, b) => {
       const timeA = a._localTimestamp || 0;
       const timeB = b._localTimestamp || 0;
@@ -1925,16 +1930,33 @@ export default function App() {
 
         {activeTab === 'off-orders' && (
           <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
               <div>
                 <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
                   <PowerOff className="w-5 h-5" /> OFF Orders List
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">Review all orders with the toggle currently turned OFF.</p>
               </div>
-              <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
-                Total OFF Orders: {offOrders.length}
-              </span>
+
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs">
+                  <Filter className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="text-slate-400">Order Executive:</span>
+                  <select
+                    value={offOrdersExecutiveFilter}
+                    onChange={(e) => setOffOrdersExecutiveFilter(e.target.value)}
+                    className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="ALL" className="bg-[#181b22]">All Execs</option>
+                    <option value="Amardeep" className="bg-[#181b22]">Amardeep</option>
+                    <option value="Gautam" className="bg-[#181b22]">Gautam</option>
+                  </select>
+                </div>
+
+                <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold whitespace-nowrap">
+                  Total OFF Orders: {offOrders.length}
+                </span>
+              </div>
             </div>
 
             <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl overflow-x-auto shadow-2xl">
@@ -1955,7 +1977,7 @@ export default function App() {
                   {offOrders.length === 0 ? (
                     <tr>
                       <td colSpan="8" className="p-12 text-center text-slate-500 text-sm font-medium">
-                        No OFF orders found.
+                        No OFF orders found for selected filter.
                       </td>
                     </tr>
                   ) : (
