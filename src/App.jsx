@@ -105,8 +105,9 @@ export default function App() {
   const [filterWorkType, setFilterWorkType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
 
-  // OFF Orders specific Executive Filter State
+  // OFF Orders specific Filters State
   const [offOrdersExecutiveFilter, setOffOrdersExecutiveFilter] = useState('ALL');
+  const [offOrdersSalesFilter, setOffOrdersSalesFilter] = useState('ALL');
 
   // Dashboard specific local cross-filtering states
   const [dashboardSalesFilter, setDashboardSalesFilter] = useState('ALL');
@@ -793,11 +794,14 @@ export default function App() {
         if (offOrdersExecutiveFilter !== 'ALL' && order.orderPerson !== offOrdersExecutiveFilter) {
           return false;
         }
+        if (offOrdersSalesFilter !== 'ALL' && order.salesPerson !== offOrdersSalesFilter) {
+          return false;
+        }
         return true;
       }
       return false;
     });
-  }, [orders, offOrdersExecutiveFilter]);
+  }, [orders, offOrdersExecutiveFilter, offOrdersSalesFilter]);
 
   const filteredOrders = useMemo(() => {
     const filtered = orders.filter(order => {
@@ -1938,10 +1942,24 @@ export default function App() {
                 <p className="text-xs text-slate-400 mt-0.5">Review all orders with the toggle currently turned OFF.</p>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs">
                   <Filter className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-slate-400">Order Executive:</span>
+                  <span className="text-slate-400">Sales:</span>
+                  <select
+                    value={offOrdersSalesFilter}
+                    onChange={(e) => setOffOrdersSalesFilter(e.target.value)}
+                    className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                  >
+                    <option value="ALL" className="bg-[#181b22]">All Sales</option>
+                    {['Sohil', 'Mohit', 'Hema', 'Akansha', 'Yogita', 'Ziya', 'Deepika'].map(s => (
+                      <option key={s} value={s} className="bg-[#181b22]">{s}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs">
+                  <span className="text-slate-400">Exec:</span>
                   <select
                     value={offOrdersExecutiveFilter}
                     onChange={(e) => setOffOrdersExecutiveFilter(e.target.value)}
@@ -1977,7 +1995,7 @@ export default function App() {
                   {offOrders.length === 0 ? (
                     <tr>
                       <td colSpan="8" className="p-12 text-center text-slate-500 text-sm font-medium">
-                        No OFF orders found for selected filter.
+                        No OFF orders found for selected filters.
                       </td>
                     </tr>
                   ) : (
