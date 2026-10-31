@@ -607,10 +607,13 @@ export default function App() {
   };
 
   const buildWhatsAppMessage = (order) => {
-    const fullOrder = (orders || []).find(o => 
-      String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
-      String(o.tagNumber || '').trim() === String(order.tagNumber || '').trim()
-    ) || order;
+    const fullOrder = (orders || []).find(o => {
+      const matchSheet = String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim();
+      const matchTag = (order.tagNumber === '' || order.tagNumber === 'NA') ? 
+                       (o.tagNumber === '' || o.tagNumber === 'NA' && String(o.jewelleryItem || '').trim().toUpperCase() === String(order.jewelleryItem || '').trim().toUpperCase()) : 
+                       (String(o.tagNumber || '').trim().toUpperCase() === String(order.tagNumber || '').trim().toUpperCase());
+      return matchSheet && matchTag;
+    }) || order;
 
     const goldWt = fullOrder.goldWeight || '';
     const diamondWt = fullOrder.diamondWeight || '';
