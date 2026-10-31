@@ -366,29 +366,38 @@ export default function App() {
     const submissionData = {
       ...formData,
       jewelleryItem: finalJewelleryItem,
-      productImageLink: formData.imageBase64 || formData.imagePreviewLocal || ''
+      productImageLink: formData.imageBase64 || formData.imagePreviewLocal || '',
+      _localTimestamp: Date.now() // Adds a permanent local timestamp so it stays prioritized
     };
 
     const optimisticNewOrder = {
       ...submissionData,
-      jewelleryItem: finalJewelleryItem,
       isOn: false,
       productStatus: '',
       placingStatus: false,
       karigarName: '',
       _fetchIndex: -999999, 
-      _localTimestamp: Number.MAX_SAFE_INTEGER
     };
 
-    setOrders(prev => [optimisticNewOrder, ...prev]);
+    // Prepend and save immediately to state and local storage backup
+    setOrders(prev => {
+      const updated = [optimisticNewOrder, ...prev];
+      try {
+        const lightOrders = updated.map(o => ({ ...o, imageBase64: undefined, imagePreviewLocal: undefined }));
+        localStorage.setItem('namah_local_orders', JSON.stringify(lightOrders));
+      } catch (err) {}
+      return updated;
+    });
+
     setLastSubmittedOrderData({ ...submissionData, jewelleryItem: finalJewelleryItem });
     setSubmittedOrderSuccessModal(true);
 
+    // Send to Google Sheets in background
     setTimeout(async () => {
       try {
         const payload = new URLSearchParams();
         Object.keys(submissionData).forEach(key => {
-          if (key !== 'otherJewelleryItem') {
+          if (key !== 'otherJewelleryItem' && key !== '_localTimestamp') {
             payload.append(key, submissionData[key] || '');
           }
         });
@@ -397,6 +406,9 @@ export default function App() {
           method: "POST",
           body: payload
         });
+        
+        // Fetch fresh data after server write completes
+        setTimeout(fetchOrdersFromSheet, 1500);
       } catch (err) {
         console.error("Background sync error:", err);
       }
