@@ -82,6 +82,7 @@ const toProperCase = (str) => {
 export default function App() {
   const [activeTab, setActiveTab] = useState('orders');
   const [karigarSubTab, setKarigarSubTab] = useState('Amardeep');
+  const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
   
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
@@ -487,7 +488,10 @@ export default function App() {
     const newIsOn = !targetOrder.isOn;
 
     setOrders(prev => prev.map(o => 
-      (o.orderSheetNo === targetOrder.orderSheetNo && o.tagNumber === targetOrder.tagNumber)
+      ((String(o.orderSheetNo || '').trim() === String(targetOrder.orderSheetNo || '').trim()) && 
+       ((targetOrder.tagNumber === '' || targetOrder.tagNumber === 'NA') ? 
+         (o.tagNumber === '' || o.tagNumber === 'NA' && String(o.jewelleryItem || '').trim().toUpperCase() === String(targetOrder.jewelleryItem || '').trim().toUpperCase()) : 
+         (String(o.tagNumber || '').trim().toUpperCase() === String(targetOrder.tagNumber || '').trim().toUpperCase())))
         ? { ...o, isOn: newIsOn }
         : o
     ));
@@ -497,6 +501,7 @@ export default function App() {
       payload.append('action', 'toggleOrder');
       payload.append('orderSheetNo', targetOrder.orderSheetNo);
       payload.append('tagNumber', targetOrder.tagNumber);
+      payload.append('jewelleryItem', targetOrder.jewelleryItem || '');
       payload.append('isOn', newIsOn ? 'ON' : 'OFF');
 
       await fetch(GOOGLE_SHEETS_API_URL, {
@@ -508,14 +513,17 @@ export default function App() {
     }
   };
 
-  const handleStatusChange = async (orderSheetNo, tagNumber, newStatus) => {
+  const handleStatusChange = async (orderSheetNo, tagNumber, jewelleryItem, newStatus) => {
     if (!isAuthorizedToEdit) {
       alert("🔒 Access Restricted: Please login as Admin or Order Desk to change product statuses.");
       return;
     }
 
     setOrders(prev => prev.map(o => 
-      (o.orderSheetNo === orderSheetNo && o.tagNumber === tagNumber) 
+      ((String(o.orderSheetNo || '').trim() === String(orderSheetNo || '').trim()) && 
+       ((tagNumber === '' || tagNumber === 'NA') ? 
+         (o.tagNumber === '' || o.tagNumber === 'NA' && String(o.jewelleryItem || '').trim().toUpperCase() === String(jewelleryItem || '').trim().toUpperCase()) : 
+         (String(o.tagNumber || '').trim().toUpperCase() === String(tagNumber || '').trim().toUpperCase())))
         ? { ...o, productStatus: newStatus } 
         : o
     ));
@@ -525,6 +533,7 @@ export default function App() {
       payload.append('action', 'updateStatus');
       payload.append('orderSheetNo', orderSheetNo);
       payload.append('tagNumber', tagNumber);
+      payload.append('jewelleryItem', jewelleryItem || '');
       payload.append('productStatus', newStatus);
 
       await fetch(GOOGLE_SHEETS_API_URL, {
@@ -560,7 +569,13 @@ export default function App() {
       productStatus: 'Under Process'
     };
 
-    setOrders(prev => prev.map(o => (o.orderSheetNo === updatedOrder.orderSheetNo && o.tagNumber === updatedOrder.tagNumber) ? updatedOrder : o));
+    setOrders(prev => prev.map(o => {
+      const matchSheet = String(o.orderSheetNo || '').trim() === String(updatedOrder.orderSheetNo || '').trim();
+      const matchTag = (updatedOrder.tagNumber === '' || updatedOrder.tagNumber === 'NA') ? 
+                       (o.tagNumber === '' || o.tagNumber === 'NA' && String(o.jewelleryItem || '').trim().toUpperCase() === String(updatedOrder.jewelleryItem || '').trim().toUpperCase()) : 
+                       (String(o.tagNumber || '').trim().toUpperCase() === String(updatedOrder.tagNumber || '').trim().toUpperCase());
+      return (matchSheet && matchTag) ? updatedOrder : o;
+    }));
     setSelectedOrderForKarigar(null);
     setWhatsappModalData(updatedOrder);
 
@@ -1929,7 +1944,7 @@ export default function App() {
                             {isAssigned && order.isOn && isAuthorizedToEdit ? (
                               <select
                                 value={order.productStatus || 'Under Process'}
-                                onChange={(e) => handleStatusChange(order.orderSheetNo, order.tagNumber, e.target.value)}
+                                onChange={(e) => handleStatusChange(order.orderSheetNo, order.tagNumber, order.jewelleryItem, e.target.value)}
                                 className="px-3 py-1.5 rounded-xl text-xs font-bold cursor-pointer border focus:outline-none bg-amber-900/30 text-amber-300 border-amber-600/40"
                               >
                                 <option value="Under Process" className="bg-[#181b22] text-amber-300">Under Process</option>
@@ -2591,43 +2606,68 @@ export default function App() {
         {activeTab === 'karigar' && (() => {
           const amardeepOrders = activeKarigarOrders.filter(o => (o.orderPerson || '').toLowerCase() === 'amardeep');
           const gautamOrders = activeKarigarOrders.filter(o => (o.orderPerson || '').toLowerCase() === 'gautam');
-          const displayedKarigarOrders = karigarSubTab === 'Amardeep' ? amardeepOrders : gautamOrders;
+          const targetKarigarList = karigarSubTab === 'Amardeep' ? amardeepOrders : gautamOrders;
+
+          const displayedKarigarOrders = targetKarigarList.filter(order => {
+            const query = karigarSearchQuery.toLowerCase();
+            return (
+              String(order.orderSheetNo || '').toLowerCase().includes(query) ||
+              String(order.tagNumber || '').toLowerCase().includes(query) ||
+              String(order.jewelleryItem || '').toLowerCase().includes(query) ||
+              String(order.customerName || '').toLowerCase().includes(query) ||
+              String(order.karigarName || '').toLowerCase().includes(query)
+            );
+          });
 
           return (
             <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
                 <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
                   <Send className="w-5 h-5" /> Active Karigar Work Orders
                 </h3>
                 
-                <div className="flex bg-[#111317] p-1.5 rounded-xl border border-slate-800">
-                  <button
-                    onClick={() => setKarigarSubTab('Amardeep')}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      karigarSubTab === 'Amardeep'
-                        ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    Amardeep ({amardeepOrders.length})
-                  </button>
-                  <button
-                    onClick={() => setKarigarSubTab('Gautam')}
-                    className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                      karigarSubTab === 'Gautam'
-                        ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
-                        : 'text-slate-400 hover:text-slate-200'
-                    }`}
-                  >
-                    Gautam ({gautamOrders.length})
-                  </button>
+                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                  {/* Search Input Box */}
+                  <div className="relative w-full sm:w-64">
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
+                    <input
+                      type="text"
+                      placeholder="Search Order No, Tag, Item..."
+                      value={karigarSearchQuery}
+                      onChange={(e) => setKarigarSearchQuery(e.target.value)}
+                      className="w-full bg-[#111318] text-white px-4 py-2 pl-9 rounded-xl border border-slate-700 focus:outline-none focus:border-amber-500 text-xs"
+                    />
+                  </div>
+
+                  <div className="flex bg-[#111317] p-1.5 rounded-xl border border-slate-800">
+                    <button
+                      onClick={() => setKarigarSubTab('Amardeep')}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        karigarSubTab === 'Amardeep'
+                          ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      Amardeep ({amardeepOrders.length})
+                    </button>
+                    <button
+                      onClick={() => setKarigarSubTab('Gautam')}
+                      className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                        karigarSubTab === 'Gautam'
+                          ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      Gautam ({gautamOrders.length})
+                    </button>
+                  </div>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {displayedKarigarOrders.length === 0 ? (
                   <div className="col-span-3 py-12 text-center text-slate-500 text-sm font-medium">
-                    No active karigar orders found for {karigarSubTab}.
+                    No active karigar orders found matching your search.
                   </div>
                 ) : (
                   displayedKarigarOrders.map((order, idx) => (
