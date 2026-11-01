@@ -24,7 +24,9 @@ import {
   LogIn,
   PowerOff,
   RotateCcw,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  Trash2
 } from 'lucide-react';
 
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
@@ -88,6 +90,16 @@ export default function App() {
   
   // Audit Tab Search State
   const [auditSearchSheetNo, setAuditSearchSheetNo] = useState('');
+
+  // Reminders state stored locally and per executive (Amardeep / Gautam)
+  const [reminders, setReminders] = useState(() => {
+    const saved = localStorage.getItem('namah_karigar_reminders');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showAddReminderModal, setShowAddReminderModal] = useState(false);
+  const [reminderTitleInput, setReminderTitleInput] = useState('');
+  const [reminderDateInput, setReminderDateInput] = useState('');
+  const [reminderTargetExec, setReminderTargetExec] = useState('Amardeep');
   
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('namah_logged_in') === 'true';
@@ -297,6 +309,10 @@ export default function App() {
       console.error("Local storage quota exceeded:", error);
     }
   }, [orders]);
+
+  useEffect(() => {
+    localStorage.setItem('namah_karigar_reminders', JSON.stringify(reminders));
+  }, [reminders]);
 
   useEffect(() => {
     localStorage.setItem('namah_logged_in', isLoggedIn);
@@ -1220,21 +1236,38 @@ export default function App() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ITEMS</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ORDERS (ON+OFF)</p>
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
                   <p className="text-xs text-slate-400 font-bold uppercase">Total Live Customers</p>
                   <h4 className="text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
                 </div>
-                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Bill Pending Customers</p>
+                
+                {/* BILL PENDING CUSTOMERS CARD WITH SMOOTH SCROLL */}
+                <div 
+                  onClick={() => {
+                    const el = document.getElementById('bill-pending-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-emerald-500/50 transition-all"
+                >
+                  <p className="text-xs text-slate-400 font-bold uppercase">BILL PENDING CUSTOMERS</p>
                   <h4 className="text-2xl font-black text-emerald-400 mt-1">{billPendingCustomers.length}</h4>
                 </div>
-                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Fully Packed Customers</p>
+
+                {/* FULLY PACKED CUSTOMERS CARD WITH SMOOTH SCROLL */}
+                <div 
+                  onClick={() => {
+                    const el = document.getElementById('packed-section');
+                    if (el) el.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                  className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-purple-500/50 transition-all"
+                >
+                  <p className="text-xs text-slate-400 font-bold uppercase">FULLY PACKED CUSTOMERS</p>
                   <h4 className="text-2xl font-black text-purple-400 mt-1">{packedCustomers.length}</h4>
                 </div>
+
                 <div 
                   onClick={() => setActiveTab('off-orders')}
                   className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-amber-500/50 transition-all"
@@ -1364,8 +1397,8 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 2. CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+              {/* 2. CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" (ID attached for smooth scrolling) */}
+              <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-emerald-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
                 </h4>
@@ -1407,8 +1440,8 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 3. CUSTOMERS WITH ALL ITEMS "PACKED" */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+              {/* 3. CUSTOMERS WITH ALL ITEMS "PACKED" (ID attached for smooth scrolling) */}
+              <div id="packed-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-purple-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
                 </h4>
@@ -2710,6 +2743,8 @@ export default function App() {
             );
           });
 
+          const currentExecReminders = reminders.filter(r => r.executive.toLowerCase() === karigarSubTab.toLowerCase());
+
           return (
             <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
@@ -2752,6 +2787,48 @@ export default function App() {
                       Gautam ({gautamOrders.length})
                     </button>
                   </div>
+                </div>
+              </div>
+
+              {/* REMINDERS / FOLLOW-UP SECTION FOR AMARDEEP / GAUTAM */}
+              <div className="bg-[#111318] border border-amber-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
+                  <h4 className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                    <Bell className="w-4 h-4 text-amber-400 animate-bounce" /> {karigarSubTab}'s Reminders & Follow-ups ({currentExecReminders.length})
+                  </h4>
+                  <button
+                    onClick={() => {
+                      setReminderTargetExec(karigarSubTab);
+                      setShowAddReminderModal(true);
+                    }}
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-md cursor-pointer"
+                  >
+                    <PlusCircle className="w-3.5 h-3.5" /> Add Reminder
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {currentExecReminders.length === 0 ? (
+                    <div className="col-span-full py-4 text-center text-slate-500 text-xs italic">
+                      No active reminders set for {karigarSubTab}. Click "Add Reminder" to create one.
+                    </div>
+                  ) : (
+                    currentExecReminders.map(rem => (
+                      <div key={rem.id} className="bg-[#181b22] border border-slate-700/80 rounded-xl p-3 flex justify-between items-start gap-2 shadow-md">
+                        <div className="space-y-1">
+                          <p className="text-xs font-bold text-slate-100">{rem.title}</p>
+                          <p className="text-[10px] font-mono text-amber-300">Due Date: {formatDDMM(rem.dueDate)}</p>
+                        </div>
+                        <button
+                          onClick={() => setReminders(prev => prev.filter(r => r.id !== rem.id))}
+                          className="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors cursor-pointer"
+                          title="Delete Reminder"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
 
@@ -2815,6 +2892,75 @@ export default function App() {
           );
         })()}
       </main>
+
+      {showAddReminderModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+                <Bell className="w-4 h-4" /> Add Reminder for {reminderTargetExec}
+              </h3>
+              <button onClick={() => setShowAddReminderModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Reminder Note / Task *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Call Karigar Vijay for bangle casting update"
+                  value={reminderTitleInput}
+                  onChange={(e) => setReminderTitleInput(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Due Date *</label>
+                <input
+                  type="date"
+                  value={reminderDateInput}
+                  onChange={(e) => setReminderDateInput(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => setShowAddReminderModal(false)}
+                className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  if (!reminderTitleInput.trim() || !reminderDateInput) {
+                    alert("Please enter both reminder note and due date.");
+                    return;
+                  }
+                  const newRem = {
+                    id: Date.now(),
+                    executive: reminderTargetExec,
+                    title: reminderTitleInput.trim(),
+                    dueDate: reminderDateInput
+                  };
+                  setReminders(prev => [newRem, ...prev]);
+                  setReminderTitleInput('');
+                  setReminderDateInput('');
+                  setShowAddReminderModal(false);
+                }}
+                className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer shadow-md"
+              >
+                Save Reminder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {submittedOrderSuccessModal && lastSubmittedOrderData && (
         <div className="fixed inset-0 bg-slate-950/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
