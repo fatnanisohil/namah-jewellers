@@ -2483,26 +2483,25 @@ export default function App() {
               </div>
 
               <div className="p-4 bg-[#111318] border border-slate-800/80 rounded-xl space-y-3">
-                <label className="block text-xs font-bold text-amber-400 uppercase">
-                  📷 Product Photo Capture (Direct Camera / Upload)
-                </label>
-                <div className="flex items-center gap-4">
-                  <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
-                    <Camera className="w-4 h-4" /> Click / Take Photo
-                    <input 
-  type="file" 
-  accept="image/*" 
-  capture="environment"
-  required
-  onChange={handleImageCapture} 
-  className="hidden" 
-/>
-                  </label>
-                  {formData.imagePreviewLocal && (
-                    <img src={formData.imagePreviewLocal} alt="" onClick={() => setPreviewImage(formData.imagePreviewLocal)} className="w-12 h-12 rounded-lg object-cover border border-amber-500 cursor-pointer" />
-                  )}
-                </div>
-              </div>
+        <label className="block text-xs font-bold text-amber-400 uppercase">
+          📷 Product Photo Capture (Direct Camera / Upload)
+        </label>
+        <div className="flex items-center gap-4">
+          <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
+            <Camera className="w-4 h-4" /> Click / Take Photo
+            <input 
+              type="file" 
+              accept="image/*" 
+              required
+              onChange={handleImageCapture} 
+              className="hidden" 
+            />
+          </label>
+          {formData.imagePreviewLocal && (
+            <img src={formData.imagePreviewLocal} alt="" onClick={() => setPreviewImage(formData.imagePreviewLocal)} className="w-12 h-12 rounded-lg object-cover border border-amber-500 cursor-pointer" />
+          )}
+        </div>
+      </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* SEARCHABLE JEWELLERY ITEM DROPDOWN */}
