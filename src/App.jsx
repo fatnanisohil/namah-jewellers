@@ -100,6 +100,7 @@ export default function App() {
   const [reminderTitleInput, setReminderTitleInput] = useState('');
   const [reminderDateInput, setReminderDateInput] = useState('');
   const [reminderTargetExec, setReminderTargetExec] = useState('Amardeep');
+  const [reminderSetByInput, setReminderSetByInput] = useState('Sohil');
   
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('namah_logged_in') === 'true';
@@ -1397,7 +1398,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 2. CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" (ID attached for smooth scrolling) */}
+              {/* 2. CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
               <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-emerald-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
@@ -1440,7 +1441,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 3. CUSTOMERS WITH ALL ITEMS "PACKED" (ID attached for smooth scrolling) */}
+              {/* 3. CUSTOMERS WITH ALL ITEMS "PACKED" */}
               <div id="packed-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-purple-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
@@ -2817,7 +2818,10 @@ export default function App() {
                       <div key={rem.id} className="bg-[#181b22] border border-slate-700/80 rounded-xl p-3 flex justify-between items-start gap-2 shadow-md">
                         <div className="space-y-1">
                           <p className="text-xs font-bold text-slate-100">{rem.title}</p>
-                          <p className="text-[10px] font-mono text-amber-300">Due Date: {formatDDMM(rem.dueDate)}</p>
+                          <div className="text-[10px] font-mono text-amber-300 flex items-center gap-2">
+                            <span>Due: {formatDDMM(rem.dueDate)}</span>
+                            {rem.setBy && <span className="text-slate-400">| Set By: <strong className="text-slate-200">{rem.setBy}</strong></span>}
+                          </div>
                         </div>
                         <button
                           onClick={() => setReminders(prev => prev.filter(r => r.id !== rem.id))}
@@ -2919,6 +2923,25 @@ export default function App() {
               </div>
 
               <div>
+                <label className="block text-slate-300 font-semibold mb-1">Set By *</label>
+                <select
+                  value={reminderSetByInput}
+                  onChange={(e) => setReminderSetByInput(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option value="Sohil">Sohil</option>
+                  <option value="Mohit">Mohit</option>
+                  <option value="Hema">Hema</option>
+                  <option value="Akansha">Akansha</option>
+                  <option value="Yogita">Yogita</option>
+                  <option value="Deepika">Deepika</option>
+                  <option value="Ziya">Ziya</option>
+                  <option value="Amardeep">Amardeep</option>
+                  <option value="Gautam">Gautam</option>
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-slate-300 font-semibold mb-1">Due Date *</label>
                 <input
                   type="date"
@@ -2946,6 +2969,7 @@ export default function App() {
                     id: Date.now(),
                     executive: reminderTargetExec,
                     title: reminderTitleInput.trim(),
+                    setBy: reminderSetByInput,
                     dueDate: reminderDateInput
                   };
                   setReminders(prev => [newRem, ...prev]);
