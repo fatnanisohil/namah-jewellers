@@ -85,6 +85,9 @@ export default function App() {
   const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
   
+  // Audit Tab Search State
+  const [auditSearchSheetNo, setAuditSearchSheetNo] = useState('');
+  
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('namah_logged_in') === 'true';
   });
@@ -2164,6 +2167,85 @@ export default function App() {
               <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
                 Smart Range Inspection Active
               </span>
+            </div>
+
+            {/* NEW: Search Order Sheet Number in Book Records */}
+            <div className="bg-[#111318] border border-slate-700/80 rounded-2xl p-4 space-y-3 shadow-xl">
+              <label className="block text-xs font-bold text-amber-400 uppercase">Search Order Sheet Number in Book Records</label>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Enter Order Sheet Number (e.g. 8160)..."
+                    value={auditSearchSheetNo}
+                    onChange={(e) => setAuditSearchSheetNo(e.target.value)}
+                    className="w-full bg-[#181b22] border border-slate-700 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+                {auditSearchSheetNo && (
+                  <button
+                    onClick={() => setAuditSearchSheetNo('')}
+                    className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-700 cursor-pointer"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+
+              {auditSearchSheetNo.trim() !== '' && (() => {
+                const searchNum = parseInt(auditSearchSheetNo.trim(), 10);
+                if (isNaN(searchNum)) {
+                  return <p className="text-xs text-red-400">Please enter a valid numeric order sheet number.</p>;
+                }
+
+                const matchedBookOwners = [];
+                const bookRangesData = [
+                  { name: 'Yogita', books: [{ start: 8151, end: 8225 }, { start: 7476, end: 7550 }, { start: 7776, end: 7850 }] },
+                  { name: 'Hema', books: [{ start: 8226, end: 8300 }, { start: 7776, end: 7850 }] },
+                  { name: 'Sohil', books: [{ start: 7626, end: 7700 }] },
+                  { name: 'Mohit', books: [{ start: 7551, end: 7625 }] },
+                  { name: 'Akansha', books: [{ start: 8451, end: 8525 }, { start: 7701, end: 7775 }, { start: 7251, end: 7325 }, { start: 8301, end: 8375 }] },
+                  { name: 'Deepika', books: [{ start: 8526, end: 8600 }] },
+                  { name: 'Ziya', books: [{ start: 7101, end: 7175 }] }
+                ];
+
+                bookRangesData.forEach(person => {
+                  person.books.forEach(b => {
+                    if (searchNum >= b.start && searchNum <= b.end) {
+                      matchedBookOwners.push({ name: person.name, range: `${b.start} - ${b.end}` });
+                    }
+                  });
+                });
+
+                const foundOrders = orders.filter(o => String(o.orderSheetNo || '').trim() === String(searchNum));
+
+                return (
+                  <div className="mt-3 p-3.5 bg-[#181b22] border border-slate-700 rounded-xl space-y-2 text-xs">
+                    <p className="font-bold text-amber-300">Search Results for Order Sheet #{searchNum}:</p>
+                    
+                    {matchedBookOwners.length > 0 ? (
+                      <div className="text-emerald-400 font-semibold">
+                        ✓ Found in <strong className="text-amber-300 uppercase">{matchedBookOwners.map(m => `${m.name} (Range: ${m.range})`).join(', ')}</strong> ORDER FILE.
+                      </div>
+                    ) : (
+                      <div className="text-red-400 font-bold">
+                        ❌ OTHER NO ORDER FILE FIND / NOT FOUND IN ANY ORDER BOOK FILE RECORD.
+                      </div>
+                    )}
+
+                    {foundOrders.length > 0 ? (
+                      <div className="text-slate-300 pt-1 border-t border-slate-800">
+                        <span className="font-bold text-amber-400">System Entry Found:</span> Entered by sales person <strong className="text-white">{foundOrders[0].salesPerson}</strong> for customer <strong className="text-white">{foundOrders[0].customerName}</strong> (Item: {foundOrders[0].jewelleryItem}, Status: {foundOrders[0].productStatus || '--Not Assign--'})
+                      </div>
+                    ) : (
+                      <div className="text-slate-400 italic pt-1 border-t border-slate-800">
+                        No active database entry found for this sheet number yet.
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
