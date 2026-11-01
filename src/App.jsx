@@ -2490,12 +2490,13 @@ export default function App() {
                   <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
                     <Camera className="w-4 h-4" /> Click / Take Photo
                     <input 
-                      type="file" 
-                      accept="image/*" 
-                      required
-                      onChange={handleImageCapture} 
-                      className="hidden" 
-                    />
+  type="file" 
+  accept="image/*" 
+  capture="environment"
+  required
+  onChange={handleImageCapture} 
+  className="hidden" 
+/>
                   </label>
                   {formData.imagePreviewLocal && (
                     <img src={formData.imagePreviewLocal} alt="" onClick={() => setPreviewImage(formData.imagePreviewLocal)} className="w-12 h-12 rounded-lg object-cover border border-amber-500 cursor-pointer" />
