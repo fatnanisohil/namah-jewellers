@@ -83,6 +83,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('orders');
   const [karigarSubTab, setKarigarSubTab] = useState('Amardeep');
   const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
+  const [selectedKarigarTagFilter, setSelectedKarigarTagFilter] = useState('ALL');
   const [previewImage, setPreviewImage] = useState(null);
   
   // Audit Tab Search State
@@ -371,7 +372,7 @@ export default function App() {
       ...formData,
       jewelleryItem: finalJewelleryItem,
       productImageLink: formData.imageBase64 || formData.imagePreviewLocal || '',
-      _localTimestamp: Date.now() // Adds a permanent local timestamp so it stays prioritized
+      _localTimestamp: Date.now()
     };
 
     const optimisticNewOrder = {
@@ -383,7 +384,6 @@ export default function App() {
       _fetchIndex: -999999, 
     };
 
-    // Prepend and save immediately to state and local storage backup
     setOrders(prev => {
       const updated = [optimisticNewOrder, ...prev];
       try {
@@ -396,7 +396,6 @@ export default function App() {
     setLastSubmittedOrderData({ ...submissionData, jewelleryItem: finalJewelleryItem });
     setSubmittedOrderSuccessModal(true);
 
-    // Send to Google Sheets in background
     setTimeout(async () => {
       try {
         const payload = new URLSearchParams();
@@ -411,7 +410,6 @@ export default function App() {
           body: payload
         });
         
-        // Fetch fresh data after server write completes
         setTimeout(fetchOrdersFromSheet, 1500);
       } catch (err) {
         console.error("Background sync error:", err);
@@ -2169,7 +2167,6 @@ export default function App() {
               </span>
             </div>
 
-            {/* NEW: Search Order Sheet Number in Book Records */}
             <div className="bg-[#111318] border border-slate-700/80 rounded-2xl p-4 space-y-3 shadow-xl">
               <label className="block text-xs font-bold text-amber-400 uppercase">Search Order Sheet Number in Book Records</label>
               <div className="flex gap-2">
@@ -2286,7 +2283,7 @@ export default function App() {
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2.5 p-2.5 text-center text-xs font-bold text-emerald-400">
                       ✨ No Gaps! All pages up to #{data.maxEntered} are filled properly.
                     </div>
                   )}
@@ -2690,14 +2687,26 @@ export default function App() {
           const gautamOrders = activeKarigarOrders.filter(o => (o.orderPerson || '').toLowerCase() === 'gautam');
           const targetKarigarList = karigarSubTab === 'Amardeep' ? amardeepOrders : gautamOrders;
 
-          const displayedKarigarOrders = targetKarigarList.filter(order => {
+          // Compute unique Karigar counts and names for the active executive tab
+          const karigarCounts = {};
+          targetKarigarList.forEach(o => {
+            const kName = (o.karigarName || '').trim() || 'Unassigned';
+            karigarCounts[kName] = (karigarCounts[kName] || 0) + 1;
+          });
+
+          const karigarFilteredOrders = targetKarigarList.filter(order => {
+            const kName = (order.karigarName || '').trim() || 'Unassigned';
+            if (selectedKarigarTagFilter !== 'ALL' && kName.toLowerCase() !== selectedKarigarTagFilter.toLowerCase()) {
+              return false;
+            }
+
             const query = karigarSearchQuery.toLowerCase();
             return (
               String(order.orderSheetNo || '').toLowerCase().includes(query) ||
               String(order.tagNumber || '').toLowerCase().includes(query) ||
               String(order.jewelleryItem || '').toLowerCase().includes(query) ||
               String(order.customerName || '').toLowerCase().includes(query) ||
-              String(order.karigarName || '').toLowerCase().includes(query)
+              kName.toLowerCase().includes(query)
             );
           });
 
@@ -2723,7 +2732,7 @@ export default function App() {
 
                   <div className="flex bg-[#111317] p-1.5 rounded-xl border border-slate-800">
                     <button
-                      onClick={() => setKarigarSubTab('Amardeep')}
+                      onClick={() => { setKarigarSubTab('Amardeep'); setSelectedKarigarTagFilter('ALL'); }}
                       className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         karigarSubTab === 'Amardeep'
                           ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
@@ -2733,7 +2742,7 @@ export default function App() {
                       Amardeep ({amardeepOrders.length})
                     </button>
                     <button
-                      onClick={() => setKarigarSubTab('Gautam')}
+                      onClick={() => { setKarigarSubTab('Gautam'); setSelectedKarigarTagFilter('ALL'); }}
                       className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                         karigarSubTab === 'Gautam'
                           ? 'bg-amber-500 text-slate-950 shadow-md font-extrabold'
@@ -2746,13 +2755,43 @@ export default function App() {
                 </div>
               </div>
 
+              {/* KARIGAR NAME FILTER TAGS */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                <button
+                  onClick={() => setSelectedKarigarTagFilter('ALL')}
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                    selectedKarigarTagFilter === 'ALL'
+                      ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-md'
+                      : 'bg-[#111318] text-slate-300 border-slate-700 hover:border-amber-500/50'
+                  }`}
+                >
+                  All Karigars ({targetKarigarList.length})
+                </button>
+                {Object.entries(karigarCounts).map(([kName, count]) => (
+                  <button
+                    key={kName}
+                    onClick={() => setSelectedKarigarTagFilter(selectedKarigarTagFilter === kName ? 'ALL' : kName)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer border flex items-center gap-1.5 ${
+                      selectedKarigarTagFilter === kName
+                        ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-md'
+                        : 'bg-[#111318] text-amber-300 border-slate-700 hover:border-amber-500/50'
+                    }`}
+                  >
+                    <span>{kName}</span>
+                    <span className={`px-1.5 py-0.2 rounded-md text-[10px] ${selectedKarigarTagFilter === kName ? 'bg-slate-950 text-amber-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                      {count}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {displayedKarigarOrders.length === 0 ? (
+                {karigarFilteredOrders.length === 0 ? (
                   <div className="col-span-3 py-12 text-center text-slate-500 text-sm font-medium">
-                    No active karigar orders found matching your search.
+                    No active karigar orders found matching your filter.
                   </div>
                 ) : (
-                  displayedKarigarOrders.map((order, idx) => (
+                  karigarFilteredOrders.map((order, idx) => (
                     <div key={idx} className="bg-[#111318] p-4 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
                       <div className="flex justify-between items-start">
                         <div>
