@@ -86,6 +86,10 @@ export default function App() {
   const [karigarSubTab, setKarigarSubTab] = useState('Amardeep');
   const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
   const [selectedKarigarTagFilter, setSelectedKarigarTagFilter] = useState('ALL');
+  
+  // New Karigar Timeline Quick Filter Tab State ('ALL', 'OVERDUE', 'TODAY', 'UPCOMING')
+  const [karigarTimelineTab, setKarigarTimelineTab] = useState('ALL');
+
   const [previewImage, setPreviewImage] = useState(null);
   
   // Audit Tab Search State
@@ -321,7 +325,7 @@ export default function App() {
     localStorage.setItem('namah_user_name', currentUserName);
   }, [isLoggedIn, currentUserRole, currentUserName]);
 
-  const isAuthorizedToEdit = isLoggedIn && (currentUserRole === 'Admin' || currentUserRole === 'Order Processing');
+  const isAuthorizedToEdit = isLoggedIn && (currentUserRole === 'Senior Admin (Admin)' || currentUserRole === 'Admin' || currentUserRole === 'Order Processing');
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -2482,39 +2486,39 @@ export default function App() {
                 </div>
               </div>
 
-            <div className="p-4 bg-[#111318] border border-slate-800/80 rounded-xl space-y-3">
-        <label className="block text-xs font-bold text-amber-400 uppercase">
-          📷 Product Photo Capture / Upload
-        </label>
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Option 1: Direct Camera */}
-          <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
-            <Camera className="w-4 h-4" /> Open Camera
-            <input 
-              type="file" 
-              accept="image/*" 
-              capture="environment"
-              onChange={handleImageCapture} 
-              className="hidden" 
-            />
-          </label>
+              <div className="p-4 bg-[#111318] border border-slate-800/80 rounded-xl space-y-3">
+                <label className="block text-xs font-bold text-amber-400 uppercase">
+                  📷 Product Photo Capture / Upload
+                </label>
+                <div className="flex flex-wrap items-center gap-3">
+                  {/* Option 1: Direct Camera */}
+                  <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
+                    <Camera className="w-4 h-4" /> Open Camera
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      capture="environment"
+                      onChange={handleImageCapture} 
+                      className="hidden" 
+                    />
+                  </label>
 
-          {/* Option 2: Choose from Gallery / Files */}
-          <label className="cursor-pointer bg-[#222630] hover:bg-[#2c3240] text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md">
-            <Download className="w-4 h-4 text-slate-400" /> Choose Gallery / File
-            <input 
-              type="file" 
-              accept="image/*" 
-              onChange={handleImageCapture} 
-              className="hidden" 
-            />
-          </label>
+                  {/* Option 2: Choose from Gallery / Files */}
+                  <label className="cursor-pointer bg-[#222630] hover:bg-[#2c3240] text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md">
+                    <Download className="w-4 h-4 text-slate-400" /> Choose Gallery / File
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      onChange={handleImageCapture} 
+                      className="hidden" 
+                    />
+                  </label>
 
-          {formData.imagePreviewLocal && (
-            <img src={formData.imagePreviewLocal} alt="" onClick={() => setPreviewImage(formData.imagePreviewLocal)} className="w-12 h-12 rounded-lg object-cover border border-amber-500 cursor-pointer" />
-          )}
-        </div>
-      </div>
+                  {formData.imagePreviewLocal && (
+                    <img src={formData.imagePreviewLocal} alt="" onClick={() => setPreviewImage(formData.imagePreviewLocal)} className="w-12 h-12 rounded-lg object-cover border border-amber-500 cursor-pointer" />
+                  )}
+                </div>
+              </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* SEARCHABLE JEWELLERY ITEM DROPDOWN */}
@@ -2734,14 +2738,43 @@ export default function App() {
           const gautamOrders = activeKarigarOrders.filter(o => (o.orderPerson || '').toLowerCase() === 'gautam');
           const targetKarigarList = karigarSubTab === 'Amardeep' ? amardeepOrders : gautamOrders;
 
-          // Compute unique Karigar counts and names for the active executive tab
-          const karigarCounts = {};
+          const todayDateStr = new Date().toISOString().split('T')[0];
+
+          // Helper to classify order DOD into Overdue, Today, or Upcoming
+          const getDODCategory = (dodStr) => {
+            const cleanDOD = extractDateOnly(dodStr);
+            if (!cleanDOD || cleanDOD === 'N/A') return 'UPCOMING';
+            if (cleanDOD < todayDateStr) return 'OVERDUE';
+            if (cleanDOD === todayDateStr) return 'TODAY';
+            return 'UPCOMING';
+          };
+
+          // Count orders per timeline category for tabs badge counts
+          let overdueCount = 0;
+          let todayCount = 0;
+          let upcomingCount = 0;
+
           targetKarigarList.forEach(o => {
+            const cat = getDODCategory(o.karigarDod);
+            if (cat === 'OVERDUE') overdueCount++;
+            if (cat === 'TODAY') todayCount++;
+            if (cat === 'UPCOMING') upcomingCount++;
+          });
+
+          // Filter by selected Timeline Tab
+          const timelineFilteredList = targetKarigarList.filter(order => {
+            if (karigarTimelineTab === 'ALL') return true;
+            return getDODCategory(order.karigarDod) === karigarTimelineTab;
+          });
+
+          // Compute unique Karigar counts and names for the active executive tab based on timeline filtered list
+          const karigarCounts = {};
+          timelineFilteredList.forEach(o => {
             const kName = (o.karigarName || '').trim() || 'Unassigned';
             karigarCounts[kName] = (karigarCounts[kName] || 0) + 1;
           });
 
-          const karigarFilteredOrders = targetKarigarList.filter(order => {
+          const karigarFilteredOrders = timelineFilteredList.filter(order => {
             const kName = (order.karigarName || '').trim() || 'Unassigned';
             if (selectedKarigarTagFilter !== 'ALL' && kName.toLowerCase() !== selectedKarigarTagFilter.toLowerCase()) {
               return false;
@@ -2849,6 +2882,65 @@ export default function App() {
                 </div>
               </div>
 
+              {/* 3 NEW TIMELINE TABS FOR EASY FILTERING */}
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <button
+                  onClick={() => { setKarigarTimelineTab('ALL'); setSelectedKarigarTagFilter('ALL'); }}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    karigarTimelineTab === 'ALL'
+                      ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-lg shadow-amber-500/20'
+                      : 'bg-[#111318] text-slate-300 border-slate-700 hover:border-amber-500/50'
+                  }`}
+                >
+                  <span>All Active Karigar Orders</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'ALL' ? 'bg-slate-950 text-amber-400 font-bold' : 'bg-slate-800 text-slate-300'}`}>
+                    {targetKarigarList.length}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { setKarigarTimelineTab('OVERDUE'); setSelectedKarigarTagFilter('ALL'); }}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    karigarTimelineTab === 'OVERDUE'
+                      ? 'bg-red-500 text-slate-950 border-red-500 font-black shadow-lg shadow-red-500/20'
+                      : 'bg-[#111318] text-red-400 border-red-500/30 hover:border-red-500'
+                  }`}
+                >
+                  <span>1 - Overdue Orders on Karigar</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'OVERDUE' ? 'bg-slate-950 text-red-400 font-bold' : 'bg-red-500/10 text-red-400'}`}>
+                    {overdueCount}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { setKarigarTimelineTab('TODAY'); setSelectedKarigarTagFilter('ALL'); }}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    karigarTimelineTab === 'TODAY'
+                      ? 'bg-amber-500 text-slate-950 border-amber-500 font-black shadow-lg shadow-amber-500/20'
+                      : 'bg-[#111318] text-amber-400 border-amber-500/30 hover:border-amber-500'
+                  }`}
+                >
+                  <span>2 - Today DOD on Karigar</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'TODAY' ? 'bg-slate-950 text-amber-400 font-bold' : 'bg-amber-500/10 text-amber-400'}`}>
+                    {todayCount}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { setKarigarTimelineTab('UPCOMING'); setSelectedKarigarTagFilter('ALL'); }}
+                  className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
+                    karigarTimelineTab === 'UPCOMING'
+                      ? 'bg-emerald-500 text-slate-950 border-emerald-500 font-black shadow-lg shadow-emerald-500/20'
+                      : 'bg-[#111318] text-emerald-400 border-emerald-500/30 hover:border-emerald-500'
+                  }`}
+                >
+                  <span>3 - Upcoming DOD on Karigar</span>
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'UPCOMING' ? 'bg-slate-950 text-emerald-400 font-bold' : 'bg-emerald-500/10 text-emerald-400'}`}>
+                    {upcomingCount}
+                  </span>
+                </button>
+              </div>
+
               {/* KARIGAR NAME FILTER TAGS */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
                 <button
@@ -2859,7 +2951,7 @@ export default function App() {
                       : 'bg-[#111318] text-slate-300 border-slate-700 hover:border-amber-500/50'
                   }`}
                 >
-                  All Karigars ({targetKarigarList.length})
+                  All Karigars ({timelineFilteredList.length})
                 </button>
                 {Object.entries(karigarCounts).map(([kName, count]) => (
                   <button
@@ -2882,27 +2974,45 @@ export default function App() {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {karigarFilteredOrders.length === 0 ? (
                   <div className="col-span-3 py-12 text-center text-slate-500 text-sm font-medium">
-                    No active karigar orders found matching your filter.
+                    No active karigar orders found matching your timeline or karigar filter.
                   </div>
                 ) : (
-                  karigarFilteredOrders.map((order, idx) => (
-                    <div key={idx} className="bg-[#111318] p-4 rounded-2xl border border-slate-800 space-y-3 shadow-xl">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-xs font-black text-amber-400">{order.orderSheetNo}</span>
-                          <h4 className="text-sm font-bold text-slate-100">{order.jewelleryItem}</h4>
+                  karigarFilteredOrders.map((order, idx) => {
+                    const cleanDOD = extractDateOnly(order.karigarDod);
+                    let badgeColor = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30';
+                    let badgeText = 'UPCOMING';
+                    if (cleanDOD < todayDateStr) {
+                      badgeColor = 'text-red-400 bg-red-500/10 border-red-500/30';
+                      badgeText = 'OVERDUE';
+                    } else if (cleanDOD === todayDateStr) {
+                      badgeColor = 'text-amber-400 bg-amber-500/10 border-amber-500/30';
+                      badgeText = 'DUE TODAY';
+                    }
+
+                    return (
+                      <div key={idx} className="bg-[#111318] p-4 rounded-2xl border border-slate-800 space-y-3 shadow-xl relative">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <span className="text-xs font-black text-amber-400">{order.orderSheetNo}</span>
+                            <h4 className="text-sm font-bold text-slate-100">{order.jewelleryItem}</h4>
+                          </div>
+                          {formatDriveUrl(order) && (
+                            <img src={formatDriveUrl(order)} alt="" onClick={() => setPreviewImage(formatDriveUrl(order))} className="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-slate-800 cursor-pointer" />
+                          )}
                         </div>
-                        {formatDriveUrl(order) && (
-                          <img src={formatDriveUrl(order)} alt="" onClick={() => setPreviewImage(formatDriveUrl(order))} className="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-slate-800 cursor-pointer" />
-                        )}
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-slate-400">Karigar: <strong className="text-amber-300">{order.karigarName || 'Unassigned'}</strong></span>
+                          <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold border ${badgeColor}`}>
+                            {badgeText}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-400">Karigar DOD: <strong className="text-emerald-400">{extractDateOnly(order.karigarDod)}</strong></p>
+                        <button onClick={() => setWhatsappModalData(order)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs w-full transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer">
+                          <Send className="w-3.5 h-3.5" /> Send WhatsApp Slip
+                        </button>
                       </div>
-                      <p className="text-xs text-slate-400">Karigar: <strong className="text-amber-300">{order.karigarName || 'Unassigned'}</strong></p>
-                      <p className="text-xs text-slate-400">Karigar DOD: <strong className="text-emerald-400">{extractDateOnly(order.karigarDod)}</strong></p>
-                      <button onClick={() => setWhatsappModalData(order)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs w-full transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer">
-                        <Send className="w-3.5 h-3.5" /> Send WhatsApp Slip
-                      </button>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -3056,6 +3166,7 @@ export default function App() {
                   value={loginNameInput}
                   onChange={(e) => setLoginNameInput(e.target.value)}
                 >
+                  <option value="Senior Admin (Admin)">Senior Admin (Admin)</option>
                   <option value="Admin">Admin</option>
                   <option value="Amardeep">Amardeep</option>
                   <option value="Gautam">Gautam</option>
@@ -3336,7 +3447,7 @@ export default function App() {
 
       {previewImage && (
         <div 
-          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-pointer"
+          className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
           onClick={() => setPreviewImage(null)}
         >
           <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
