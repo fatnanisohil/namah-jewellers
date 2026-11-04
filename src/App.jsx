@@ -95,11 +95,8 @@ export default function App() {
   // Audit Tab Search State
   const [auditSearchSheetNo, setAuditSearchSheetNo] = useState('');
 
-  // Reminders state stored locally and per executive (Amardeep / Gautam)
-  const [reminders, setReminders] = useState(() => {
-    const saved = localStorage.getItem('namah_karigar_reminders');
-    return saved ? JSON.parse(saved) : [];
-  });
+  // Reminders state synced from Google Sheets (Reminders tab)
+  const [reminders, setReminders] = useState([]);
   const [showAddReminderModal, setShowAddReminderModal] = useState(false);
   const [reminderTitleInput, setReminderTitleInput] = useState('');
   const [reminderDateInput, setReminderDateInput] = useState('');
@@ -290,6 +287,18 @@ export default function App() {
     }
   };
 
+  const fetchRemindersFromSheet = async () => {
+    try {
+      const response = await fetch(`${GOOGLE_SHEETS_API_URL}?action=getReminders`);
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        setReminders(data);
+      }
+    } catch (err) {
+      console.error("Error fetching reminders:", err);
+    }
+  };
+
   useEffect(() => {
     if (!isLoggedIn) {
       setShowLoginModal(true);
@@ -298,7 +307,11 @@ export default function App() {
 
   useEffect(() => {
     fetchOrdersFromSheet();
-    const interval = setInterval(fetchOrdersFromSheet, 60000);
+    fetchRemindersFromSheet();
+    const interval = setInterval(() => {
+      fetchOrdersFromSheet();
+      fetchRemindersFromSheet();
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -314,10 +327,6 @@ export default function App() {
       console.error("Local storage quota exceeded:", error);
     }
   }, [orders]);
-
-  useEffect(() => {
-    localStorage.setItem('namah_karigar_reminders', JSON.stringify(reminders));
-  }, [reminders]);
 
   useEffect(() => {
     localStorage.setItem('namah_logged_in', isLoggedIn);
@@ -955,7 +964,7 @@ export default function App() {
             ) : (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-md"
+                className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-md"
               >
                 <LogIn className="w-3.5 h-3.5" /> Login
               </button>
@@ -1249,7 +1258,6 @@ export default function App() {
                   <h4 className="text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
                 </div>
                 
-                {/* BILL PENDING CUSTOMERS CARD WITH SMOOTH SCROLL */}
                 <div 
                   onClick={() => {
                     const el = document.getElementById('bill-pending-section');
@@ -1261,7 +1269,6 @@ export default function App() {
                   <h4 className="text-2xl font-black text-emerald-400 mt-1">{billPendingCustomers.length}</h4>
                 </div>
 
-                {/* FULLY PACKED CUSTOMERS CARD WITH SMOOTH SCROLL */}
                 <div 
                   onClick={() => {
                     const el = document.getElementById('packed-section');
@@ -2491,7 +2498,6 @@ export default function App() {
                   📷 Product Photo Capture / Upload
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
-                  {/* Option 1: Direct Camera */}
                   <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
                     <Camera className="w-4 h-4" /> Open Camera
                     <input 
@@ -2503,7 +2509,6 @@ export default function App() {
                     />
                   </label>
 
-                  {/* Option 2: Choose from Gallery / Files */}
                   <label className="cursor-pointer bg-[#222630] hover:bg-[#2c3240] text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md">
                     <Download className="w-4 h-4 text-slate-400" /> Choose Gallery / File
                     <input 
@@ -2521,7 +2526,6 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* SEARCHABLE JEWELLERY ITEM DROPDOWN */}
                 <div className="relative" ref={jewelleryDropdownRef}>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Jewellery Item Name *</label>
                   <div
@@ -2740,7 +2744,6 @@ export default function App() {
 
           const todayDateStr = new Date().toISOString().split('T')[0];
 
-          // Helper to classify order DOD into Overdue, Today, or Upcoming
           const getDODCategory = (dodStr) => {
             const cleanDOD = extractDateOnly(dodStr);
             if (!cleanDOD || cleanDOD === 'N/A') return 'UPCOMING';
@@ -2749,7 +2752,6 @@ export default function App() {
             return 'UPCOMING';
           };
 
-          // Count orders per timeline category for tabs badge counts
           let overdueCount = 0;
           let todayCount = 0;
           let upcomingCount = 0;
@@ -2761,13 +2763,11 @@ export default function App() {
             if (cat === 'UPCOMING') upcomingCount++;
           });
 
-          // Filter by selected Timeline Tab
           const timelineFilteredList = targetKarigarList.filter(order => {
             if (karigarTimelineTab === 'ALL') return true;
             return getDODCategory(order.karigarDod) === karigarTimelineTab;
           });
 
-          // Compute unique Karigar counts and names for the active executive tab based on timeline filtered list
           const karigarCounts = {};
           timelineFilteredList.forEach(o => {
             const kName = (o.karigarName || '').trim() || 'Unassigned';
@@ -2800,7 +2800,6 @@ export default function App() {
                 </h3>
                 
                 <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-                  {/* Search Input Box */}
                   <div className="relative w-full sm:w-64">
                     <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                     <input
@@ -2870,7 +2869,17 @@ export default function App() {
                           </div>
                         </div>
                         <button
-                          onClick={() => setReminders(prev => prev.filter(r => r.id !== rem.id))}
+                          onClick={async () => {
+                            setReminders(prev => prev.filter(r => r.id !== rem.id));
+                            try {
+                              const payload = new URLSearchParams();
+                              payload.append('action', 'deleteReminder');
+                              payload.append('id', rem.id);
+                              await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: payload });
+                            } catch (err) {
+                              console.error("Failed to delete reminder from sheet:", err);
+                            }
+                          }}
                           className="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors cursor-pointer"
                           title="Delete Reminder"
                         >
@@ -2882,7 +2891,6 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 3 NEW TIMELINE TABS FOR EASY FILTERING */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <button
                   onClick={() => { setKarigarTimelineTab('ALL'); setSelectedKarigarTagFilter('ALL'); }}
@@ -2941,7 +2949,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* KARIGAR NAME FILTER TAGS */}
               <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
                 <button
                   onClick={() => setSelectedKarigarTagFilter('ALL')}
@@ -3083,7 +3090,7 @@ export default function App() {
                 Cancel
               </button>
               <button
-                onClick={() => {
+                onClick={async () => {
                   if (!reminderTitleInput.trim() || !reminderDateInput) {
                     alert("Please enter both reminder note and due date.");
                     return;
@@ -3099,6 +3106,19 @@ export default function App() {
                   setReminderTitleInput('');
                   setReminderDateInput('');
                   setShowAddReminderModal(false);
+
+                  try {
+                    const payload = new URLSearchParams();
+                    payload.append('action', 'saveReminder');
+                    payload.append('id', newRem.id);
+                    payload.append('executive', newRem.executive);
+                    payload.append('title', newRem.title);
+                    payload.append('setBy', newRem.setBy);
+                    payload.append('dueDate', newRem.dueDate);
+                    await fetch(GOOGLE_SHEETS_API_URL, { method: 'POST', body: payload });
+                  } catch (err) {
+                    console.error("Failed to save reminder to sheet:", err);
+                  }
                 }}
                 className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer shadow-md"
               >
