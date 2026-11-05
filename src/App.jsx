@@ -936,7 +936,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#111318] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-16 md:pb-0">
-      <header className="bg-[#181b22]/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between sticky top-0 z-30 shadow-2xl gap-3">
+      <header className="bg-[#181b22]/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between sticky top-0 z-35 shadow-2xl gap-3">
         <div className="flex items-center justify-between w-full sm:w-auto">
           <div className="flex items-center gap-3">
             <div className="bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
@@ -1506,25 +1506,30 @@ export default function App() {
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3 w-20">IMAGE</th>
                         <th className="p-3">Order / Tag</th>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
                         <th className="p-3">Karigar Name</th>
                         <th className="p-3">Karigar DOD</th>
+                        <th className="p-3">Product Status</th>
                         <th className="p-3 text-center">Timeline Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {urgentDODOrdersList.length === 0 ? (
-                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
+                        <tr><td colSpan="9" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
                       ) : (
                         urgentDODOrdersList.map((ord, idx) => {
                           const timeline = getDODTimelineStatus(ord.karigarDod);
                           const imageUrl = formatDriveUrl(ord);
+                          const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
+                          const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
+
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
                               <td className="p-3">
@@ -1546,8 +1551,22 @@ export default function App() {
                               </td>
                               <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
                               <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
                               <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
                               <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
+                              <td className="p-3">
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
+                                  isUnassigned
+                                    ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
+                                    : (ord.productStatus || '').toLowerCase() === 'packed'
+                                    ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
+                                    : (ord.productStatus || '').toLowerCase().includes('bill pending')
+                                    ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                                    : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                                }`}>
+                                  {isUnassigned ? '--Not Assign--' : ord.productStatus}
+                                </span>
+                              </td>
                               <td className="p-3 text-center">
                                 <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${timeline.color}`}>
                                   {timeline.text}
