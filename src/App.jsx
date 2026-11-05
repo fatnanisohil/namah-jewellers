@@ -3014,9 +3014,30 @@ export default function App() {
                           </span>
                         </div>
                         <p className="text-xs text-slate-400">Karigar DOD: <strong className="text-emerald-400">{extractDateOnly(order.karigarDod)}</strong></p>
-                        <button onClick={() => setWhatsappModalData(order)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs w-full transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer">
-                          <Send className="w-3.5 h-3.5" /> Send WhatsApp Slip
-                        </button>
+
+                        {/* DIRECT PRODUCT STATUS DROPDOWN & WHATSAPP BUTTON */}
+                        <div className="space-y-2 pt-1 border-t border-slate-800">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] text-slate-400 font-semibold">Status:</span>
+                            {isAuthorizedToEdit ? (
+                              <select
+                                value={order.productStatus || 'Under Process'}
+                                onChange={(e) => handleStatusChange(order.orderSheetNo, order.tagNumber, order.jewelleryItem, e.target.value)}
+                                className="px-2.5 py-1 rounded-xl text-xs font-bold cursor-pointer border focus:outline-none bg-amber-900/30 text-amber-300 border-amber-600/40"
+                              >
+                                <option value="Under Process" className="bg-[#181b22] text-amber-300">Under Process</option>
+                                <option value="Ready but bill pending" className="bg-[#181b22] text-emerald-300">Ready but bill pending</option>
+                                <option value="Packed" className="bg-[#181b22] text-purple-300">Packed</option>
+                              </select>
+                            ) : (
+                              <span className="text-xs font-bold text-amber-300">{order.productStatus || 'Under Process'}</span>
+                            )}
+                          </div>
+
+                          <button onClick={() => setWhatsappModalData(order)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs w-full transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer">
+                            <Send className="w-3.5 h-3.5" /> Send WhatsApp Slip
+                          </button>
+                        </div>
                       </div>
                     );
                   })
