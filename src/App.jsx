@@ -1495,7 +1495,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 4. 🚨 URGENT ORDERS DOD (<= 2 DAYS) */}
+              {/* 4. 🚨 URGENT ORDERS DOD (<= 2 DAYS) WITH PRODUCT STATUS COLUMN */}
               <div className="bg-[#181b22] border border-orange-500/30 p-5 rounded-2xl space-y-4 shadow-xl">
                 <div className="flex justify-between items-center border-b border-orange-500/20 pb-3">
                   <h4 className="text-sm font-black text-orange-400 flex items-center gap-2 uppercase tracking-wide">
@@ -1506,7 +1506,7 @@ export default function App() {
                   </span>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[1050px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3 w-20">IMAGE</th>
@@ -1515,16 +1515,20 @@ export default function App() {
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Karigar Name</th>
                         <th className="p-3">Karigar DOD</th>
+                        <th className="p-3">Product Status</th>
                         <th className="p-3 text-center">Timeline Status</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {urgentDODOrdersList.length === 0 ? (
-                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
+                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
                       ) : (
                         urgentDODOrdersList.map((ord, idx) => {
                           const timeline = getDODTimelineStatus(ord.karigarDod);
                           const imageUrl = formatDriveUrl(ord);
+                          const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
+                          const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
+
                           return (
                             <tr key={idx} className="hover:bg-[#111318]/50">
                               <td className="p-3">
@@ -1548,6 +1552,19 @@ export default function App() {
                               <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
                               <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
                               <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
+                              <td className="p-3">
+                                <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
+                                  isUnassigned
+                                    ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
+                                    : (ord.productStatus || '').toLowerCase() === 'packed'
+                                    ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
+                                    : (ord.productStatus || '').toLowerCase().includes('bill pending')
+                                    ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                                    : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                                }`}>
+                                  {isUnassigned ? '--Not Assign--' : ord.productStatus}
+                                </span>
+                              </td>
                               <td className="p-3 text-center">
                                 <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${timeline.color}`}>
                                   {timeline.text}
@@ -3044,8 +3061,8 @@ export default function App() {
                 )}
               </div>
             </div>
-          );
-        })()}
+          </div>
+        )}
       </main>
 
       {showAddReminderModal && (
