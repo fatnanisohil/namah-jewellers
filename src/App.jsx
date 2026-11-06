@@ -877,8 +877,9 @@ export default function App() {
     });
   }, [orders, offOrdersExecutiveFilter, offOrdersSalesFilter]);
 
-  const filteredOrders = useMemo(() => {
-    const filtered = orders.filter(order => {
+  // BASE ACTIVE ORDERS (Without Status Filter, but respects Search, Sales, and Executive Filters)
+  const baseFilteredOrdersForStats = useMemo(() => {
+    return orders.filter(order => {
       if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
         return false;
       }
@@ -895,7 +896,31 @@ export default function App() {
       if (filterSalesperson !== 'ALL' && order.salesPerson !== filterSalesperson) return false;
       if (filterExecutive !== 'ALL' && order.orderPerson !== filterExecutive) return false;
       if (filterWorkType !== 'ALL' && (order.orderType || '').toUpperCase() !== filterWorkType) return false;
-      
+
+      return true;
+    });
+  }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType]);
+
+  // DYNAMIC COUNTS FOR STAT CARDS
+  const dynamicTotalActiveCount = baseFilteredOrdersForStats.length;
+
+  const dynamicUnderProcessCount = baseFilteredOrdersForStats.filter(o => {
+    const pStatus = (o.productStatus || '').toLowerCase();
+    return pStatus.includes('process') || pStatus === 'assigned';
+  }).length;
+
+  const dynamicBillPendingCount = baseFilteredOrdersForStats.filter(o => {
+    const pStatus = (o.productStatus || '').toLowerCase();
+    return pStatus === 'ready but bill pending' || pStatus.includes('bill pending');
+  }).length;
+
+  const dynamicPackedCount = baseFilteredOrdersForStats.filter(o => {
+    const pStatus = (o.productStatus || '').toLowerCase();
+    return pStatus === 'packed';
+  }).length;
+
+  const filteredOrders = useMemo(() => {
+    const filtered = baseFilteredOrdersForStats.filter(order => {
       if (filterStatus !== 'ALL') {
         const pStatus = (order.productStatus || '--Not Assign--').toLowerCase();
         if (filterStatus === 'Under Process') {
@@ -932,7 +957,7 @@ export default function App() {
       const idxB = b._fetchIndex !== undefined ? b._fetchIndex : 999999;
       return idxA - idxB;
     });
-  }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType, filterStatus]);
+  }, [baseFilteredOrdersForStats, filterStatus]);
 
   return (
     <div className="min-h-screen bg-[#111318] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-16 md:pb-0">
@@ -1661,12 +1686,12 @@ export default function App() {
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div 
                 onClick={() => setFilterStatus('ALL')}
-                className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xl cursor-pointer hover:border-amber-500/50 transition-all"
+                className={`bg-[#181b22] border rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xl cursor-pointer transition-all ${filterStatus === 'ALL' ? 'border-amber-500 bg-amber-500/5' : 'border-slate-800/90 hover:border-amber-500/50'}`}
               >
                 <div>
                   <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active</p>
                   <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
-                    {orders.filter(o => (o.orderStatus || '').toLowerCase() !== 'delivered' && (o.productStatus || '').toLowerCase() !== 'delivered').length}
+                    {dynamicTotalActiveCount}
                   </h3>
                 </div>
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -1681,11 +1706,7 @@ export default function App() {
                 <div>
                   <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Under Process</p>
                   <h3 className="text-xl sm:text-2xl font-black text-amber-400 mt-1">
-                    {orders.filter(o => {
-                      if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
-                      const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus.includes('process') || pStatus === 'assigned';
-                    }).length}
+                    {dynamicUnderProcessCount}
                   </h3>
                 </div>
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
@@ -1700,11 +1721,7 @@ export default function App() {
                 <div>
                   <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ready but bill pending</p>
                   <h3 className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
-                    {orders.filter(o => {
-                      if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
-                      const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending');
-                    }).length}
+                    {dynamicBillPendingCount}
                   </h3>
                 </div>
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -1719,11 +1736,7 @@ export default function App() {
                 <div>
                   <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Packed</p>
                   <h3 className="text-xl sm:text-2xl font-black text-purple-400 mt-1">
-                    {orders.filter(o => {
-                      if ((o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered') return false;
-                      const pStatus = (o.productStatus || '').toLowerCase();
-                      return pStatus === 'packed';
-                    }).length}
+                    {dynamicPackedCount}
                   </h3>
                 </div>
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
