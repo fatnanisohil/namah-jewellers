@@ -1871,7 +1871,7 @@ export default function App() {
                               {order.orderSheetNo || `NJ-2026-00${idx + 1}`}
                             </h4>
                             <p className="text-[10px] text-slate-400 font-mono">
-                              {order.tagNumber || 'TAG-8821'}
+                              {order.tagNumber || 'GS-NJ-1234'}
                             </p>
                             <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                               (order.orderType || '').toUpperCase() === 'CUSTOMIZATION IN PRODUCT'
@@ -2624,7 +2624,7 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. TAG-8821"
+                    placeholder="e.g. GS-NJ-1234"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
                     value={formData.tagNumber}
                     onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })}
@@ -3097,7 +3097,7 @@ export default function App() {
                 <label className="block text-slate-300 font-semibold mb-1">Reminder Note / Task *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Call Karigar Vijay for bangle casting update"
+                  placeholder="e.g. Call Karigar SS for bangle casting update"
                   value={reminderTitleInput}
                   onChange={(e) => setReminderTitleInput(e.target.value)}
                   className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
@@ -3368,7 +3368,7 @@ export default function App() {
                     required
                     name="karigarName"
                     defaultValue={selectedOrderForKarigar.karigarName || ''}
-                    placeholder="e.g. Craftsman Vijay"
+                    placeholder="e.g. SS KARIGAR"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
                   />
                 </div>
