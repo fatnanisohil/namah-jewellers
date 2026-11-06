@@ -1689,7 +1689,7 @@ export default function App() {
                 className={`bg-[#181b22] border rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xl cursor-pointer transition-all ${filterStatus === 'ALL' ? 'border-amber-500 bg-amber-500/5' : 'border-slate-800/90 hover:border-amber-500/50'}`}
               >
                 <div>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active</p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active Product</p>
                   <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
                     {dynamicTotalActiveCount}
                   </h3>
