@@ -1212,16 +1212,16 @@ export default function App() {
           };
 
           const urgentDODOrdersList = dashboardFilteredOrders.filter(o => {
-            const cleanDOD = extractDateOnly(o.karigarDod);
-            if (!cleanDOD || cleanDOD === 'N/A') return false;
-            const dodTime = new Date(cleanDOD).getTime();
-            const diffDays = Math.round((dodTime - todayTime) / (1000 * 60 * 60 * 24));
-            return diffDays <= 2;
-          }).sort((a, b) => {
-            const timeA = new Date(extractDateOnly(a.karigarDod)).getTime();
-            const timeB = new Date(extractDateOnly(b.karigarDod)).getTime();
-            return timeA - timeB;
-          });
+    const cleanDelivery = extractDateOnly(o.deliveryDate);
+    if (!cleanDelivery || cleanDelivery === 'N/A') return false;
+    const deliveryTime = new Date(cleanDelivery).getTime();
+    const diffDays = Math.round((deliveryTime - todayTime) / (1000 * 60 * 60 * 24));
+    return diffDays <= 2;
+  }).sort((a, b) => {
+    const timeA = new Date(extractDateOnly(a.deliveryDate)).getTime();
+    const timeB = new Date(extractDateOnly(b.deliveryDate)).getTime();
+    return timeA - timeB;
+  });
 
           const underProcessOrdersList = dashboardFilteredOrders.filter(o => {
             const st = getStatusStr(o);
@@ -1557,7 +1557,7 @@ export default function App() {
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Order Person</th>
                         <th className="p-3">Karigar Name</th>
-                        <th className="p-3">Karigar DOD</th>
+                        <th className="p-3">Promised DOD</th>
                         <th className="p-3">Product Status</th>
                         <th className="p-3 text-center">Timeline Status</th>
                       </tr>
@@ -1595,7 +1595,7 @@ export default function App() {
                               <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
                               <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
                               <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
-                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
+                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.deliveryDate)}</td>
                               <td className="p-3">
                                 <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
                                   isUnassigned
