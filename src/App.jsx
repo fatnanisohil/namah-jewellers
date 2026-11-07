@@ -1556,7 +1556,7 @@ export default function App() {
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Order Person</th>
-                        <th className="p-3">Karigar Name</th>
+                        <th className="p-3">Daily Remarks</th>
                         <th className="p-3">Promised DOD</th>
                         <th className="p-3">Product Status</th>
                         <th className="p-3 text-center">Timeline Status</th>
@@ -1594,7 +1594,7 @@ export default function App() {
                               <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
                               <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
                               <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
-                              <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
+                              <td className="p-3 text-slate-300 max-w-xs truncate">{ord.dailyRemarks || '--'}</td>
                               <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.deliveryDate)}</td>
                               <td className="p-3">
                                 <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
