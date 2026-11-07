@@ -1159,6 +1159,24 @@ export default function App() {
             return true;
           });
 
+          // SORT MASTER LIST SO TODAY'S DOD APPEARS FIRST
+          const todayDateStr = new Date().toISOString().split('T')[0];
+          const sortedDashboardFilteredOrders = [...dashboardFilteredOrders].sort((a, b) => {
+            const dateA = extractDateOnly(a.deliveryDate);
+            const dateB = extractDateOnly(b.deliveryDate);
+            
+            const isTodayA = dateA === todayDateStr;
+            const isTodayB = dateB === todayDateStr;
+
+            if (isTodayA && !isTodayB) return -1;
+            if (!isTodayA && isTodayB) return 1;
+
+            if (dateA !== 'N/A' && dateB !== 'N/A') {
+              return new Date(dateA).getTime() - new Date(dateB).getTime();
+            }
+            return 0;
+          });
+
           const totalLiveOrders = dashboardFilteredOrders.length;
 
           const uniqueLiveOrdersMap = {};
@@ -1173,7 +1191,6 @@ export default function App() {
 
           const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
 
-          const todayDateStr = new Date().toISOString().split('T')[0];
           const todayTime = new Date(todayDateStr).getTime();
 
           const getDODTimelineStatus = (dodStr) => {
@@ -1279,7 +1296,7 @@ export default function App() {
                   <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live OrderSheet</p>
+                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Customers</p>
                   <h4 className="text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
                 </div>
                 
@@ -1606,11 +1623,16 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 5. MASTER LIST OF ALL ACTIVE LIVE ORDERS (LAST) */}
+              {/* 5. MASTER LIST OF ALL ACTIVE LIVE ORDERS (SORTED BY TODAY'S DOD FIRST) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">
-                  Master List of All Active Live Orders ({dashboardFilteredOrders.length})
-                </h4>
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-black text-amber-400 uppercase">
+                    Master List of All Active Live Orders ({sortedDashboardFilteredOrders.length})
+                  </h4>
+                  <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-bold">
+                    🔥 Sorted: Today's Promised DOD First
+                  </span>
+                </div>
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
@@ -1626,16 +1648,17 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {dashboardFilteredOrders.length === 0 ? (
+                      {sortedDashboardFilteredOrders.length === 0 ? (
                         <tr><td colSpan="8" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
-                        dashboardFilteredOrders.map((ord, idx) => {
+                        sortedDashboardFilteredOrders.map((ord, idx) => {
                           const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                           const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
                           const imageUrl = formatDriveUrl(ord);
+                          const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
 
                           return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
+                            <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
                               <td className="p-3">
                                 {imageUrl ? (
                                   <img
@@ -1656,7 +1679,11 @@ export default function App() {
                               <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
                               <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
                               <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
-                              <td className="p-3 font-mono">{formatDateDDMM(ord.deliveryDate)}</td>
+                              <td className="p-3 font-mono font-bold">
+                                <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
+                                  {formatDateDDMM(ord.deliveryDate)} {isToday && '⭐ (TODAY)'}
+                                </span>
+                              </td>
                               <td className="p-3">
                                 <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
                                   isUnassigned
@@ -1689,7 +1716,7 @@ export default function App() {
                 className={`bg-[#181b22] border rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xl cursor-pointer transition-all ${filterStatus === 'ALL' ? 'border-amber-500 bg-amber-500/5' : 'border-slate-800/90 hover:border-amber-500/50'}`}
               >
                 <div>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active Product</p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Active</p>
                   <h3 className="text-xl sm:text-2xl font-black text-white mt-1">
                     {dynamicTotalActiveCount}
                   </h3>
@@ -1871,7 +1898,7 @@ export default function App() {
                               {order.orderSheetNo || `NJ-2026-00${idx + 1}`}
                             </h4>
                             <p className="text-[10px] text-slate-400 font-mono">
-                              {order.tagNumber || 'GS-NJ-1234'}
+                              {order.tagNumber || 'TAG-8821'}
                             </p>
                             <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
                               (order.orderType || '').toUpperCase() === 'CUSTOMIZATION IN PRODUCT'
@@ -2624,7 +2651,7 @@ export default function App() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. GS-NJ-1234"
+                    placeholder="e.g. TAG-8821"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
                     value={formData.tagNumber}
                     onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })}
@@ -3097,7 +3124,7 @@ export default function App() {
                 <label className="block text-slate-300 font-semibold mb-1">Reminder Note / Task *</label>
                 <input
                   type="text"
-                  placeholder="e.g. Call Karigar SS for bangle casting update"
+                  placeholder="e.g. Call Karigar Vijay for bangle casting update"
                   value={reminderTitleInput}
                   onChange={(e) => setReminderTitleInput(e.target.value)}
                   className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
@@ -3368,7 +3395,7 @@ export default function App() {
                     required
                     name="karigarName"
                     defaultValue={selectedOrderForKarigar.karigarName || ''}
-                    placeholder="e.g. SS KARIGAR"
+                    placeholder="e.g. Craftsman Vijay"
                     className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
                   />
                 </div>
