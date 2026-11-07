@@ -83,6 +83,8 @@ const toProperCase = (str) => {
 };
 
 export default function App() {
+  const { isAuthenticated, loginWithRedirect, logout: auth0Logout, user, isLoading } = useAuth0();
+
   const [activeTab, setActiveTab] = useState('orders');
   const [karigarSubTab, setKarigarSubTab] = useState('Amardeep');
   const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
@@ -299,12 +301,6 @@ export default function App() {
       console.error("Error fetching reminders:", err);
     }
   };
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setShowLoginModal(true);
-    }
-  }, [isLoggedIn]);
 
   useEffect(() => {
     fetchOrdersFromSheet();
@@ -980,19 +976,19 @@ export default function App() {
           </div>
 
           <div className="flex sm:hidden items-center">
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <button
-                onClick={handleLogout}
+                onClick={() => auth0Logout({ logoutParams: { returnTo: window.location.origin } })}
                 className="flex items-center gap-1 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold"
               >
                 <LogOut className="w-3.5 h-3.5" /> Logout
               </button>
             ) : (
               <button
-                onClick={() => setShowLoginModal(true)}
+                onClick={() => loginWithRedirect()}
                 className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-md"
               >
-                <LogIn className="w-3.5 h-3.5" /> Login
+                <LogIn className="w-3.5 h-3.5" /> Auth0 Login
               </button>
             )}
           </div>
@@ -1062,14 +1058,14 @@ export default function App() {
         </nav>
 
         <div className="hidden sm:flex items-center gap-3">
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <div className="flex items-center gap-2">
               <div className="bg-[#111317] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs flex items-center gap-2">
                 <ShieldCheck className="w-4 h-4 text-amber-400" />
-                <span className="text-slate-200 font-bold">{currentUserName} ({currentUserRole})</span>
+                <span className="text-slate-200 font-bold">{user?.email}</span>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={() => auth0Logout({ logoutParams: { returnTo: window.location.origin } })}
                 className="flex items-center gap-1.5 bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer"
               >
                 <LogOut className="w-3.5 h-3.5" /> Logout
@@ -1077,10 +1073,10 @@ export default function App() {
             </div>
           ) : (
             <button
-              onClick={() => setShowLoginModal(true)}
+              onClick={() => loginWithRedirect()}
               className="flex items-center gap-2 bg-gradient-to-r from-amber-500 via-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-4 py-2 rounded-xl text-xs transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
             >
-              <LogIn className="w-4 h-4 text-slate-950" /> LOGIN
+              <LogIn className="w-4 h-4 text-slate-950" /> AUTH0 LOGIN
             </button>
           )}
         </div>
