@@ -1982,12 +1982,14 @@ export default function App() {
                             <div className="text-[11px] text-slate-300 space-x-1">
                               {(() => {
                                 const gWt = order['Gold Weight(g)'] || order.goldWeight;
-                                const dWt = order['Diamond Weight(ct)'];
+                                const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                                const adv = order.advanceAmount;
                                 return (
                                   <>
                                     {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
                                     {gWt && dWt && <span className="text-slate-600">|</span>}
                                     {dWt && <span>Dia: <strong className="text-amber-400 font-bold">{dWt}ct</strong></span>}
+                                    {adv && <><br /><span>Adv: <strong className="text-emerald-400 font-bold">₹{adv}</strong></span></>}
                                   </>
                                 );
                               })()}
@@ -1995,6 +1997,16 @@ export default function App() {
                             <p className="text-[11px] text-slate-400">
                               {order.colorTone || ''} {order.size ? `| Size: ${order.size}` : ''}
                             </p>
+                            
+                            <div className="mt-1 text-xs text-amber-300/90 pt-1 border-t border-slate-800 break-words whitespace-normal max-w-[280px]">
+                              <span className="font-medium text-amber-400">ORDER DESCRIPTION - </span>
+                              <span className="text-gray-300">{order.orderDescription || order.remarks || '--'}</span>
+                            </div>
+
+                            <div className="mt-1 text-xs text-purple-300/90 pt-1 border-t border-slate-800/60 break-words whitespace-normal max-w-[280px]">
+                              <span className="font-medium text-purple-400">DAILY REMARKS - </span>
+                              <span className="text-gray-300">{order.dailyRemarks || '--'}</span>
+                            </div>
                           </td>
                           <td className="p-4">
                             <span className="px-3 py-1.5 rounded-xl bg-[#232d42] text-blue-300 border border-blue-500/30 text-xs font-bold inline-block">
