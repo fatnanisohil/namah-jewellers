@@ -691,7 +691,6 @@ export default function App() {
   };
 
   const buildConsolidatedCustomerMessage = (client) => {
-    // Filter out items that are already delivered from the consolidated WhatsApp slip
     const activeItems = client.ordersList.filter(ord => {
       const status = (ord.productStatus || ord.status || '').toLowerCase();
       return status !== 'delivered';
@@ -829,7 +828,6 @@ export default function App() {
 
   const uniqueCustomers = useMemo(() => {
     const map = {};
-    // Includes all customer orders from sheet without filtering out delivered status for CRM tab visibility
     orders.forEach(o => {
       if (!o.customerName) return;
       const key = o.contactNumber || o.customerName;
@@ -884,7 +882,6 @@ export default function App() {
     });
   }, [orders, offOrdersExecutiveFilter, offOrdersSalesFilter]);
 
-  // BASE ACTIVE ORDERS (Without Status Filter, but respects Search, Sales, and Executive Filters)
   const baseFilteredOrdersForStats = useMemo(() => {
     return orders.filter(order => {
       if ((order.orderStatus || '').toLowerCase() === 'delivered' || (order.productStatus || '').toLowerCase() === 'delivered') {
@@ -908,7 +905,6 @@ export default function App() {
     });
   }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType]);
 
-  // DYNAMIC COUNTS FOR STAT CARDS
   const dynamicTotalActiveCount = baseFilteredOrdersForStats.length;
 
   const dynamicUnderProcessCount = baseFilteredOrdersForStats.filter(o => {
@@ -1166,7 +1162,6 @@ export default function App() {
             return true;
           });
 
-          // SORT MASTER LIST SO TODAY'S DOD APPEARS FIRST
           const todayDateStr = new Date().toISOString().split('T')[0];
           const sortedDashboardFilteredOrders = [...dashboardFilteredOrders].sort((a, b) => {
             const dateA = extractDateOnly(a.deliveryDate);
@@ -1197,54 +1192,6 @@ export default function App() {
           const totalUniqueLiveOrders = Object.keys(uniqueLiveOrdersMap).length;
 
           const dashboardOffOrdersCount = dashboardFilteredOrders.filter(o => !o.isOn).length;
-
-          const todayTime = new Date(todayDateStr).getTime();
-
-          const getDODTimelineStatus = (dodStr) => {
-            const cleanDOD = extractDateOnly(dodStr);
-            if (!cleanDOD || cleanDOD === 'N/A') return { text: 'ON TRACK', color: 'text-slate-400 bg-slate-800/30 border-slate-700', rank: 3 };
-
-            const dodTime = new Date(cleanDOD).getTime();
-            const diffDays = Math.round((dodTime - todayTime) / (1000 * 60 * 60 * 24));
-
-            if (cleanDOD < todayDateStr) {
-              return { text: 'OVERDUE ORDERS', color: 'text-red-400 bg-red-500/10 border-red-500/30', rank: 0 };
-            } else if (cleanDOD === todayDateStr) {
-              return { text: 'DUE TODAY', color: 'text-amber-400 bg-amber-500/10 border-amber-500/30', rank: 1 };
-            } else if (diffDays <= 2) {
-              return { text: 'DUE DATE COMING', color: 'text-orange-400 bg-orange-500/10 border-orange-500/30', rank: 2 };
-            } else {
-              return { text: 'ON TRACK', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30', rank: 3 };
-            }
-          };
-
-          const urgentDODOrdersList = dashboardFilteredOrders.filter(o => {
-            const cleanDelivery = extractDateOnly(o.deliveryDate);
-            if (!cleanDelivery || cleanDelivery === 'N/A') return false;
-            const deliveryTime = new Date(cleanDelivery).getTime();
-            const diffDays = Math.round((deliveryTime - todayTime) / (1000 * 60 * 60 * 24));
-            return diffDays <= 2;
-          }).sort((a, b) => {
-            const timeA = new Date(extractDateOnly(a.deliveryDate)).getTime();
-            const timeB = new Date(extractDateOnly(b.deliveryDate)).getTime();
-            return timeA - timeB;
-          });
-
-          const underProcessOrdersList = dashboardFilteredOrders.filter(o => {
-            const st = getStatusStr(o);
-            return st === 'Under Process';
-          }).sort((a, b) => {
-            const statA = getDODTimelineStatus(a.karigarDod);
-            const statB = getDODTimelineStatus(b.karigarDod);
-
-            if (statA.rank !== statB.rank) {
-              return statA.rank - statB.rank;
-            }
-
-            const timeA = extractDateOnly(a.karigarDod) === 'N/A' ? Infinity : new Date(extractDateOnly(a.karigarDod)).getTime();
-            const timeB = extractDateOnly(b.karigarDod) === 'N/A' ? Infinity : new Date(extractDateOnly(b.karigarDod)).getTime();
-            return timeA - timeB;
-          });
 
           const customerGroups = {};
           dashboardFilteredOrders.forEach(o => {
@@ -1394,71 +1341,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 1. ORDERS ON KARIGAR */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-amber-400 uppercase">
-                  ORDERS ON KARIGAR ({underProcessOrdersList.length})
-                </h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[950px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3 w-20">IMAGE</th>
-                        <th className="p-3">Order / Tag</th>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Sales Person</th>
-                        <th className="p-3">Order Person</th>
-                        <th className="p-3">Karigar Name</th>
-                        <th className="p-3">Karigar DOD</th>
-                        <th className="p-3 text-center">DOD Timeline Update</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {underProcessOrdersList.length === 0 ? (
-                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">No under process orders found.</td></tr>
-                      ) : (
-                        underProcessOrdersList.map((ord, idx) => {
-                          const timeline = getDODTimelineStatus(ord.karigarDod);
-                          const imageUrl = formatDriveUrl(ord);
-                          return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
-                              <td className="p-3">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt=""
-                                    onClick={() => setPreviewImage(imageUrl)}
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Product
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3 font-bold text-amber-400">
-                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
-                              </td>
-                              <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
-                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
-                              <td className="p-3">{ord.karigarName || 'Not Assigned'}</td>
-                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.karigarDod)}</td>
-                              <td className="p-3 text-center">
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${timeline.color}`}>
-                                  {timeline.text}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* 2. CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
+              {/* CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
               <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-emerald-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
@@ -1501,7 +1384,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 3. CUSTOMERS WITH ALL ITEMS "PACKED" */}
+              {/* CUSTOMERS WITH ALL ITEMS "PACKED" */}
               <div id="packed-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-purple-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
@@ -1544,93 +1427,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* 4. 🚨 URGENT ORDERS DOD (<= 2 DAYS) */}
-              <div className="bg-[#181b22] border border-orange-500/30 p-5 rounded-2xl space-y-4 shadow-xl">
-                <div className="flex justify-between items-center border-b border-orange-500/20 pb-3">
-                  <h4 className="text-sm font-black text-orange-400 flex items-center gap-2 uppercase tracking-wide">
-                    <AlertTriangle className="w-4 h-4 text-orange-400" /> 🚨 Urgent Orders (DOD Due in 2 Days or Less / Overdue) ({urgentDODOrdersList.length})
-                  </h4>
-                  <span className="px-3 py-1 bg-orange-500/10 border border-orange-500/30 text-orange-300 rounded-xl text-xs font-bold">
-                    Action Required
-                  </span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3 w-20">IMAGE</th>
-                        <th className="p-3">Order / Tag</th>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Sales Person</th>
-                        <th className="p-3">Order Person</th>
-                        <th className="p-3">Daily Remarks</th>
-                        <th className="p-3">Promised DOD</th>
-                        <th className="p-3">Product Status</th>
-                        <th className="p-3 text-center">Timeline Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {urgentDODOrdersList.length === 0 ? (
-                        <tr><td colSpan="9" className="p-6 text-center text-slate-500">✨ No urgent orders due in 2 days or less. All caught up!</td></tr>
-                      ) : (
-                        urgentDODOrdersList.map((ord, idx) => {
-                          const timeline = getDODTimelineStatus(ord.karigarDod);
-                          const imageUrl = formatDriveUrl(ord);
-                          const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
-                          const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
-
-                          return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
-                              <td className="p-3">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt=""
-                                    onClick={() => setPreviewImage(imageUrl)}
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Product
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3 font-bold text-amber-400">
-                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
-                              </td>
-                              <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
-                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
-                              <td className="p-3 text-slate-300 max-w-xs truncate">{ord.dailyRemarks || '--'}</td>
-                              <td className="p-3 font-mono font-bold text-amber-300">{formatDateDDMM(ord.deliveryDate)}</td>
-                              <td className="p-3">
-                                <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
-                                  isUnassigned
-                                    ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
-                                    : (ord.productStatus || '').toLowerCase() === 'packed'
-                                    ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
-                                    : (ord.productStatus || '').toLowerCase().includes('bill pending')
-                                    ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
-                                    : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
-                                }`}>
-                                  {isUnassigned ? '--Not Assign--' : ord.productStatus}
-                                </span>
-                              </td>
-                              <td className="p-3 text-center">
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border ${timeline.color}`}>
-                                  {timeline.text}
-                                </span>
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* 5. MASTER LIST OF ALL ACTIVE LIVE ORDERS (SORTED BY TODAY'S DOD FIRST) */}
+              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (SORTED BY TODAY'S DOD FIRST) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <div className="flex justify-between items-center">
                   <h4 className="text-sm font-black text-amber-400 uppercase">
@@ -3081,7 +2878,6 @@ export default function App() {
                         </div>
                         <p className="text-xs text-slate-400">Karigar DOD: <strong className="text-emerald-400">{extractDateOnly(order.karigarDod)}</strong></p>
 
-                        {/* DIRECT PRODUCT STATUS DROPDOWN & WHATSAPP BUTTON */}
                         <div className="space-y-2 pt-1 border-t border-slate-800">
                           <div className="flex items-center justify-between">
                             <span className="text-[11px] text-slate-400 font-semibold">Status:</span>
