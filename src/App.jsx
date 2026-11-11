@@ -691,10 +691,16 @@ export default function App() {
   };
 
   const buildConsolidatedCustomerMessage = (client) => {
+    // Filter out items that are already delivered from the consolidated WhatsApp slip
+    const activeItems = client.ordersList.filter(ord => {
+      const status = (ord.productStatus || ord.status || '').toLowerCase();
+      return status !== 'delivered';
+    });
+
     const firstOrder = client.ordersList[0] || {};
     const salesPersonName = firstOrder.salesPerson || 'N/A';
     const salesPersonPhone = SALESPERSON_NUMBERS[salesPersonName] || 'N/A';
-    const advanceTotal = client.ordersList.reduce((sum, ord) => sum + (parseFloat(ord.advanceAmount) || 0), 0);
+    const advanceTotal = activeItems.reduce((sum, ord) => sum + (parseFloat(ord.advanceAmount) || 0), 0);
 
     let msg = `*Namah Jewellers - Consolidated Order Slip*\n\n` +
       `👤 *Customer:* ${client.customerName}\n` +
@@ -706,10 +712,10 @@ export default function App() {
       msg += `💵 *Total Advance Paid:* ₹${advanceTotal}\n`;
     }
 
-    msg += `📦 *Total Items Ordered:* ${client.ordersList.length}\n\n` +
+    msg += `📦 *Total Active Items Ordered:* ${activeItems.length}\n\n` +
       `-----------------------------------\n\n`;
 
-    client.ordersList.forEach((ord, index) => {
+    activeItems.forEach((ord, index) => {
       const goldWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
       const diamondWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
       const imgUrl = formatDriveUrl(ord);
@@ -823,6 +829,7 @@ export default function App() {
 
   const uniqueCustomers = useMemo(() => {
     const map = {};
+    // Includes all customer orders from sheet without filtering out delivered status for CRM tab visibility
     orders.forEach(o => {
       if (!o.customerName) return;
       const key = o.contactNumber || o.customerName;
@@ -1212,16 +1219,16 @@ export default function App() {
           };
 
           const urgentDODOrdersList = dashboardFilteredOrders.filter(o => {
-    const cleanDelivery = extractDateOnly(o.deliveryDate);
-    if (!cleanDelivery || cleanDelivery === 'N/A') return false;
-    const deliveryTime = new Date(cleanDelivery).getTime();
-    const diffDays = Math.round((deliveryTime - todayTime) / (1000 * 60 * 60 * 24));
-    return diffDays <= 2;
-  }).sort((a, b) => {
-    const timeA = new Date(extractDateOnly(a.deliveryDate)).getTime();
-    const timeB = new Date(extractDateOnly(b.deliveryDate)).getTime();
-    return timeA - timeB;
-  });
+            const cleanDelivery = extractDateOnly(o.deliveryDate);
+            if (!cleanDelivery || cleanDelivery === 'N/A') return false;
+            const deliveryTime = new Date(cleanDelivery).getTime();
+            const diffDays = Math.round((deliveryTime - todayTime) / (1000 * 60 * 60 * 24));
+            return diffDays <= 2;
+          }).sort((a, b) => {
+            const timeA = new Date(extractDateOnly(a.deliveryDate)).getTime();
+            const timeB = new Date(extractDateOnly(b.deliveryDate)).getTime();
+            return timeA - timeB;
+          });
 
           const underProcessOrdersList = dashboardFilteredOrders.filter(o => {
             const st = getStatusStr(o);
