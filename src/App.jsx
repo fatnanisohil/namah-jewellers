@@ -335,6 +335,7 @@ export default function App() {
   }, [isLoggedIn, currentUserRole, currentUserName]);
 
   const isAuthorizedToEdit = isLoggedIn && (currentUserRole === 'Senior Admin (Admin)' || currentUserRole === 'Admin' || currentUserRole === 'Order Processing');
+  const isAdminUser = isLoggedIn && (currentUserRole === 'Senior Admin (Admin)' || currentUserRole === 'Admin');
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -545,6 +546,11 @@ export default function App() {
   };
 
   const handleStatusChange = async (orderSheetNo, tagNumber, jewelleryItem, newStatus) => {
+    if (newStatus.toLowerCase() === 'delivered' && !isAdminUser) {
+      alert("🔒 Access Restricted: Only Admins can set status to Delivered.");
+      return;
+    }
+
     if (!isAuthorizedToEdit) {
       alert("🔒 Access Restricted: Please login as Admin or Order Desk to change product statuses.");
       return;
@@ -830,6 +836,9 @@ export default function App() {
     const map = {};
     orders.forEach(o => {
       if (!o.customerName) return;
+      const status = (o.orderStatus || o.productStatus || '').toLowerCase();
+      if (status === 'delivered') return;
+
       const key = o.contactNumber || o.customerName;
       if (!map[key]) {
         map[key] = {
@@ -1644,6 +1653,7 @@ export default function App() {
                     <option value="Under Process" className="bg-[#181b22]">Under Process</option>
                     <option value="Ready but bill pending" className="bg-[#181b22]">Ready but bill pending</option>
                     <option value="Packed" className="bg-[#181b22]">Packed</option>
+                    {isAdminUser && <option value="Delivered" className="bg-[#181b22]">Delivered</option>}
                     <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
                   </select>
                 </div>
@@ -1859,6 +1869,7 @@ export default function App() {
                                 <option value="Under Process" className="bg-[#181b22] text-amber-300">Under Process</option>
                                 <option value="Ready but bill pending" className="bg-[#181b22] text-emerald-300">Ready but bill pending</option>
                                 <option value="Packed" className="bg-[#181b22] text-purple-300">Packed</option>
+                                {isAdminUser && <option value="Delivered" className="bg-[#181b22] text-blue-300">Delivered</option>}
                               </select>
                             ) : (
                               <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border whitespace-nowrap inline-block ${
@@ -1868,6 +1879,8 @@ export default function App() {
                                   ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                                   : (order.productStatus || '').toLowerCase().includes('bill pending')
                                   ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                                  : (order.productStatus || '').toLowerCase() === 'delivered'
+                                  ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
                                   : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
                               }`}>
                                 {isAssigned && order.productStatus && !order.productStatus.includes('Not Assign') ? order.productStatus : '--Not Assign--'}
@@ -2056,6 +2069,8 @@ export default function App() {
                                 ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                                 : (order.productStatus || '').toLowerCase().includes('bill pending')
                                 ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                                : (order.productStatus || '').toLowerCase() === 'delivered'
+                                ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
                                 : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
                             }`}>
                               {isAssigned && order.productStatus && !order.productStatus.includes('Not Assign') ? order.productStatus : '--Not Assign--'}
@@ -2902,6 +2917,7 @@ export default function App() {
                                 <option value="Under Process" className="bg-[#181b22] text-amber-300">Under Process</option>
                                 <option value="Ready but bill pending" className="bg-[#181b22] text-emerald-300">Ready but bill pending</option>
                                 <option value="Packed" className="bg-[#181b22] text-purple-300">Packed</option>
+                                {isAdminUser && <option value="Delivered" className="bg-[#181b22] text-blue-300">Delivered</option>}
                               </select>
                             ) : (
                               <span className="text-xs font-bold text-amber-300">{order.productStatus || 'Under Process'}</span>
@@ -3143,6 +3159,8 @@ export default function App() {
                         ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
                         : ord.productStatus.toLowerCase().includes('bill pending')
                         ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                        : ord.productStatus.toLowerCase() === 'delivered'
+                        ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
                         : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
                     }`}>
                       {ord.productStatus && !ord.productStatus.includes('Not Assign') ? ord.productStatus : '--Not Assign--'}
