@@ -1350,6 +1350,88 @@ export default function App() {
                 </div>
               </div>
 
+              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (SORTED BY TODAY'S DOD FIRST) */}
+              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-black text-amber-400 uppercase">
+                    Master List of All Active Live Orders ({sortedDashboardFilteredOrders.length})
+                  </h4>
+                  <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-bold">
+                    🔥 Sorted: Today's Promised DOD First
+                  </span>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
+                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
+                      <tr>
+                        <th className="p-3 w-20">IMAGE</th>
+                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3">Customer Name</th>
+                        <th className="p-3">Sales Person</th>
+                        <th className="p-3">Order Person</th>
+                        <th className="p-3">DOD (Promised)</th>
+                        <th className="p-3">Product Status</th>
+                        <th className="p-3">Daily Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/50">
+                      {sortedDashboardFilteredOrders.length === 0 ? (
+                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
+                      ) : (
+                        sortedDashboardFilteredOrders.map((ord, idx) => {
+                          const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
+                          const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
+                          const imageUrl = formatDriveUrl(ord);
+                          const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
+
+                          return (
+                            <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
+                              <td className="p-3">
+                                {imageUrl ? (
+                                  <img
+                                    src={imageUrl}
+                                    alt=""
+                                    onClick={() => setPreviewImage(imageUrl)}
+                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
+                                    Product
+                                  </div>
+                                )}
+                              </td>
+                              <td className="p-3 font-bold text-amber-400">
+                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
+                              </td>
+                              <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
+                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
+                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
+                              <td className="p-3 font-mono font-bold">
+                                <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
+                                  {formatDateDDMM(ord.deliveryDate)} {isToday && '⭐ (TODAY)'}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
+                                  isUnassigned
+                                    ? 'bg-slate-900 text-slate-400 border-slate-700'
+                                    : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                                }`}>
+                                  {isUnassigned ? '--Not Assign--' : ord.productStatus}
+                                </span>
+                              </td>
+                              <td className="p-3 text-slate-300 max-w-xs truncate">
+                                {ord.dailyRemarks || '--'}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
               {/* CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
               <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <h4 className="text-sm font-black text-emerald-400 uppercase">
@@ -1426,88 +1508,6 @@ export default function App() {
                               <td className="p-3">{cust.items.length}</td>
                               <td className="p-3 text-amber-400 font-mono">
                                 {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-
-              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (SORTED BY TODAY'S DOD FIRST) */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-black text-amber-400 uppercase">
-                    Master List of All Active Live Orders ({sortedDashboardFilteredOrders.length})
-                  </h4>
-                  <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-bold">
-                    🔥 Sorted: Today's Promised DOD First
-                  </span>
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
-                    <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
-                      <tr>
-                        <th className="p-3 w-20">IMAGE</th>
-                        <th className="p-3">Order / Tag</th>
-                        <th className="p-3">Customer Name</th>
-                        <th className="p-3">Sales Person</th>
-                        <th className="p-3">Order Person</th>
-                        <th className="p-3">DOD (Promised)</th>
-                        <th className="p-3">Product Status</th>
-                        <th className="p-3">Daily Remarks</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800/50">
-                      {sortedDashboardFilteredOrders.length === 0 ? (
-                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
-                      ) : (
-                        sortedDashboardFilteredOrders.map((ord, idx) => {
-                          const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
-                          const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
-                          const imageUrl = formatDriveUrl(ord);
-                          const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
-
-                          return (
-                            <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
-                              <td className="p-3">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt=""
-                                    onClick={() => setPreviewImage(imageUrl)}
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Product
-                                  </div>
-                                )}
-                              </td>
-                              <td className="p-3 font-bold text-amber-400">
-                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
-                              </td>
-                              <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
-                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
-                              <td className="p-3 font-mono font-bold">
-                                <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
-                                  {formatDateDDMM(ord.deliveryDate)} {isToday && '⭐ (TODAY)'}
-                                </span>
-                              </td>
-                              <td className="p-3">
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
-                                  isUnassigned
-                                    ? 'bg-slate-900 text-slate-400 border-slate-700'
-                                    : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
-                                }`}>
-                                  {isUnassigned ? '--Not Assign--' : ord.productStatus}
-                                </span>
-                              </td>
-                              <td className="p-3 text-slate-300 max-w-xs truncate">
-                                {ord.dailyRemarks || '--'}
                               </td>
                             </tr>
                           );
