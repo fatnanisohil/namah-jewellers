@@ -163,7 +163,7 @@ export default function App() {
     orderSheetNo: '',
     salesPerson: '',
     jewelleryItem: '',
-    otherJewelleryItem: '', // Custom text if 'OTHER' selected
+    otherJewelleryItem: '',
     tagNumber: '',
     productImageLink: '',
     imageBase64: '',
@@ -1198,21 +1198,65 @@ export default function App() {
           });
 
           const todayDateStr = new Date().toISOString().split('T')[0];
-          const sortedDashboardFilteredOrders = [...dashboardFilteredOrders].sort((a, b) => {
-            const dateA = extractDateOnly(a.deliveryDate);
-            const dateB = extractDateOnly(b.deliveryDate);
-            
-            const isTodayA = dateA === todayDateStr;
-            const isTodayB = dateB === todayDateStr;
 
-            if (isTodayA && !isTodayB) return -1;
-            if (!isTodayA && isTodayB) return 1;
+          // Group dashboardFilteredOrders by Customer Name so each customer appears only ONCE
+          const groupedMasterCustomersMap = {};
+          dashboardFilteredOrders.forEach(ord => {
+            const custKey = (ord.customerName || 'Unknown').trim().toUpperCase();
+            if (!groupedMasterCustomersMap[custKey]) {
+              groupedMasterCustomersMap[custKey] = {
+                customerName: ord.customerName || 'N/A',
+                contactNumber: ord.contactNumber || '',
+                items: [],
+                earliestDod: extractDateOnly(ord.deliveryDate),
+                hasTodayDod: extractDateOnly(ord.deliveryDate) === todayDateStr
+              };
+            }
+            groupedMasterCustomersMap[custKey].items.push(ord);
 
-            if (dateA !== 'N/A' && dateB !== 'N/A') {
-              return new Date(dateA).getTime() - new Date(dateB).getTime();
+            const cleanDod = extractDateOnly(ord.deliveryDate);
+            if (cleanDod === todayDateStr) {
+              groupedMasterCustomersMap[custKey].hasTodayDod = true;
+            }
+            if (cleanDod !== 'N/A') {
+              if (groupedMasterCustomersMap[custKey].earliestDod === 'N/A' || cleanDod < groupedMasterCustomersMap[custKey].earliestDod) {
+                groupedMasterCustomersMap[custKey].earliestDod = cleanDod;
+              }
+            }
+          });
+
+          const consolidatedMasterList = Object.values(groupedMasterCustomersMap).sort((a, b) => {
+            if (a.hasTodayDod && !b.hasTodayDod) return -1;
+            if (!a.hasTodayDod && b.hasTodayDod) return 1;
+            if (a.earliestDod !== 'N/A' && b.earliestDod !== 'N/A') {
+              return new Date(a.earliestDod).getTime() - new Date(b.earliestDod).getTime();
             }
             return 0;
           });
+
+          // Export CSV handler for Master List of All Active Live Orders
+          const handleExportMasterListCSV = () => {
+            const headers = "Customer Name,Order / Tag,Jewellery Item / Tag,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
+            const rows = consolidatedMasterList.map(cust => {
+              const custName = `"${(cust.customerName || '').replace(/"/g, '""')}"`;
+              const orderTags = `"${cust.items.map(i => `${i.orderSheetNo || ''} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
+              const itemTags = `"${cust.items.map(i => `${i.jewelleryItem || 'N/A'} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
+              const salesP = `"${Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ').replace(/"/g, '""')}"`;
+              const orderP = `"${Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ').replace(/"/g, '""')}"`;
+              const dods = `"${cust.items.map(i => formatDateDDMM(i.deliveryDate)).join(' | ').replace(/"/g, '""')}"`;
+              const statuses = `"${cust.items.map(i => getStatusStr(i)).join(' | ').replace(/"/g, '""')}"`;
+              const remarks = `"${cust.items.map(i => i.dailyRemarks || '--').join(' | ').replace(/"/g, '""')}"`;
+
+              return `${custName},${orderTags},${itemTags},${salesP},${orderP},${dods},${statuses},${remarks}`;
+            }).join("\n");
+
+            const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Master_Live_Orders_Consolidated_${todayDateStr}.csv`;
+            a.click();
+          };
 
           const totalLiveOrders = dashboardFilteredOrders.length;
 
@@ -1376,23 +1420,35 @@ export default function App() {
                 </div>
               </div>
 
-              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (SORTED BY TODAY'S DOD FIRST) */}
+              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (CONSOLIDATED ONE ROW PER CUSTOMER + EXPORT BUTTON + JEWELLERY ITEM/TAG COLUMN) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <div className="flex justify-between items-center">
-                  <h4 className="text-sm font-black text-amber-400 uppercase">
-                    Master List of All Active Live Orders ({sortedDashboardFilteredOrders.length})
-                  </h4>
-                  <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-bold">
-                    🔥 Sorted: Today's Promised DOD First
-                  </span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <div>
+                    <h4 className="text-sm font-black text-amber-400 uppercase">
+                      Master List of All Active Live Orders ({consolidatedMasterList.length} Customers / {dashboardFilteredOrders.length} Items)
+                    </h4>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <button
+                      onClick={handleExportMasterListCSV}
+                      className="bg-[#222630] hover:bg-[#2c3240] text-amber-400 border border-amber-500/30 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Export Master List CSV
+                    </button>
+                    <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-bold">
+                      🔥 Sorted: Today's Promised DOD First
+                    </span>
+                  </div>
                 </div>
+
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[1250px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
-                        <th className="p-3 w-20">IMAGE</th>
-                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3 w-24">IMAGE</th>
                         <th className="p-3">Customer Name</th>
+                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3">Jewellery Item / Tag</th>
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Order Person</th>
                         <th className="p-3">DOD (Promised)</th>
@@ -1401,53 +1457,111 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {sortedDashboardFilteredOrders.length === 0 ? (
-                        <tr><td colSpan="8" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
+                      {consolidatedMasterList.length === 0 ? (
+                        <tr><td colSpan="9" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
-                        sortedDashboardFilteredOrders.map((ord, idx) => {
-                          const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
-                          const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
-                          const imageUrl = formatDriveUrl(ord);
-                          const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
+                        consolidatedMasterList.map((cust, idx) => {
+                          const salesPersonsList = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ') || 'N/A';
+                          const orderPersonsList = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ') || 'N/A';
 
                           return (
-                            <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
+                            <tr key={idx} className={`hover:bg-[#111318]/50 align-top ${cust.hasTodayDod ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
+                              {/* Images stacked for all items of this customer */}
                               <td className="p-3">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt=""
-                                    onClick={() => setPreviewImage(imageUrl)}
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Product
-                                  </div>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {cust.items.map((item, iIdx) => {
+                                    const imgUrl = formatDriveUrl(item);
+                                    return imgUrl ? (
+                                      <img
+                                        key={iIdx}
+                                        src={imgUrl}
+                                        alt=""
+                                        onClick={() => setPreviewImage(imgUrl)}
+                                        className="w-11 h-11 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                      />
+                                    ) : (
+                                      <div key={iIdx} className="w-11 h-11 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
+                                        Item {iIdx + 1}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+
+                              {/* Single Customer Name */}
+                              <td className="p-3 font-bold text-slate-100">
+                                <div className="text-sm">{cust.customerName}</div>
+                                {cust.items.length > 1 && (
+                                  <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-300 border border-amber-500/30 text-[10px] font-bold">
+                                    {cust.items.length} Items
+                                  </span>
                                 )}
                               </td>
-                              <td className="p-3 font-bold text-amber-400">
-                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
+
+                              {/* Order / Tag stacked per item */}
+                              <td className="p-3 space-y-1.5">
+                                {cust.items.map((item, iIdx) => (
+                                  <div key={iIdx} className="font-bold text-amber-400">
+                                    {item.orderSheetNo || 'N/A'} <span className="text-slate-500 font-mono font-normal">({item.tagNumber || 'NA'})</span>
+                                  </div>
+                                ))}
                               </td>
-                              <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
-                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
-                              <td className="p-3 font-mono font-bold">
-                                <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
-                                  {formatDateDDMM(ord.deliveryDate)} {isToday && '⭐ (TODAY)'}
-                                </span>
+
+                              {/* New Column: Jewellery Item / Tag */}
+                              <td className="p-3 space-y-1.5">
+                                {cust.items.map((item, iIdx) => (
+                                  <div key={iIdx} className="font-semibold text-slate-200">
+                                    {item.jewelleryItem || 'N/A'} <span className="text-amber-300/80 font-mono text-[11px]">({item.tagNumber || 'NA'})</span>
+                                  </div>
+                                ))}
                               </td>
-                              <td className="p-3">
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
-                                  isUnassigned
-                                    ? 'bg-slate-900 text-slate-400 border-slate-700'
-                                    : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
-                                }`}>
-                                  {isUnassigned ? '--Not Assign--' : ord.productStatus}
-                                </span>
+
+                              {/* Sales Person */}
+                              <td className="p-3 text-amber-300 font-medium">{salesPersonsList}</td>
+
+                              {/* Order Person */}
+                              <td className="p-3 text-blue-300 font-medium">{orderPersonsList}</td>
+
+                              {/* DOD (Promised) stacked per item */}
+                              <td className="p-3 font-mono font-bold space-y-1.5">
+                                {cust.items.map((item, iIdx) => {
+                                  const isToday = extractDateOnly(item.deliveryDate) === todayDateStr;
+                                  return (
+                                    <div key={iIdx}>
+                                      <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
+                                        {formatDateDDMM(item.deliveryDate)} {isToday && '⭐ (TODAY)'}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
                               </td>
-                              <td className="p-3 text-slate-300 max-w-xs truncate">
-                                {ord.dailyRemarks || '--'}
+
+                              {/* Product Status stacked per item */}
+                              <td className="p-3 space-y-1.5">
+                                {cust.items.map((item, iIdx) => {
+                                  const rawStatus = item.productStatus ? String(item.productStatus).trim() : '';
+                                  const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
+                                  return (
+                                    <div key={iIdx}>
+                                      <span className={`px-2.5 py-0.5 rounded-xl text-[10px] font-bold border inline-block ${
+                                        isUnassigned
+                                          ? 'bg-slate-900 text-slate-400 border-slate-700'
+                                          : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                                      }`}>
+                                        {isUnassigned ? '--Not Assign--' : item.productStatus}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </td>
+
+                              {/* Daily Remarks stacked per item */}
+                              <td className="p-3 text-slate-300 max-w-xs space-y-1.5">
+                                {cust.items.map((item, iIdx) => (
+                                  <div key={iIdx} className="truncate">
+                                    {item.dailyRemarks || '--'}
+                                  </div>
+                                ))}
                               </td>
                             </tr>
                           );
