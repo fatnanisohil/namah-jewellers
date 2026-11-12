@@ -102,6 +102,11 @@ export default function App() {
   const [reminderDateInput, setReminderDateInput] = useState('');
   const [reminderTargetExec, setReminderTargetExec] = useState('Amardeep');
   const [reminderSetByInput, setReminderSetByInput] = useState('Sohil');
+
+  // Advanced Export Modal States
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState('');
+  const [exportEndDate, setExportEndDate] = useState('');
   
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('namah_logged_in') === 'true';
@@ -647,15 +652,36 @@ export default function App() {
     }
   };
 
-  const exportCSV = () => {
-    const headers = "Order Sheet,Tag Number,Customer,Contact,Item,Purity,Gold Wt,Diamond Wt,Advance,Sales,Executive,Status\n";
-    const rows = orders.map(o => `${o.orderSheetNo},${o.tagNumber},${o.customerName},${o.contactNumber},${o.jewelleryItem},${o.purity},${o['Gold Weight(g)'] || o.goldWeight},${o['Diamond Weight(ct)'] || o.diamondWeight},${o.advanceAmount || ''},${o.salesPerson},${o.orderPerson},${o.productStatus}`).join("\n");
-    const blob = new Blob([headers + rows], { type: 'text/csv' });
+  const handleExportFilteredCSV = () => {
+    let listToExport = filteredOrders;
+
+    if (exportStartDate && exportEndDate) {
+      listToExport = filteredOrders.filter(o => {
+        const cleanDOD = extractDateOnly(o.deliveryDate);
+        if (!cleanDOD || cleanDOD === 'N/A') return false;
+        return cleanDOD >= exportStartDate && cleanDOD <= exportEndDate;
+      });
+    }
+
+    const headers = "Order Sheet,Customer Name,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
+    const rows = listToExport.map(o => {
+      const sheetNo = `"${(o.orderSheetNo || '').replace(/"/g, '""')}"`;
+      const custName = `"${(o.customerName || '').replace(/"/g, '""')}"`;
+      const salesP = `"${(o.salesPerson || '').replace(/"/g, '""')}"`;
+      const orderP = `"${(o.orderPerson || '').replace(/"/g, '""')}"`;
+      const dod = `"${formatDDMM(o.deliveryDate).replace(/"/g, '""')}"`;
+      const status = `"${(o.productStatus || '').replace(/"/g, '""')}"`;
+      const remarks = `"${(o.dailyRemarks || '').replace(/"/g, '""')}"`;
+      return `${sheetNo},${custName},${salesP},${orderP},${dod},${status},${remarks}`;
+    }).join("\n");
+
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'Namah_Jewellers_Orders.csv';
+    a.download = `Namah_Orders_Export_${exportStartDate || 'All'}_to_${exportEndDate || 'All'}.csv`;
     a.click();
+    setShowExportModal(false);
   };
 
   const buildWhatsAppMessage = (order) => {
@@ -1588,10 +1614,10 @@ export default function App() {
             <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 flex flex-col lg:flex-row items-center justify-between gap-4 shadow-2xl">
               <div className="flex items-center gap-3 w-full lg:w-auto">
                 <button
-                  onClick={exportCSV}
+                  onClick={() => setShowExportModal(true)}
                   className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer"
                 >
-                  <Download className="w-4 h-4 text-slate-400" /> Export CSV
+                  <Download className="w-4 h-4 text-slate-400" /> Export Advanced CSV
                 </button>
 
                 <button
@@ -2937,6 +2963,66 @@ export default function App() {
           );
         })()}
       </main>
+
+      {showExportModal && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+              <h3 className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+                <Download className="w-4 h-4" /> Export Advanced Orders CSV
+              </h3>
+              <button onClick={() => setShowExportModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-400">
+              Select a Promised Delivery Date (DOD) range for export, or leave blank to export all currently filtered orders.
+            </p>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Start Date (Promised DOD)</label>
+                <input
+                  type="date"
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">End Date (Promised DOD)</label>
+                <input
+                  type="date"
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => {
+                  setExportStartDate('');
+                  setExportEndDate('');
+                  setShowExportModal(false);
+                }}
+                className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleExportFilteredCSV}
+                className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer shadow-md flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" /> Download CSV
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddReminderModal && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
