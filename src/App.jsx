@@ -103,10 +103,21 @@ export default function App() {
   const [reminderTargetExec, setReminderTargetExec] = useState('Amardeep');
   const [reminderSetByInput, setReminderSetByInput] = useState('Sohil');
 
-  // Advanced Export Modal States
+  // Advanced Export Modal States (Orders Tab)
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportStartDate, setExportStartDate] = useState('');
   const [exportEndDate, setExportEndDate] = useState('');
+  const [exportSalesperson, setExportSalesperson] = useState('ALL');
+  const [exportExecutive, setExportExecutive] = useState('ALL');
+  const [exportStatus, setExportStatus] = useState('ALL');
+
+  // Advanced Export Modal States (Dashboard Master List)
+  const [showMasterExportModal, setShowMasterExportModal] = useState(false);
+  const [masterExportStartDate, setMasterExportStartDate] = useState('');
+  const [masterExportEndDate, setMasterExportEndDate] = useState('');
+  const [masterExportSalesperson, setMasterExportSalesperson] = useState('ALL');
+  const [masterExportExecutive, setMasterExportExecutive] = useState('ALL');
+  const [masterExportStatus, setMasterExportStatus] = useState('ALL');
   
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
     return localStorage.getItem('namah_logged_in') === 'true';
@@ -652,15 +663,55 @@ export default function App() {
     }
   };
 
+  const matchesStatusFilter = (order, selectedStatus) => {
+    if (selectedStatus === 'ALL') return true;
+    const pStatus = (order.productStatus || '--Not Assign--').toLowerCase();
+    if (selectedStatus === 'Under Process') {
+      return pStatus.includes('process') || pStatus === 'assigned';
+    }
+    if (selectedStatus === 'Ready but bill pending') {
+      return pStatus === 'ready but bill pending' || pStatus.includes('bill pending');
+    }
+    if (selectedStatus === 'Packed') {
+      return pStatus === 'packed';
+    }
+    if (selectedStatus === '--Not Assign--') {
+      return !order.productStatus || order.productStatus === '' || pStatus.includes('not assign');
+    }
+    return pStatus === selectedStatus.toLowerCase();
+  };
+
   const handleExportFilteredCSV = () => {
     let listToExport = filteredOrders;
 
     if (exportStartDate && exportEndDate) {
-      listToExport = filteredOrders.filter(o => {
+      listToExport = listToExport.filter(o => {
         const cleanDOD = extractDateOnly(o.deliveryDate);
         if (!cleanDOD || cleanDOD === 'N/A') return false;
         return cleanDOD >= exportStartDate && cleanDOD <= exportEndDate;
       });
+    } else if (exportStartDate) {
+      listToExport = listToExport.filter(o => {
+        const cleanDOD = extractDateOnly(o.deliveryDate);
+        return cleanDOD !== 'N/A' && cleanDOD >= exportStartDate;
+      });
+    } else if (exportEndDate) {
+      listToExport = listToExport.filter(o => {
+        const cleanDOD = extractDateOnly(o.deliveryDate);
+        return cleanDOD !== 'N/A' && cleanDOD <= exportEndDate;
+      });
+    }
+
+    if (exportSalesperson !== 'ALL') {
+      listToExport = listToExport.filter(o => (o.salesPerson || '') === exportSalesperson);
+    }
+
+    if (exportExecutive !== 'ALL') {
+      listToExport = listToExport.filter(o => (o.orderPerson || '') === exportExecutive);
+    }
+
+    if (exportStatus !== 'ALL') {
+      listToExport = listToExport.filter(o => matchesStatusFilter(o, exportStatus));
     }
 
     const headers = "Order Sheet,Customer Name,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
@@ -670,7 +721,7 @@ export default function App() {
       const salesP = `"${(o.salesPerson || '').replace(/"/g, '""')}"`;
       const orderP = `"${(o.orderPerson || '').replace(/"/g, '""')}"`;
       const dod = `"${formatDDMM(o.deliveryDate).replace(/"/g, '""')}"`;
-      const status = `"${(o.productStatus || '').replace(/"/g, '""')}"`;
+      const status = `"${(o.productStatus || '--Not Assign--').replace(/"/g, '""')}"`;
       const remarks = `"${(o.dailyRemarks || '').replace(/"/g, '""')}"`;
       return `${sheetNo},${custName},${salesP},${orderP},${dod},${status},${remarks}`;
     }).join("\n");
@@ -959,29 +1010,7 @@ export default function App() {
 
   const filteredOrders = useMemo(() => {
     const filtered = baseFilteredOrdersForStats.filter(order => {
-      if (filterStatus !== 'ALL') {
-        const pStatus = (order.productStatus || '--Not Assign--').toLowerCase();
-        if (filterStatus === 'Under Process') {
-          if (!(pStatus.includes('process') || pStatus === 'assigned')) {
-            return false;
-          }
-        } else if (filterStatus === 'Ready but bill pending') {
-          if (!(pStatus === 'ready but bill pending' || pStatus.includes('bill pending'))) {
-            return false;
-          }
-        } else if (filterStatus === 'Packed') {
-          if (!(pStatus === 'packed')) {
-            return false;
-          }
-        } else if (filterStatus === '--Not Assign--') {
-          if (!(!order.productStatus || order.productStatus === '' || pStatus.includes('not assign'))) {
-            return false;
-          }
-        } else if (pStatus !== filterStatus.toLowerCase()) {
-          return false;
-        }
-      }
-
+      if (!matchesStatusFilter(order, filterStatus)) return false;
       return true;
     });
 
@@ -1198,38 +1227,72 @@ export default function App() {
           });
 
           const todayDateStr = new Date().toISOString().split('T')[0];
-          const sortedDashboardFilteredOrders = [...dashboardFilteredOrders].sort((a, b) => {
-            const dateA = extractDateOnly(a.deliveryDate);
-            const dateB = extractDateOnly(b.deliveryDate);
-            
-            const isTodayA = dateA === todayDateStr;
-            const isTodayB = dateB === todayDateStr;
+
+          const sortedMasterLiveOrders = [...dashboardFilteredOrders].sort((a, b) => {
+            const dodA = extractDateOnly(a.deliveryDate);
+            const dodB = extractDateOnly(b.deliveryDate);
+            const isTodayA = dodA === todayDateStr;
+            const isTodayB = dodB === todayDateStr;
 
             if (isTodayA && !isTodayB) return -1;
             if (!isTodayA && isTodayB) return 1;
 
-            if (dateA !== 'N/A' && dateB !== 'N/A') {
-              return new Date(dateA).getTime() - new Date(dateB).getTime();
+            if (dodA !== 'N/A' && dodB !== 'N/A') {
+              return new Date(dodA).getTime() - new Date(dodB).getTime();
             }
             return 0;
           });
 
-          // Export CSV handler: Consolidates one customer into one row and includes Jewellery Item / Tag column ONLY in the exported CSV
+          // Consolidated One-Row-Per-Customer CSV Export with Date Range + Salesperson + Order Executive + Product Status Filters
           const handleExportMasterListCSV = () => {
-            const groupedForExport = {};
-            sortedDashboardFilteredOrders.forEach(ord => {
+            let listToExport = sortedMasterLiveOrders;
+
+            if (masterExportStartDate && masterExportEndDate) {
+              listToExport = listToExport.filter(o => {
+                const cleanDOD = extractDateOnly(o.deliveryDate);
+                if (!cleanDOD || cleanDOD === 'N/A') return false;
+                return cleanDOD >= masterExportStartDate && cleanDOD <= masterExportEndDate;
+              });
+            } else if (masterExportStartDate) {
+              listToExport = listToExport.filter(o => {
+                const cleanDOD = extractDateOnly(o.deliveryDate);
+                return cleanDOD !== 'N/A' && cleanDOD >= masterExportStartDate;
+              });
+            } else if (masterExportEndDate) {
+              listToExport = listToExport.filter(o => {
+                const cleanDOD = extractDateOnly(o.deliveryDate);
+                return cleanDOD !== 'N/A' && cleanDOD <= masterExportEndDate;
+              });
+            }
+
+            if (masterExportSalesperson !== 'ALL') {
+              listToExport = listToExport.filter(o => (o.salesPerson || '') === masterExportSalesperson);
+            }
+
+            if (masterExportExecutive !== 'ALL') {
+              listToExport = listToExport.filter(o => (o.orderPerson || '') === masterExportExecutive);
+            }
+
+            if (masterExportStatus !== 'ALL') {
+              listToExport = listToExport.filter(o => matchesStatusFilter(o, masterExportStatus));
+            }
+
+            const groupedMap = {};
+            listToExport.forEach(ord => {
               const custKey = (ord.customerName || 'Unknown').trim().toUpperCase();
-              if (!groupedForExport[custKey]) {
-                groupedForExport[custKey] = {
+              if (!groupedMap[custKey]) {
+                groupedMap[custKey] = {
                   customerName: ord.customerName || 'N/A',
                   items: []
                 };
               }
-              groupedForExport[custKey].items.push(ord);
+              groupedMap[custKey].items.push(ord);
             });
 
+            const consolidatedRows = Object.values(groupedMap);
+
             const headers = "Customer Name,Order / Tag,Jewellery Item / Tag,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
-            const rows = Object.values(groupedForExport).map(cust => {
+            const rows = consolidatedRows.map(cust => {
               const custName = `"${(cust.customerName || '').replace(/"/g, '""')}"`;
               const orderTags = `"${cust.items.map(i => `${i.orderSheetNo || ''} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
               const itemTags = `"${cust.items.map(i => `${i.jewelleryItem || 'N/A'} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
@@ -1246,8 +1309,9 @@ export default function App() {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `Master_Live_Orders_Consolidated_${todayDateStr}.csv`;
+            a.download = `Master_Live_Orders_Consolidated_${masterExportStartDate || todayDateStr}.csv`;
             a.click();
+            setShowMasterExportModal(false);
           };
 
           const totalLiveOrders = dashboardFilteredOrders.length;
@@ -1412,15 +1476,20 @@ export default function App() {
                 </div>
               </div>
 
-              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (ORIGINAL TABLE UNCHANGED + EXPORT BUTTON) */}
+              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (ORIGINAL TABLE UNTOUCHED + FILTERABLE MASTER EXPORT MODAL) */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <h4 className="text-sm font-black text-amber-400 uppercase">
-                    Master List of All Active Live Orders ({sortedDashboardFilteredOrders.length})
+                    Master List of All Active Live Orders ({sortedMasterLiveOrders.length})
                   </h4>
                   <div className="flex flex-wrap items-center gap-2.5">
                     <button
-                      onClick={handleExportMasterListCSV}
+                      onClick={() => {
+                        setMasterExportSalesperson(dashboardSalesFilter);
+                        setMasterExportExecutive(dashboardExecFilter);
+                        setMasterExportStatus(dashboardStatusFilter);
+                        setShowMasterExportModal(true);
+                      }}
                       className="bg-[#222630] hover:bg-[#2c3240] text-amber-400 border border-amber-500/30 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" /> Export Master List CSV
@@ -1430,13 +1499,60 @@ export default function App() {
                     </span>
                   </div>
                 </div>
+
+                {/* Inline Quick Filters for Master List */}
+                <div className="flex flex-wrap items-center gap-2.5 bg-[#111318] border border-slate-800/80 rounded-xl p-3 text-xs">
+                  <div className="flex items-center gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <Filter className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-slate-400 text-[11px]">Salesperson:</span>
+                    <select
+                      value={dashboardSalesFilter}
+                      onChange={(e) => setDashboardSalesFilter(e.target.value)}
+                      className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                    >
+                      <option value="ALL" className="bg-[#181b22]">All Salespersons</option>
+                      {['Sohil', 'Mohit', 'Hema', 'Akansha', 'Yogita', 'Ziya', 'Deepika'].map(s => (
+                        <option key={s} value={s} className="bg-[#181b22]">{s}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <span className="text-slate-400 text-[11px]">Order Executive:</span>
+                    <select
+                      value={dashboardExecFilter}
+                      onChange={(e) => setDashboardExecFilter(e.target.value)}
+                      className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                    >
+                      <option value="ALL" className="bg-[#181b22]">All Executives</option>
+                      <option value="Amardeep" className="bg-[#181b22]">Amardeep</option>
+                      <option value="Gautam" className="bg-[#181b22]">Gautam</option>
+                    </select>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <span className="text-slate-400 text-[11px]">Product Status:</span>
+                    <select
+                      value={dashboardStatusFilter}
+                      onChange={(e) => setDashboardStatusFilter(e.target.value)}
+                      className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                    >
+                      <option value="ALL" className="bg-[#181b22]">All Statuses</option>
+                      <option value="Under Process" className="bg-[#181b22]">Under Process</option>
+                      <option value="Ready but bill pending" className="bg-[#181b22]">Ready but bill pending</option>
+                      <option value="Packed" className="bg-[#181b22]">Packed</option>
+                      <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
+                    </select>
+                  </div>
+                </div>
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
-                        <th className="p-3 w-20">IMAGE</th>
-                        <th className="p-3">Order / Tag</th>
+                        <th className="p-3 w-16">IMAGE</th>
                         <th className="p-3">Customer Name</th>
+                        <th className="p-3">Order / Tag</th>
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Order Person</th>
                         <th className="p-3">DOD (Promised)</th>
@@ -1445,54 +1561,50 @@ export default function App() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
-                      {sortedDashboardFilteredOrders.length === 0 ? (
+                      {sortedMasterLiveOrders.length === 0 ? (
                         <tr><td colSpan="8" className="p-6 text-center text-slate-500">No active live orders found.</td></tr>
                       ) : (
-                        sortedDashboardFilteredOrders.map((ord, idx) => {
+                        sortedMasterLiveOrders.map((ord, idx) => {
                           const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                           const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
-                          const imageUrl = formatDriveUrl(ord);
                           const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
-
+                          const imgUrl = formatDriveUrl(ord);
+                          
                           return (
                             <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
                               <td className="p-3">
-                                {imageUrl ? (
-                                  <img
-                                    src={imageUrl}
-                                    alt=""
-                                    onClick={() => setPreviewImage(imageUrl)}
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                {imgUrl ? (
+                                  <img 
+                                    src={imgUrl} 
+                                    alt="" 
+                                    onClick={() => setPreviewImage(imgUrl)} 
+                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform" 
                                   />
                                 ) : (
                                   <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Product
+                                    Item
                                   </div>
                                 )}
                               </td>
-                              <td className="p-3 font-bold text-amber-400">
-                                {ord.orderSheetNo} <span className="text-slate-500 font-mono font-normal">({ord.tagNumber})</span>
-                              </td>
-                              <td className="p-3 font-bold text-slate-100">{ord.customerName || 'N/A'}</td>
-                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson || 'N/A'}</td>
-                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson || 'N/A'}</td>
+                              <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
+                              <td className="p-3 text-amber-400 font-bold">{ord.orderSheetNo} ({ord.tagNumber})</td>
+                              <td className="p-3 text-amber-300 font-medium">{ord.salesPerson}</td>
+                              <td className="p-3 text-blue-300 font-medium">{ord.orderPerson}</td>
                               <td className="p-3 font-mono font-bold">
                                 <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
                                   {formatDateDDMM(ord.deliveryDate)} {isToday && '⭐ (TODAY)'}
                                 </span>
                               </td>
                               <td className="p-3">
-                                <span className={`px-2.5 py-1 rounded-xl text-[10px] font-bold border ${
-                                  isUnassigned
-                                    ? 'bg-slate-900 text-slate-400 border-slate-700'
+                                <span className={`px-2.5 py-1 rounded-xl text-[11px] font-bold border ${
+                                  isUnassigned 
+                                    ? 'bg-slate-900 text-slate-400 border-slate-700' 
                                     : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
                                 }`}>
                                   {isUnassigned ? '--Not Assign--' : ord.productStatus}
                                 </span>
                               </td>
-                              <td className="p-3 text-slate-300 max-w-xs truncate">
-                                {ord.dailyRemarks || '--'}
-                              </td>
+                              <td className="p-3 text-slate-300 max-w-xs truncate">{ord.dailyRemarks || '--'}</td>
                             </tr>
                           );
                         })
@@ -1587,6 +1699,114 @@ export default function App() {
                   </table>
                 </div>
               </div>
+
+              {/* MASTER LIST EXPORT MODAL */}
+              {showMasterExportModal && (
+                <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                  <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-2xl">
+                    <div className="flex justify-between items-center border-b border-slate-800 pb-2">
+                      <h3 className="text-sm font-bold text-amber-400 flex items-center gap-1.5">
+                        <Download className="w-4 h-4" /> Export Master List CSV
+                      </h3>
+                      <button onClick={() => setShowMasterExportModal(false)} className="text-slate-400 hover:text-white cursor-pointer">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    <p className="text-xs text-slate-400">
+                      Filter Master List export by Promised DOD, Salesperson, Order Executive, and Product Status (one consolidated row per customer).
+                    </p>
+
+                    <div className="space-y-3 text-xs">
+                      <div className="grid grid-cols-2 gap-2.5">
+                        <div>
+                          <label className="block text-slate-300 font-semibold mb-1">Start Date (DOD)</label>
+                          <input
+                            type="date"
+                            value={masterExportStartDate}
+                            onChange={(e) => setMasterExportStartDate(e.target.value)}
+                            className="w-full bg-[#111318] border border-slate-700 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-slate-300 font-semibold mb-1">End Date (DOD)</label>
+                          <input
+                            type="date"
+                            value={masterExportEndDate}
+                            onChange={(e) => setMasterExportEndDate(e.target.value)}
+                            className="w-full bg-[#111318] border border-slate-700 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-amber-500"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 font-semibold mb-1">Salesperson</label>
+                        <select
+                          value={masterExportSalesperson}
+                          onChange={(e) => setMasterExportSalesperson(e.target.value)}
+                          className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-amber-500 cursor-pointer"
+                        >
+                          <option value="ALL" className="bg-[#181b22]">All Salespersons</option>
+                          {['Sohil', 'Mohit', 'Hema', 'Akansha', 'Yogita', 'Ziya', 'Deepika'].map(s => (
+                            <option key={s} value={s} className="bg-[#181b22]">{s}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 font-semibold mb-1">Order Executive</label>
+                        <select
+                          value={masterExportExecutive}
+                          onChange={(e) => setMasterExportExecutive(e.target.value)}
+                          className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-amber-500 cursor-pointer"
+                        >
+                          <option value="ALL" className="bg-[#181b22]">All Order Executives</option>
+                          <option value="Amardeep" className="bg-[#181b22]">Amardeep</option>
+                          <option value="Gautam" className="bg-[#181b22]">Gautam</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-slate-300 font-semibold mb-1">Product Status</label>
+                        <select
+                          value={masterExportStatus}
+                          onChange={(e) => setMasterExportStatus(e.target.value)}
+                          className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-amber-500 cursor-pointer"
+                        >
+                          <option value="ALL" className="bg-[#181b22]">All Product Statuses</option>
+                          <option value="Under Process" className="bg-[#181b22]">Under Process</option>
+                          <option value="Ready but bill pending" className="bg-[#181b22]">Ready but bill pending</option>
+                          <option value="Packed" className="bg-[#181b22]">Packed</option>
+                          <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                      <button
+                        onClick={() => {
+                          setMasterExportStartDate('');
+                          setMasterExportEndDate('');
+                          setMasterExportSalesperson('ALL');
+                          setMasterExportExecutive('ALL');
+                          setMasterExportStatus('ALL');
+                          setShowMasterExportModal(false);
+                        }}
+                        className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={handleExportMasterListCSV}
+                        className="px-4 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer shadow-md flex items-center gap-1.5"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download CSV
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })()}
@@ -1658,7 +1878,12 @@ export default function App() {
             <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 flex flex-col lg:flex-row items-center justify-between gap-4 shadow-2xl">
               <div className="flex items-center gap-3 w-full lg:w-auto">
                 <button
-                  onClick={() => setShowExportModal(true)}
+                  onClick={() => {
+                    setExportSalesperson(filterSalesperson);
+                    setExportExecutive(filterExecutive);
+                    setExportStatus(filterStatus);
+                    setShowExportModal(true);
+                  }}
                   className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer"
                 >
                   <Download className="w-4 h-4 text-slate-400" /> Export Advanced CSV
@@ -3021,28 +3246,73 @@ export default function App() {
             </div>
 
             <p className="text-xs text-slate-400">
-              Select a Promised Delivery Date (DOD) range for export, or leave blank to export all currently filtered orders.
+              Filter export by Promised Delivery Date (DOD), Salesperson, Order Executive, and Product Status.
             </p>
 
             <div className="space-y-3 text-xs">
-              <div>
-                <label className="block text-slate-300 font-semibold mb-1">Start Date (Promised DOD)</label>
-                <input
-                  type="date"
-                  value={exportStartDate}
-                  onChange={(e) => setExportStartDate(e.target.value)}
-                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
-                />
+              <div className="grid grid-cols-2 gap-2.5">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Start Date (DOD)</label>
+                  <input
+                    type="date"
+                    value={exportStartDate}
+                    onChange={(e) => setExportStartDate(e.target.value)}
+                    className="w-full bg-[#111318] border border-slate-700 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">End Date (DOD)</label>
+                  <input
+                    type="date"
+                    value={exportEndDate}
+                    onChange={(e) => setExportEndDate(e.target.value)}
+                    className="w-full bg-[#111318] border border-slate-700 rounded-xl px-2.5 py-2 text-white focus:outline-none focus:border-amber-500"
+                  />
+                </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">End Date (Promised DOD)</label>
-                <input
-                  type="date"
-                  value={exportEndDate}
-                  onChange={(e) => setExportEndDate(e.target.value)}
-                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-amber-500"
-                />
+                <label className="block text-slate-300 font-semibold mb-1">Salesperson</label>
+                <select
+                  value={exportSalesperson}
+                  onChange={(e) => setExportSalesperson(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option value="ALL" className="bg-[#181b22]">All Salespersons</option>
+                  {['Sohil', 'Mohit', 'Hema', 'Akansha', 'Yogita', 'Ziya', 'Deepika'].map(s => (
+                    <option key={s} value={s} className="bg-[#181b22]">{s}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Order Executive</label>
+                <select
+                  value={exportExecutive}
+                  onChange={(e) => setExportExecutive(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option value="ALL" className="bg-[#181b22]">All Order Executives</option>
+                  <option value="Amardeep" className="bg-[#181b22]">Amardeep</option>
+                  <option value="Gautam" className="bg-[#181b22]">Gautam</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-semibold mb-1">Product Status</label>
+                <select
+                  value={exportStatus}
+                  onChange={(e) => setExportStatus(e.target.value)}
+                  className="w-full bg-[#111318] border border-slate-700 rounded-xl px-3 py-2 text-amber-400 font-bold focus:outline-none focus:border-amber-500 cursor-pointer"
+                >
+                  <option value="ALL" className="bg-[#181b22]">All Product Statuses</option>
+                  <option value="Under Process" className="bg-[#181b22]">Under Process</option>
+                  <option value="Ready but bill pending" className="bg-[#181b22]">Ready but bill pending</option>
+                  <option value="Packed" className="bg-[#181b22]">Packed</option>
+                  {isAdminUser && <option value="Delivered" className="bg-[#181b22]">Delivered</option>}
+                  <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
+                </select>
               </div>
             </div>
 
@@ -3051,6 +3321,9 @@ export default function App() {
                 onClick={() => {
                   setExportStartDate('');
                   setExportEndDate('');
+                  setExportSalesperson('ALL');
+                  setExportExecutive('ALL');
+                  setExportStatus('ALL');
                   setShowExportModal(false);
                 }}
                 className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
