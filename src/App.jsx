@@ -26,7 +26,8 @@ import {
   RotateCcw,
   ChevronDown,
   Bell,
-  Trash2
+  Trash2,
+  Calendar
 } from 'lucide-react';
 
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
@@ -158,6 +159,8 @@ export default function App() {
   const [dashboardSalesFilter, setDashboardSalesFilter] = useState('ALL');
   const [dashboardExecFilter, setDashboardExecFilter] = useState('ALL');
   const [dashboardStatusFilter, setDashboardStatusFilter] = useState('ALL');
+  const [dashboardStartDate, setDashboardStartDate] = useState('');
+  const [dashboardEndDate, setDashboardEndDate] = useState('');
 
   const [selectedOrderForKarigar, setSelectedOrderForKarigar] = useState(null);
   const [whatsappModalData, setWhatsappModalData] = useState(null);
@@ -681,26 +684,19 @@ export default function App() {
     return pStatus === selectedStatus.toLowerCase();
   };
 
+  const matchesDateRange = (order, startDate, endDate) => {
+    if (!startDate && !endDate) return true;
+    const cleanDOD = extractDateOnly(order.deliveryDate);
+    if (!cleanDOD || cleanDOD === 'N/A') return false;
+    if (startDate && cleanDOD < startDate) return false;
+    if (endDate && cleanDOD > endDate) return false;
+    return true;
+  };
+
   const handleExportFilteredCSV = () => {
     let listToExport = filteredOrders;
 
-    if (exportStartDate && exportEndDate) {
-      listToExport = listToExport.filter(o => {
-        const cleanDOD = extractDateOnly(o.deliveryDate);
-        if (!cleanDOD || cleanDOD === 'N/A') return false;
-        return cleanDOD >= exportStartDate && cleanDOD <= exportEndDate;
-      });
-    } else if (exportStartDate) {
-      listToExport = listToExport.filter(o => {
-        const cleanDOD = extractDateOnly(o.deliveryDate);
-        return cleanDOD !== 'N/A' && cleanDOD >= exportStartDate;
-      });
-    } else if (exportEndDate) {
-      listToExport = listToExport.filter(o => {
-        const cleanDOD = extractDateOnly(o.deliveryDate);
-        return cleanDOD !== 'N/A' && cleanDOD <= exportEndDate;
-      });
-    }
+    listToExport = listToExport.filter(o => matchesDateRange(o, exportStartDate, exportEndDate));
 
     if (exportSalesperson !== 'ALL') {
       listToExport = listToExport.filter(o => (o.salesPerson || '') === exportSalesperson);
@@ -1186,18 +1182,21 @@ export default function App() {
           const ordersForSalesBreakdown = allLiveOrders.filter(o => {
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
             if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            if (!matchesDateRange(o, dashboardStartDate, dashboardEndDate)) return false;
             return true;
           });
 
           const ordersForExecBreakdown = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            if (!matchesDateRange(o, dashboardStartDate, dashboardEndDate)) return false;
             return true;
           });
 
           const ordersForStatusBreakdown = allLiveOrders.filter(o => {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
+            if (!matchesDateRange(o, dashboardStartDate, dashboardEndDate)) return false;
             return true;
           });
 
@@ -1223,6 +1222,7 @@ export default function App() {
             if (dashboardSalesFilter !== 'ALL' && o.salesPerson !== dashboardSalesFilter) return false;
             if (dashboardExecFilter !== 'ALL' && o.orderPerson !== dashboardExecFilter) return false;
             if (dashboardStatusFilter !== 'ALL' && getStatusStr(o) !== dashboardStatusFilter) return false;
+            if (!matchesDateRange(o, dashboardStartDate, dashboardEndDate)) return false;
             return true;
           });
 
@@ -1245,25 +1245,9 @@ export default function App() {
 
           // Consolidated One-Row-Per-Customer CSV Export with Date Range + Salesperson + Order Executive + Product Status Filters
           const handleExportMasterListCSV = () => {
-            let listToExport = sortedMasterLiveOrders;
+            let listToExport = allLiveOrders;
 
-            if (masterExportStartDate && masterExportEndDate) {
-              listToExport = listToExport.filter(o => {
-                const cleanDOD = extractDateOnly(o.deliveryDate);
-                if (!cleanDOD || cleanDOD === 'N/A') return false;
-                return cleanDOD >= masterExportStartDate && cleanDOD <= masterExportEndDate;
-              });
-            } else if (masterExportStartDate) {
-              listToExport = listToExport.filter(o => {
-                const cleanDOD = extractDateOnly(o.deliveryDate);
-                return cleanDOD !== 'N/A' && cleanDOD >= masterExportStartDate;
-              });
-            } else if (masterExportEndDate) {
-              listToExport = listToExport.filter(o => {
-                const cleanDOD = extractDateOnly(o.deliveryDate);
-                return cleanDOD !== 'N/A' && cleanDOD <= masterExportEndDate;
-              });
-            }
+            listToExport = listToExport.filter(o => matchesDateRange(o, masterExportStartDate, masterExportEndDate));
 
             if (masterExportSalesperson !== 'ALL') {
               listToExport = listToExport.filter(o => (o.salesPerson || '') === masterExportSalesperson);
@@ -1354,6 +1338,13 @@ export default function App() {
             if (allPacked) packedCustomers.push(cust);
           });
 
+          const hasActiveDashboardFilters =
+            dashboardSalesFilter !== 'ALL' ||
+            dashboardExecFilter !== 'ALL' ||
+            dashboardStatusFilter !== 'ALL' ||
+            dashboardStartDate !== '' ||
+            dashboardEndDate !== '';
+
           return (
             <div className="space-y-6">
               <div className="flex justify-between items-center border-b border-slate-800 pb-4">
@@ -1361,12 +1352,14 @@ export default function App() {
                   <Sparkles className="w-5 h-5" /> Comprehensive Business Dashboard
                 </h3>
                 <div className="flex items-center gap-3">
-                  {(dashboardSalesFilter !== 'ALL' || dashboardExecFilter !== 'ALL' || dashboardStatusFilter !== 'ALL') && (
+                  {hasActiveDashboardFilters && (
                     <button
                       onClick={() => {
                         setDashboardSalesFilter('ALL');
                         setDashboardExecFilter('ALL');
                         setDashboardStatusFilter('ALL');
+                        setDashboardStartDate('');
+                        setDashboardEndDate('');
                       }}
                       className="px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
                     >
@@ -1476,7 +1469,7 @@ export default function App() {
                 </div>
               </div>
 
-              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS (ORIGINAL TABLE UNTOUCHED + FILTERABLE MASTER EXPORT MODAL) */}
+              {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS */}
               <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <h4 className="text-sm font-black text-amber-400 uppercase">
@@ -1488,6 +1481,8 @@ export default function App() {
                         setMasterExportSalesperson(dashboardSalesFilter);
                         setMasterExportExecutive(dashboardExecFilter);
                         setMasterExportStatus(dashboardStatusFilter);
+                        setMasterExportStartDate(dashboardStartDate);
+                        setMasterExportEndDate(dashboardEndDate);
                         setShowMasterExportModal(true);
                       }}
                       className="bg-[#222630] hover:bg-[#2c3240] text-amber-400 border border-amber-500/30 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
@@ -1543,6 +1538,39 @@ export default function App() {
                       <option value="Packed" className="bg-[#181b22]">Packed</option>
                       <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
                     </select>
+                  </div>
+
+                  {/* Promised DOD Date Range Filter right next to Product Status */}
+                  <div className="flex flex-wrap items-center gap-2 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-slate-400 text-[11px]">DOD Range:</span>
+                    <input
+                      type="date"
+                      value={dashboardStartDate}
+                      onChange={(e) => setDashboardStartDate(e.target.value)}
+                      title="Start Date (Promised DOD)"
+                      className="bg-[#111318] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                    />
+                    <span className="text-slate-500 text-[11px]">to</span>
+                    <input
+                      type="date"
+                      value={dashboardEndDate}
+                      onChange={(e) => setDashboardEndDate(e.target.value)}
+                      title="End Date (Promised DOD)"
+                      className="bg-[#111318] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                    />
+                    {(dashboardStartDate || dashboardEndDate) && (
+                      <button
+                        onClick={() => {
+                          setDashboardStartDate('');
+                          setDashboardEndDate('');
+                        }}
+                        title="Clear Date Range"
+                        className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
                   </div>
                 </div>
 
