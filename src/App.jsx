@@ -1243,7 +1243,9 @@ export default function App() {
             return 0;
           });
 
-          // Consolidated One-Row-Per-Customer CSV Export with Date Range + Salesperson + Order Executive + Product Status Filters
+          // Consolidated One-Row-Per-Customer CSV Export:
+          // - Replaces "Jewellery Item / Tag" with "Item Count"
+          // - Deduplicates DOD (Promised) per customer (if all items share the same DOD, outputs it once; otherwise joins unique DODs with " | ")
           const handleExportMasterListCSV = () => {
             let listToExport = allLiveOrders;
 
@@ -1275,18 +1277,19 @@ export default function App() {
 
             const consolidatedRows = Object.values(groupedMap);
 
-            const headers = "Customer Name,Order / Tag,Jewellery Item / Tag,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
+            const headers = "Customer Name,Order / Tag,Item Count,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
             const rows = consolidatedRows.map(cust => {
               const custName = `"${(cust.customerName || '').replace(/"/g, '""')}"`;
               const orderTags = `"${cust.items.map(i => `${i.orderSheetNo || ''} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
-              const itemTags = `"${cust.items.map(i => `${i.jewelleryItem || 'N/A'} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
+              const itemCount = cust.items.length;
               const salesP = `"${Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ').replace(/"/g, '""')}"`;
               const orderP = `"${Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ').replace(/"/g, '""')}"`;
-              const dods = `"${cust.items.map(i => formatDateDDMM(i.deliveryDate)).join(' | ').replace(/"/g, '""')}"`;
+              const uniqueDods = Array.from(new Set(cust.items.map(i => formatDateDDMM(i.deliveryDate)).filter(Boolean)));
+              const dods = `"${uniqueDods.join(' | ').replace(/"/g, '""')}"`;
               const statuses = `"${cust.items.map(i => getStatusStr(i)).join(' | ').replace(/"/g, '""')}"`;
               const remarks = `"${cust.items.map(i => i.dailyRemarks || '--').join(' | ').replace(/"/g, '""')}"`;
 
-              return `${custName},${orderTags},${itemTags},${salesP},${orderP},${dods},${statuses},${remarks}`;
+              return `${custName},${orderTags},${itemCount},${salesP},${orderP},${dods},${statuses},${remarks}`;
             }).join("\n");
 
             const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
