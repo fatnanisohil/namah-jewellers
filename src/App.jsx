@@ -48,8 +48,8 @@ const ORDER_DEPARTMENT_NUMBER = '9217403206'; // Amardeep & Gautam
 // Jewellery Items Dropdown List (including OTHER)
 const JEWELLERY_ITEMS_LIST = [
   'BANGLES',
-  'CHAIN',
   'BRACELET',
+  'CHAIN',
   'GOLD SET',
   'NECKLACE',
   'NOSE PIN',
