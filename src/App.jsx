@@ -1023,36 +1023,36 @@ export default function App() {
   }, [baseFilteredOrdersForStats, filterStatus]);
 
   return (
-    <div className="min-h-screen bg-[#111318] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-16 md:pb-0">
-      <header className="bg-[#181b22]/95 backdrop-blur-md border-b border-slate-800/80 px-4 sm:px-6 py-3.5 flex flex-col sm:flex-row items-center justify-between sticky top-0 z-35 shadow-2xl gap-3">
-        <div className="flex items-center justify-between w-full sm:w-auto">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
-              <Sparkles className="w-5 h-5 text-slate-950 font-bold" />
+    <div className="min-h-screen bg-[#111318] text-slate-100 flex flex-col font-sans selection:bg-amber-500 selection:text-slate-950 pb-20 md:pb-0">
+      <header className="bg-[#181b22]/95 backdrop-blur-md border-b border-slate-800/80 px-3 sm:px-6 py-3 flex flex-col md:flex-row items-center justify-between sticky top-0 z-35 shadow-2xl gap-2.5">
+        <div className="flex items-center justify-between w-full md:w-auto">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-2 sm:p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 font-bold" />
             </div>
             <div>
-              <h1 className="text-base sm:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500">
+              <h1 className="text-sm sm:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500">
                 NAMAH JEWELLERS
               </h1>
               <p className="text-[10px] sm:text-[11px] font-medium text-slate-400 flex items-center gap-1.5">
                 <span className={`w-1.5 h-1.5 rounded-full ${isLoggedIn ? 'bg-emerald-400 animate-pulse' : 'bg-amber-500'}`}></span>
-                Mode: <strong className="text-amber-400">{isLoggedIn ? `${currentUserName} (${currentUserRole})` : 'View-Only Mode'}</strong>
+                Mode: <strong className="text-amber-400 truncate max-w-[140px] sm:max-w-none">{isLoggedIn ? `${currentUserName} (${currentUserRole})` : 'View-Only'}</strong>
               </p>
             </div>
           </div>
 
-          <div className="flex sm:hidden items-center">
+          <div className="flex md:hidden items-center">
             {isLoggedIn ? (
               <button
                 onClick={handleLogout}
-                className="flex items-center gap-1 bg-red-500/10 border border-red-500/30 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold"
+                className="flex items-center gap-1 bg-red-500/10 border border-red-500/30 text-red-400 px-2.5 py-1.5 rounded-xl text-[11px] font-bold"
               >
                 <LogOut className="w-3.5 h-3.5" /> Logout
               </button>
             ) : (
               <button
                 onClick={() => setShowLoginModal(true)}
-                className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 px-3.5 py-1.5 rounded-xl text-xs font-black shadow-md"
+                className="flex items-center gap-1 bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 px-3 py-1.5 rounded-xl text-[11px] font-black shadow-md"
               >
                 <LogIn className="w-3.5 h-3.5" /> Login
               </button>
@@ -1060,10 +1060,11 @@ export default function App() {
           </div>
         </div>
 
-        <nav className="flex bg-[#111317] p-1.5 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto w-full sm:w-auto justify-start sm:justify-center">
+        {/* Desktop Top Navigation */}
+        <nav className="hidden md:flex bg-[#111317] p-1.5 rounded-2xl border border-slate-800/80 shadow-inner overflow-x-auto justify-center">
           <button
             onClick={() => setActiveTab('dashboard')}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'dashboard'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
                 : 'text-slate-400 hover:text-slate-200'
@@ -1073,7 +1074,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('orders')}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'orders'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
                 : 'text-slate-400 hover:text-slate-200'
@@ -1083,7 +1084,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('off-orders')}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'off-orders'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
                 : 'text-slate-400 hover:text-slate-200'
@@ -1093,7 +1094,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('crm')}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'crm'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
                 : 'text-slate-400 hover:text-slate-200'
@@ -1103,7 +1104,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('karigar')}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'karigar'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
                 : 'text-slate-400 hover:text-slate-200'
@@ -1113,7 +1114,7 @@ export default function App() {
           </button>
           <button
             onClick={() => setActiveTab('audit')}
-            className={`px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               activeTab === 'audit'
                 ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/25 font-extrabold'
                 : 'text-slate-400 hover:text-slate-200'
@@ -1123,7 +1124,7 @@ export default function App() {
           </button>
         </nav>
 
-        <div className="hidden sm:flex items-center gap-3">
+        <div className="hidden md:flex items-center gap-3">
           {isLoggedIn ? (
             <div className="flex items-center gap-2">
               <div className="bg-[#111317] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs flex items-center gap-2">
@@ -1148,7 +1149,65 @@ export default function App() {
         </div>
       </header>
 
-      <main className="flex-1 p-4 sm:p-6 max-w-[1450px] w-full mx-auto space-y-6">
+      {/* Fixed Mobile Bottom Navigation Bar */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#181b22]/95 backdrop-blur-md border-t border-slate-800/90 px-1 py-1.5 grid grid-cols-6 gap-0.5 shadow-2xl">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[9px] font-bold transition-all ${
+            activeTab === 'dashboard' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 mb-0.5" />
+          <span>Dashboard</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[9px] font-bold transition-all ${
+            activeTab === 'orders' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400'
+          }`}
+        >
+          <Layers className="w-4 h-4 mb-0.5" />
+          <span>Orders</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('off-orders')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[9px] font-bold transition-all relative ${
+            activeTab === 'off-orders' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400'
+          }`}
+        >
+          <PowerOff className="w-4 h-4 mb-0.5" />
+          <span>OFF ({offOrders.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('crm')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[9px] font-bold transition-all ${
+            activeTab === 'crm' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400'
+          }`}
+        >
+          <Users className="w-4 h-4 mb-0.5" />
+          <span>CRM</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('karigar')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[9px] font-bold transition-all ${
+            activeTab === 'karigar' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400'
+          }`}
+        >
+          <Send className="w-4 h-4 mb-0.5" />
+          <span>Karigar ({activeKarigarOrders.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('audit')}
+          className={`flex flex-col items-center justify-center py-1.5 rounded-xl text-[9px] font-bold transition-all ${
+            activeTab === 'audit' ? 'bg-amber-500/15 text-amber-400' : 'text-slate-400'
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4 mb-0.5" />
+          <span>Audit</span>
+        </button>
+      </nav>
+
+      <main className="flex-1 p-3 sm:p-6 max-w-[1450px] w-full mx-auto space-y-5 sm:space-y-6">
         {activeTab === 'dashboard' && (() => {
           const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
@@ -1243,9 +1302,6 @@ export default function App() {
             return 0;
           });
 
-          // Consolidated One-Row-Per-Customer CSV Export:
-          // - Replaces "Jewellery Item / Tag" with "Item Count"
-          // - Deduplicates DOD (Promised) per customer (if all items share the same DOD, outputs it once; otherwise joins unique DODs with " | ")
           const handleExportMasterListCSV = () => {
             let listToExport = allLiveOrders;
 
@@ -1349,12 +1405,12 @@ export default function App() {
             dashboardEndDate !== '';
 
           return (
-            <div className="space-y-6">
-              <div className="flex justify-between items-center border-b border-slate-800 pb-4">
-                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+            <div className="space-y-5 sm:space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-3 sm:pb-4 gap-2">
+                <h3 className="text-base sm:text-lg font-black text-amber-400 flex items-center gap-2">
                   <Sparkles className="w-5 h-5" /> Comprehensive Business Dashboard
                 </h3>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   {hasActiveDashboardFilters && (
                     <button
                       onClick={() => {
@@ -1364,25 +1420,25 @@ export default function App() {
                         setDashboardStartDate('');
                         setDashboardEndDate('');
                       }}
-                      className="px-3 py-1 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      className="px-3 py-1.5 bg-red-500/10 border border-red-500/30 text-red-400 rounded-xl text-xs font-bold flex items-center gap-1 cursor-pointer"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" /> Clear Dashboard Filters
+                      <RotateCcw className="w-3.5 h-3.5" /> Clear Filters
                     </button>
                   )}
-                  <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
+                  <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[11px] sm:text-xs font-bold">
                     Active Live Metrics
                   </span>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ORDERS (ON+OFF)</p>
-                  <h4 className="text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
+              <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+                <div className="bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg">
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ORDERS</p>
+                  <h4 className="text-xl sm:text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
-                <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg">
-                  <p className="text-xs text-slate-400 font-bold uppercase">Total Live Customers</p>
-                  <h4 className="text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
+                <div className="bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg">
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">LIVE CUSTOMERS</p>
+                  <h4 className="text-xl sm:text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
                 </div>
                 
                 <div 
@@ -1390,10 +1446,10 @@ export default function App() {
                     const el = document.getElementById('bill-pending-section');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-emerald-500/50 transition-all"
+                  className="bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg cursor-pointer hover:border-emerald-500/50 transition-all"
                 >
-                  <p className="text-xs text-slate-400 font-bold uppercase">BILL PENDING CUSTOMERS</p>
-                  <h4 className="text-2xl font-black text-emerald-400 mt-1">{billPendingCustomers.length}</h4>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">BILL PENDING</p>
+                  <h4 className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">{billPendingCustomers.length}</h4>
                 </div>
 
                 <div 
@@ -1401,24 +1457,24 @@ export default function App() {
                     const el = document.getElementById('packed-section');
                     if (el) el.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-purple-500/50 transition-all"
+                  className="bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg cursor-pointer hover:border-purple-500/50 transition-all"
                 >
-                  <p className="text-xs text-slate-400 font-bold uppercase">FULLY PACKED CUSTOMERS</p>
-                  <h4 className="text-2xl font-black text-purple-400 mt-1">{packedCustomers.length}</h4>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">FULLY PACKED</p>
+                  <h4 className="text-xl sm:text-2xl font-black text-purple-400 mt-1">{packedCustomers.length}</h4>
                 </div>
 
                 <div 
                   onClick={() => setActiveTab('off-orders')}
-                  className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl shadow-lg cursor-pointer hover:border-amber-500/50 transition-all"
+                  className="col-span-2 lg:col-span-1 bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg cursor-pointer hover:border-amber-500/50 transition-all"
                 >
-                  <p className="text-xs text-slate-400 font-bold uppercase">NOT PLACED TO KARIGAR ORDERS</p>
-                  <h4 className="text-2xl font-black text-amber-500 mt-1">{dashboardOffOrdersCount}</h4>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">NOT PLACED TO KARIGAR</p>
+                  <h4 className="text-xl sm:text-2xl font-black text-amber-500 mt-1">{dashboardOffOrdersCount}</h4>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Sales Person (Click to Filter Dashboard)</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">By Sales Person (Tap to Filter)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveBySalesAll).map(([sp, count], i) => (
                       <div 
@@ -1436,7 +1492,7 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Live Orders by Order Person (Click to Filter Dashboard)</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">By Order Person (Tap to Filter)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveByExecAll).map(([ep, count], i) => (
                       <div 
@@ -1454,7 +1510,7 @@ export default function App() {
                 </div>
 
                 <div className="bg-[#181b22] border border-slate-800 p-4 rounded-2xl space-y-3">
-                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise (Click to Filter Dashboard)</h4>
+                  <h4 className="text-xs font-black text-amber-400 uppercase border-b border-slate-800 pb-2">Product Status Wise (Tap to Filter)</h4>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
                     {Object.entries(liveByStatusAll).map(([st, count], i) => (
                       <div 
@@ -1473,12 +1529,12 @@ export default function App() {
               </div>
 
               {/* MASTER LIST OF ALL ACTIVE LIVE ORDERS */}
-              <div className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
+              <div className="bg-[#181b22] border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-4">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <h4 className="text-sm font-black text-amber-400 uppercase">
+                  <h4 className="text-xs sm:text-sm font-black text-amber-400 uppercase">
                     Master List of All Active Live Orders ({sortedMasterLiveOrders.length})
                   </h4>
-                  <div className="flex flex-wrap items-center gap-2.5">
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     <button
                       onClick={() => {
                         setMasterExportSalesperson(dashboardSalesFilter);
@@ -1488,21 +1544,23 @@ export default function App() {
                         setMasterExportEndDate(dashboardEndDate);
                         setShowMasterExportModal(true);
                       }}
-                      className="bg-[#222630] hover:bg-[#2c3240] text-amber-400 border border-amber-500/30 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
+                      className="flex-1 sm:flex-initial justify-center bg-[#222630] hover:bg-[#2c3240] text-amber-400 border border-amber-500/30 font-bold px-3.5 py-2 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-md cursor-pointer"
                     >
-                      <Download className="w-3.5 h-3.5" /> Export Master List CSV
+                      <Download className="w-3.5 h-3.5" /> Export Master CSV
                     </button>
-                    <span className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-3 py-1 rounded-xl font-bold">
-                      🔥 Sorted: Today's Promised DOD First
+                    <span className="text-[10px] sm:text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1.5 rounded-xl font-bold">
+                      🔥 Today's DOD First
                     </span>
                   </div>
                 </div>
 
-                {/* Inline Quick Filters for Master List */}
-                <div className="flex flex-wrap items-center gap-2.5 bg-[#111318] border border-slate-800/80 rounded-xl p-3 text-xs">
-                  <div className="flex items-center gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
-                    <Filter className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-slate-400 text-[11px]">Salesperson:</span>
+                {/* Responsive Filters for Master List */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-2.5 bg-[#111318] border border-slate-800/80 rounded-xl p-3 text-xs">
+                  <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-2">
+                    <div className="flex items-center gap-1.5">
+                      <Filter className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-slate-400 text-[11px]">Salesperson:</span>
+                    </div>
                     <select
                       value={dashboardSalesFilter}
                       onChange={(e) => setDashboardSalesFilter(e.target.value)}
@@ -1515,7 +1573,7 @@ export default function App() {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                  <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-2">
                     <span className="text-slate-400 text-[11px]">Order Executive:</span>
                     <select
                       value={dashboardExecFilter}
@@ -1528,7 +1586,7 @@ export default function App() {
                     </select>
                   </div>
 
-                  <div className="flex items-center gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                  <div className="flex items-center justify-between sm:justify-start gap-1.5 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-2">
                     <span className="text-slate-400 text-[11px]">Product Status:</span>
                     <select
                       value={dashboardStatusFilter}
@@ -1543,25 +1601,43 @@ export default function App() {
                     </select>
                   </div>
 
-                  {/* Promised DOD Date Range Filter right next to Product Status */}
-                  <div className="flex flex-wrap items-center gap-2 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                    <span className="text-slate-400 text-[11px]">DOD Range:</span>
-                    <input
-                      type="date"
-                      value={dashboardStartDate}
-                      onChange={(e) => setDashboardStartDate(e.target.value)}
-                      title="Start Date (Promised DOD)"
-                      className="bg-[#111318] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
-                    />
-                    <span className="text-slate-500 text-[11px]">to</span>
-                    <input
-                      type="date"
-                      value={dashboardEndDate}
-                      onChange={(e) => setDashboardEndDate(e.target.value)}
-                      title="End Date (Promised DOD)"
-                      className="bg-[#111318] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
-                    />
+                  {/* Promised DOD Date Range Filter */}
+                  <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 bg-[#181b22] border border-slate-700/80 rounded-xl px-3 py-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                        <span className="text-slate-400 text-[11px]">DOD Range:</span>
+                      </div>
+                      {(dashboardStartDate || dashboardEndDate) && (
+                        <button
+                          onClick={() => {
+                            setDashboardStartDate('');
+                            setDashboardEndDate('');
+                          }}
+                          title="Clear Date Range"
+                          className="sm:hidden text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 sm:flex items-center gap-1.5">
+                      <input
+                        type="date"
+                        value={dashboardStartDate}
+                        onChange={(e) => setDashboardStartDate(e.target.value)}
+                        title="Start Date (Promised DOD)"
+                        className="w-full sm:w-auto bg-[#111318] border border-slate-700/80 rounded-lg px-2 py-1 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                      />
+                      <span className="hidden sm:inline text-slate-500 text-[11px]">to</span>
+                      <input
+                        type="date"
+                        value={dashboardEndDate}
+                        onChange={(e) => setDashboardEndDate(e.target.value)}
+                        title="End Date (Promised DOD)"
+                        className="w-full sm:w-auto bg-[#111318] border border-slate-700/80 rounded-lg px-2 py-1 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                      />
+                    </div>
                     {(dashboardStartDate || dashboardEndDate) && (
                       <button
                         onClick={() => {
@@ -1569,7 +1645,7 @@ export default function App() {
                           setDashboardEndDate('');
                         }}
                         title="Clear Date Range"
-                        className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                        className="hidden sm:inline text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
                       >
                         <X className="w-3.5 h-3.5" />
                       </button>
@@ -1577,8 +1653,88 @@ export default function App() {
                   </div>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[1100px]">
+                {/* MOBILE CARD LIST FOR MASTER LIVE ORDERS */}
+                <div className="md:hidden space-y-3">
+                  {sortedMasterLiveOrders.length === 0 ? (
+                    <div className="p-6 text-center text-slate-500 text-xs">No active live orders found.</div>
+                  ) : (
+                    sortedMasterLiveOrders.map((ord, idx) => {
+                      const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
+                      const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
+                      const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
+                      const imgUrl = formatDriveUrl(ord);
+
+                      return (
+                        <div
+                          key={idx}
+                          className={`rounded-2xl p-3.5 border space-y-2.5 shadow-md ${
+                            isToday
+                              ? 'bg-amber-500/10 border-amber-500/50'
+                              : 'bg-[#111318] border-slate-800'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex items-center gap-3">
+                              {imgUrl ? (
+                                <img
+                                  src={imgUrl}
+                                  alt=""
+                                  onClick={() => setPreviewImage(imgUrl)}
+                                  className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
+                                />
+                              ) : (
+                                <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] shrink-0">
+                                  Item
+                                </div>
+                              )}
+                              <div>
+                                <h5 className="text-sm font-black text-slate-100 leading-tight">{ord.customerName}</h5>
+                                <p className="text-xs text-amber-400 font-bold mt-0.5">
+                                  {ord.orderSheetNo} ({ord.tagNumber})
+                                </p>
+                              </div>
+                            </div>
+
+                            <span className={`px-2 py-1 rounded-lg text-[10px] font-bold border text-right shrink-0 ${
+                              isUnassigned
+                                ? 'bg-slate-900 text-slate-400 border-slate-700'
+                                : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                            }`}>
+                              {isUnassigned ? '--Not Assign--' : ord.productStatus}
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800/80 text-[11px]">
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase">Sales</span>
+                              <span className="text-amber-300 font-bold">{ord.salesPerson || 'N/A'}</span>
+                            </div>
+                            <div>
+                              <span className="text-slate-500 block text-[9px] uppercase">Executive</span>
+                              <span className="text-blue-300 font-bold">{ord.orderPerson || 'N/A'}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-slate-500 block text-[9px] uppercase">DOD (Promised)</span>
+                              <span className={`font-mono font-bold ${isToday ? 'text-amber-400' : 'text-slate-300'}`}>
+                                {formatDateDDMM(ord.deliveryDate)} {isToday && '⭐'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {ord.dailyRemarks && (
+                            <div className="bg-[#181b22] px-2.5 py-1.5 rounded-lg text-[11px] text-slate-300 border border-slate-800/80">
+                              <span className="text-purple-400 font-bold">Remarks: </span>{ord.dailyRemarks}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* DESKTOP TABLE FOR MASTER LIVE ORDERS */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[1000px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3 w-16">IMAGE</th>
@@ -1646,11 +1802,45 @@ export default function App() {
               </div>
 
               {/* CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
-              <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-emerald-400 uppercase">
+              <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-4">
+                <h4 className="text-xs sm:text-sm font-black text-emerald-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
                 </h4>
-                <div className="overflow-x-auto">
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-2.5">
+                  {billPendingCustomers.length === 0 ? (
+                    <p className="p-4 text-center text-slate-500 text-xs">No customers found with all items ready and bill pending.</p>
+                  ) : (
+                    billPendingCustomers.map((cust, idx) => {
+                      const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+                      const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                      return (
+                        <div key={idx} className="bg-[#111318] border border-emerald-500/25 rounded-xl p-3.5 space-y-2 text-xs">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h5 className="font-bold text-emerald-300 text-sm">{cust.customerName}</h5>
+                              <p className="font-mono text-slate-400 text-[11px]">{cust.contactNumber}</p>
+                            </div>
+                            <span className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                              {cust.items.length} Item(s)
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                            <span>Sales: <strong className="text-amber-300">{salesPersons || 'N/A'}</strong></span>
+                            <span>Exec: <strong className="text-blue-300">{orderPersons || 'N/A'}</strong></span>
+                          </div>
+                          <p className="text-[11px] text-amber-400 font-mono">
+                            {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
@@ -1689,11 +1879,45 @@ export default function App() {
               </div>
 
               {/* CUSTOMERS WITH ALL ITEMS "PACKED" */}
-              <div id="packed-section" className="bg-[#181b22] border border-slate-800 p-5 rounded-2xl space-y-4">
-                <h4 className="text-sm font-black text-purple-400 uppercase">
+              <div id="packed-section" className="bg-[#181b22] border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-4">
+                <h4 className="text-xs sm:text-sm font-black text-purple-400 uppercase">
                   CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
                 </h4>
-                <div className="overflow-x-auto">
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-2.5">
+                  {packedCustomers.length === 0 ? (
+                    <p className="p-4 text-center text-slate-500 text-xs">No customers found with all items packed.</p>
+                  ) : (
+                    packedCustomers.map((cust, idx) => {
+                      const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
+                      const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                      return (
+                        <div key={idx} className="bg-[#111318] border border-purple-500/25 rounded-xl p-3.5 space-y-2 text-xs">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <h5 className="font-bold text-purple-300 text-sm">{cust.customerName}</h5>
+                              <p className="font-mono text-slate-400 text-[11px]">{cust.contactNumber}</p>
+                            </div>
+                            <span className="bg-purple-500/15 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                              {cust.items.length} Item(s)
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                            <span>Sales: <strong className="text-amber-300">{salesPersons || 'N/A'}</strong></span>
+                            <span>Exec: <strong className="text-blue-300">{orderPersons || 'N/A'}</strong></span>
+                          </div>
+                          <p className="text-[11px] text-amber-400 font-mono">
+                            {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
+                          </p>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
@@ -1843,7 +2067,7 @@ export default function App() {
         })()}
 
         {activeTab === 'orders' && (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <div 
                 onClick={() => setFilterStatus('ALL')}
@@ -1880,7 +2104,7 @@ export default function App() {
                 className={`bg-[#181b22] border rounded-2xl p-3.5 sm:p-4 flex items-center justify-between shadow-xl cursor-pointer transition-all ${filterStatus === 'Ready but bill pending' ? 'border-emerald-500 bg-emerald-500/5' : 'border-slate-800/90 hover:border-emerald-500/50'}`}
               >
                 <div>
-                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Ready but bill pending</p>
+                  <p className="text-[10px] sm:text-[11px] font-bold text-slate-400 uppercase tracking-wider">Bill Pending</p>
                   <h3 className="text-xl sm:text-2xl font-black text-emerald-400 mt-1">
                     {dynamicBillPendingCount}
                   </h3>
@@ -1906,8 +2130,8 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 flex flex-col lg:flex-row items-center justify-between gap-4 shadow-2xl">
-              <div className="flex items-center gap-3 w-full lg:w-auto">
+            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-3.5 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 shadow-2xl">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full lg:w-auto">
                 <button
                   onClick={() => {
                     setExportSalesperson(filterSalesperson);
@@ -1915,21 +2139,21 @@ export default function App() {
                     setExportStatus(filterStatus);
                     setShowExportModal(true);
                   }}
-                  className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-md cursor-pointer"
+                  className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-3 sm:px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
                 >
-                  <Download className="w-4 h-4 text-slate-400" /> Export Advanced CSV
+                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" /> Export CSV
                 </button>
 
                 <button
                   onClick={() => setActiveTab('new-order')}
-                  className="bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-slate-950 font-black px-5 py-2.5 rounded-xl text-xs flex items-center gap-2 transition-all shadow-lg shadow-orange-500/20 cursor-pointer"
+                  className="bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-slate-950 font-black px-3 sm:px-5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-orange-500/20 cursor-pointer"
                 >
-                  <PlusCircle className="w-4 h-4 text-slate-950" /> Sales Order Intake
+                  <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950" /> New Order
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto justify-end text-xs">
-                <div className="relative flex-1 sm:w-44">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto justify-end text-xs">
+                <div className="relative sm:col-span-2 lg:w-48">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
                   <input
                     type="text"
@@ -1940,9 +2164,11 @@ export default function App() {
                   />
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5">
-                  <Filter className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-slate-400 text-[11px]">Sales:</span>
+                <div className="flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2">
+                  <div className="flex items-center gap-1.5">
+                    <Filter className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-slate-400 text-[11px]">Sales:</span>
+                  </div>
                   <select
                     value={filterSalesperson}
                     onChange={(e) => setFilterSalesperson(e.target.value)}
@@ -1955,7 +2181,7 @@ export default function App() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                <div className="flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2">
                   <span className="text-slate-400 text-[11px]">Desk:</span>
                   <select
                     value={filterExecutive}
@@ -1968,7 +2194,7 @@ export default function App() {
                   </select>
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                <div className="sm:col-span-2 flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2">
                   <span className="text-slate-400 text-[11px]">Status:</span>
                   <select
                     value={filterStatus}
@@ -1986,7 +2212,195 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl overflow-x-auto shadow-2xl">
+            {/* MOBILE CARD VIEW FOR ORDERS */}
+            <div className="md:hidden space-y-3">
+              {filteredOrders.length === 0 ? (
+                <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-8 text-center text-slate-500 text-xs font-medium">
+                  {loading ? (
+                    <div className="flex items-center justify-center gap-2 text-amber-400">
+                      <Clock className="w-4 h-4 animate-spin" /> Syncing with Google Sheets...
+                    </div>
+                  ) : (
+                    'No orders found matching selected filters.'
+                  )}
+                </div>
+              ) : (
+                filteredOrders.map((order, idx) => {
+                  const isAssigned = order.karigarName || (order.productStatus && !order.productStatus.includes('Not Assign') && order.productStatus !== '');
+                  const productStatus = (order.productStatus || '').toLowerCase();
+                  const karigarName = order.karigarName || order.KarigarName || 'Not Assigned';
+                  const karigarDOD = order.karigarDod || order.karigarDOD || '';
+                  const gWt = order['Gold Weight(g)'] || order.goldWeight;
+                  const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                  const adv = order.advanceAmount;
+
+                  return (
+                    <div key={idx} className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 space-y-3 shadow-xl">
+                      {/* Header Row: Image + Order Sheet + Toggle */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {formatDriveUrl(order) ? (
+                            <img
+                              src={formatDriveUrl(order)}
+                              alt=""
+                              onClick={() => setPreviewImage(formatDriveUrl(order))}
+                              className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md shrink-0 cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] font-semibold shrink-0">
+                              Product
+                            </div>
+                          )}
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h4 className="text-sm font-black text-amber-400">{order.orderSheetNo || `NJ-2026-00${idx + 1}`}</h4>
+                              <span className="text-[11px] text-slate-400 font-mono">({order.tagNumber || 'NA'})</span>
+                            </div>
+                            <h5 className="text-sm font-bold text-slate-100 mt-0.5">{order.customerName}</h5>
+                            <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider ${
+                              (order.orderType || '').toUpperCase() === 'CUSTOMIZATION IN PRODUCT'
+                                ? 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
+                                : (order.orderType || '').toUpperCase() === 'CLIENT REPAIR'
+                                ? 'bg-purple-600/30 text-purple-300 border border-purple-500/40'
+                                : (order.orderType || '').toUpperCase().includes('HM PENDING')
+                                ? 'bg-orange-600/30 text-orange-300 border border-orange-500/40'
+                                : 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                            }`}>
+                              {order.orderType || 'NEW'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          disabled={!isAssigned || !isAuthorizedToEdit}
+                          onClick={() => isAssigned && isAuthorizedToEdit && toggleOrderSwitch(order)}
+                          className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border transition-all shrink-0 ${
+                            !isAssigned || !isAuthorizedToEdit
+                              ? 'bg-slate-900/40 border-slate-800 text-slate-600 cursor-not-allowed opacity-50'
+                              : order.isOn
+                              ? 'bg-[#13231f] border-emerald-500/40 text-emerald-400 cursor-pointer'
+                              : 'bg-slate-900 border-slate-700 text-slate-500 cursor-pointer'
+                          }`}
+                        >
+                          {isAssigned && order.isOn ? (
+                            <>
+                              <ToggleRight className="w-4 h-4 text-emerald-400" />
+                              <span>ON</span>
+                            </>
+                          ) : (
+                            <>
+                              <ToggleLeft className="w-4 h-4 text-slate-500" />
+                              <span>OFF</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Jewellery Specs Block */}
+                      <div className="bg-[#111318] border border-slate-800/80 rounded-xl p-3 space-y-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-200">{order.jewelleryItem || 'Necklace'} {order.purity && <span className="text-amber-300">({order.purity})</span>}</span>
+                          <span className="text-[11px] font-mono text-emerald-400 font-bold">DOD: {formatDDMM(order.deliveryDate)}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex flex-wrap gap-x-2 gap-y-0.5">
+                          {gWt && <span>Gold: <strong className="text-amber-400">{gWt}g</strong></span>}
+                          {dWt && <span>Dia: <strong className="text-amber-400">{dWt}ct</strong></span>}
+                          {adv && <span>Adv: <strong className="text-emerald-400">₹{adv}</strong></span>}
+                          {order.colorTone && <span>Tone: {order.colorTone}</span>}
+                          {order.size && <span>Size: {order.size}</span>}
+                        </div>
+                        {(order.orderDescription || order.remarks) && (
+                          <p className="text-[11px] text-slate-300 pt-1 border-t border-slate-800/80">
+                            <span className="text-amber-400 font-semibold">Desc: </span>{order.orderDescription || order.remarks}
+                          </p>
+                        )}
+                        {order.dailyRemarks && (
+                          <p className="text-[11px] text-slate-300 pt-1 border-t border-slate-800/80">
+                            <span className="text-purple-400 font-semibold">Remarks: </span>{order.dailyRemarks}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Sales & Exec Row */}
+                      <div className="flex items-center justify-between text-[11px] px-1">
+                        <span className="text-amber-400 font-bold">Sales: {order.salesPerson || 'Sohil'}</span>
+                        <span className="px-2.5 py-0.5 rounded-lg bg-[#232d42] text-blue-300 border border-blue-500/30 font-bold">
+                          Desk: {order.orderPerson || 'Amardeep'}
+                        </span>
+                      </div>
+
+                      {/* Action & Status Footer */}
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
+                        <div>
+                          {!isAssigned || productStatus.includes('not assign') || productStatus === '' ? (
+                            <button
+                              onClick={() => {
+                                if (!isAuthorizedToEdit) {
+                                  alert("🔒 Restricted: Please login as Admin or Order Desk to place orders.");
+                                  return;
+                                }
+                                setSelectedOrderForKarigar(order);
+                              }}
+                              className={`w-full justify-center text-xs font-bold px-3 py-2 rounded-xl border transition-all flex items-center gap-1 cursor-pointer ${
+                                isAuthorizedToEdit
+                                  ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                                  : 'text-slate-500 bg-slate-900 border-slate-800 opacity-70'
+                              }`}
+                            >
+                              Place Order
+                            </button>
+                          ) : productStatus.includes('ready but bill pending') || productStatus.includes('bill pending') ? (
+                            <div className="px-2.5 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-[10px] font-bold text-center leading-tight">
+                              Received ({karigarName})
+                            </div>
+                          ) : productStatus.includes('packed') || productStatus.includes('dispatch') ? (
+                            <div className="px-2.5 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold text-center">
+                              Ready to Dispatch
+                            </div>
+                          ) : (
+                            <div className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold text-center leading-tight">
+                              {karigarName} {karigarDOD && `(${formatDDMM(karigarDOD)})`}
+                            </div>
+                          )}
+                        </div>
+
+                        <div>
+                          {isAssigned && order.isOn && isAuthorizedToEdit ? (
+                            <select
+                              value={order.productStatus || 'Under Process'}
+                              onChange={(e) => handleStatusChange(order.orderSheetNo, order.tagNumber, order.jewelleryItem, e.target.value)}
+                              className="w-full px-2.5 py-2 rounded-xl text-[11px] font-bold cursor-pointer border focus:outline-none bg-amber-900/30 text-amber-300 border-amber-600/40"
+                            >
+                              <option value="Under Process" className="bg-[#181b22] text-amber-300">Under Process</option>
+                              <option value="Ready but bill pending" className="bg-[#181b22] text-emerald-300">Ready but bill pending</option>
+                              <option value="Packed" className="bg-[#181b22] text-purple-300">Packed</option>
+                              {isAdminUser && <option value="Delivered" className="bg-[#181b22] text-blue-300">Delivered</option>}
+                            </select>
+                          ) : (
+                            <div className={`w-full text-center text-[11px] font-bold px-2.5 py-2 rounded-xl border truncate ${
+                              !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
+                                ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
+                                : (order.productStatus || '').toLowerCase() === 'packed'
+                                ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
+                                : (order.productStatus || '').toLowerCase().includes('bill pending')
+                                ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                                : (order.productStatus || '').toLowerCase() === 'delivered'
+                                ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
+                                : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                            }`}>
+                              {isAssigned && order.productStatus && !order.productStatus.includes('Not Assign') ? order.productStatus : '--Not Assign--'}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* DESKTOP TABLE VIEW FOR ORDERS */}
+            <div className="hidden md:block bg-[#181b22] border border-slate-800/90 rounded-2xl overflow-x-auto shadow-2xl">
               <table className="w-full text-left text-xs text-slate-300 border-collapse min-w-[950px]">
                 <thead className="bg-[#121419] text-amber-500/90 uppercase font-black tracking-wider border-b border-slate-800 text-[11px]">
                   <tr>
@@ -2224,51 +2638,153 @@ export default function App() {
         )}
 
         {activeTab === 'off-orders' && (
-          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-4">
+          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 border-b border-slate-800 pb-4">
               <div>
-                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-amber-400 flex items-center gap-2">
                   <PowerOff className="w-5 h-5" /> OFF Orders List
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">Review all orders with the toggle currently turned OFF.</p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs">
-                  <Filter className="w-3.5 h-3.5 text-amber-400" />
-                  <span className="text-slate-400">Sales:</span>
+              <div className="grid grid-cols-2 sm:flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                <div className="flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2 text-xs">
+                  <div className="flex items-center gap-1">
+                    <Filter className="w-3.5 h-3.5 text-amber-400" />
+                    <span className="text-slate-400">Sales:</span>
+                  </div>
                   <select
                     value={offOrdersSalesFilter}
                     onChange={(e) => setOffOrdersSalesFilter(e.target.value)}
                     className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
                   >
-                    <option value="ALL" className="bg-[#181b22]">All Sales</option>
+                    <option value="ALL" className="bg-[#181b22]">All</option>
                     {['Sohil', 'Mohit', 'Hema', 'Akansha', 'Yogita', 'Ziya', 'Deepika'].map(s => (
                       <option key={s} value={s} className="bg-[#181b22]">{s}</option>
                     ))}
                   </select>
                 </div>
 
-                <div className="flex items-center gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5 text-xs">
+                <div className="flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2 text-xs">
                   <span className="text-slate-400">Exec:</span>
                   <select
                     value={offOrdersExecutiveFilter}
                     onChange={(e) => setOffOrdersExecutiveFilter(e.target.value)}
                     className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
                   >
-                    <option value="ALL" className="bg-[#181b22]">All Execs</option>
+                    <option value="ALL" className="bg-[#181b22]">All</option>
                     <option value="Amardeep" className="bg-[#181b22]">Amardeep</option>
                     <option value="Gautam" className="bg-[#181b22]">Gautam</option>
                   </select>
                 </div>
 
-                <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold whitespace-nowrap">
+                <span className="col-span-2 text-center px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold whitespace-nowrap">
                   Total OFF Orders: {offOrders.length}
                 </span>
               </div>
             </div>
 
-            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl overflow-x-auto shadow-2xl">
+            {/* MOBILE CARD VIEW FOR OFF ORDERS */}
+            <div className="md:hidden space-y-3">
+              {offOrders.length === 0 ? (
+                <div className="p-8 text-center text-slate-500 text-xs font-medium">
+                  No OFF orders found for selected filters.
+                </div>
+              ) : (
+                offOrders.map((order, idx) => {
+                  const isAssigned = order.karigarName || (order.productStatus && !order.productStatus.includes('Not Assign') && order.productStatus !== '');
+                  const gWt = order['Gold Weight(g)'] || order.goldWeight;
+                  const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
+                  const adv = order.advanceAmount;
+
+                  return (
+                    <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {formatDriveUrl(order) ? (
+                            <img
+                              src={formatDriveUrl(order)}
+                              alt=""
+                              onClick={() => setPreviewImage(formatDriveUrl(order))}
+                              className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
+                            />
+                          ) : (
+                            <div className="w-14 h-14 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] shrink-0">
+                              Product
+                            </div>
+                          )}
+                          <div>
+                            <h4 className="text-sm font-black text-amber-400">
+                              {order.orderSheetNo} <span className="text-xs text-slate-400 font-mono">({order.tagNumber})</span>
+                            </h4>
+                            <h5 className="text-sm font-bold text-slate-100">{order.customerName}</h5>
+                            <p className="text-[11px] font-bold text-amber-400">Sales: {order.salesPerson}</p>
+                          </div>
+                        </div>
+
+                        <button
+                          disabled={!isAssigned || !isAuthorizedToEdit}
+                          onClick={() => isAssigned && isAuthorizedToEdit && toggleOrderSwitch(order)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold border bg-slate-900 border-slate-700 text-slate-500 cursor-pointer shrink-0"
+                        >
+                          <ToggleLeft className="w-4 h-4 text-slate-500" />
+                          <span>OFF</span>
+                        </button>
+                      </div>
+
+                      <div className="bg-[#181b22] border border-slate-800/80 rounded-xl p-3 space-y-1 text-xs">
+                        <div className="flex justify-between">
+                          <span className="font-bold text-slate-200">{order.jewelleryItem || 'Necklace'} {order.purity && `(${order.purity})`}</span>
+                          <span className="text-[11px] font-mono text-emerald-400 font-bold">DOD: {formatDDMM(order.deliveryDate)}</span>
+                        </div>
+                        <div className="text-[11px] text-slate-300 flex flex-wrap gap-2">
+                          {gWt && <span>Gold: <strong className="text-amber-400">{gWt}g</strong></span>}
+                          {dWt && <span>Dia: <strong className="text-amber-400">{dWt}ct</strong></span>}
+                          {adv && <span>Adv: <strong className="text-emerald-400">₹{adv}</strong></span>}
+                        </div>
+                        {(order.orderDescription || order.remarks) && (
+                          <p className="text-[11px] text-slate-300 pt-1 border-t border-slate-800">
+                            <span className="text-amber-400 font-semibold">Desc: </span>{order.orderDescription || order.remarks}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <span className="px-2.5 py-1 rounded-lg bg-[#232d42] text-blue-300 border border-blue-500/30 text-[11px] font-bold">
+                          Desk: {order.orderPerson || 'Amardeep'}
+                        </span>
+
+                        {!isAssigned ? (
+                          <button
+                            onClick={() => {
+                              if (!isAuthorizedToEdit) {
+                                alert("🔒 Restricted: Please login as Admin or Order Desk to place orders.");
+                                return;
+                              }
+                              setSelectedOrderForKarigar(order);
+                            }}
+                            className={`text-xs font-bold px-3.5 py-2 rounded-xl border transition-all cursor-pointer ${
+                              isAuthorizedToEdit
+                                ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                                : 'text-slate-500 bg-slate-900 border-slate-800 opacity-70'
+                            }`}
+                          >
+                            Place Order
+                          </button>
+                        ) : (
+                          <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/30 inline-flex items-center gap-1">
+                            <Check className="w-3.5 h-3.5" /> Assigned
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* DESKTOP TABLE VIEW FOR OFF ORDERS */}
+            <div className="hidden md:block bg-[#181b22] border border-slate-800/90 rounded-2xl overflow-x-auto shadow-2xl">
               <table className="w-full text-left text-xs text-slate-300 border-collapse min-w-[950px]">
                 <thead className="bg-[#121419] text-amber-500/90 uppercase font-black tracking-wider border-b border-slate-800 text-[11px]">
                   <tr>
@@ -2413,17 +2929,17 @@ export default function App() {
         )}
 
         {activeTab === 'audit' && (
-          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
-            <div className="flex justify-between items-center border-b border-slate-800 pb-4">
+          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-5 sm:space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-800 pb-4 gap-2">
               <div>
-                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-amber-400 flex items-center gap-2">
                   <AlertTriangle className="w-5 h-5" /> Order Book & Active Gap Audit
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
                   Detects skipped blank pages only within active entry ranges (ignoring unreached future pages).
                 </p>
               </div>
-              <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold">
+              <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-[11px] sm:text-xs font-bold">
                 Smart Range Inspection Active
               </span>
             </div>
@@ -2509,9 +3025,9 @@ export default function App() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {Object.entries(orderBookAudits).map(([name, data], idx) => (
                 <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-xl">
-                  <div className="flex justify-between items-center">
+                  <div className="flex flex-wrap justify-between items-center gap-1.5">
                     <h4 className="text-sm font-black text-slate-100">{name}</h4>
-                    <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
+                    <span className="text-[11px] font-mono text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-lg border border-amber-500/20">
                       Range: {data.expectedRange}
                     </span>
                   </div>
@@ -2544,7 +3060,7 @@ export default function App() {
                       </p>
                     </div>
                   ) : (
-                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-2.5 p-2.5 text-center text-xs font-bold text-emerald-400">
+                    <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-2.5 text-center text-xs font-bold text-emerald-400">
                       ✨ No Gaps! All pages up to #{data.maxEntered} are filled properly.
                     </div>
                   )}
@@ -2555,15 +3071,15 @@ export default function App() {
         )}
 
         {activeTab === 'crm' && (
-          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
+          <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-5 sm:space-y-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 border-b border-slate-800 pb-4">
               <div>
-                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+                <h3 className="text-base sm:text-lg font-black text-amber-400 flex items-center gap-2">
                   <Users className="w-5 h-5" /> Client Directory & CRM History
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">Manage customer profiles, contact numbers, and complete order histories.</p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-end">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto justify-end">
                 <div className="relative w-full sm:w-64">
                   <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
                   <input
@@ -2574,7 +3090,7 @@ export default function App() {
                     className="w-full bg-[#111318] border border-slate-700/80 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                   />
                 </div>
-                <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold whitespace-nowrap">
+                <span className="text-center px-3 py-1.5 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl text-xs font-bold whitespace-nowrap">
                   Clients: {filteredUniqueCustomers.length} / {uniqueCustomers.length}
                 </span>
               </div>
@@ -2604,7 +3120,7 @@ export default function App() {
 
                     <button
                       onClick={() => setSelectedCustomerCRM(client)}
-                      className="w-full mt-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-2 rounded-xl text-xs transition-all shadow-md cursor-pointer"
+                      className="w-full mt-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-all shadow-md cursor-pointer"
                     >
                       View Client Purchase History
                     </button>
@@ -2617,20 +3133,20 @@ export default function App() {
 
         {activeTab === 'new-order' && (
           <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 sm:p-6 max-w-4xl mx-auto shadow-2xl">
-            <div className="border-b border-slate-800 pb-4 mb-6">
-              <h2 className="text-xl font-black text-amber-400 flex items-center gap-2">
-                <PlusCircle className="w-6 h-6" /> Sales Order Intake
+            <div className="border-b border-slate-800 pb-4 mb-5 sm:mb-6">
+              <h2 className="text-lg sm:text-xl font-black text-amber-400 flex items-center gap-2">
+                <PlusCircle className="w-5 h-5 sm:w-6 sm:h-6" /> Sales Order Intake
               </h2>
               <p className="text-xs text-slate-400 mt-1">Sales team can enter new customer orders directly from mobile or desktop.</p>
             </div>
 
-            <form onSubmit={handleCreateOrder} className="space-y-6">
+            <form onSubmit={handleCreateOrder} className="space-y-5 sm:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Sales Person Name *</label>
                   <select
                     required
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 cursor-pointer"
                     value={formData.salesPerson}
                     onChange={(e) => setFormData({ ...formData, salesPerson: e.target.value })}
                   >
@@ -2645,7 +3161,7 @@ export default function App() {
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Order Support Person *</label>
                   <select
                     required
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 cursor-pointer"
                     value={formData.orderPerson}
                     onChange={(e) => setFormData({ ...formData, orderPerson: e.target.value })}
                   >
@@ -2659,7 +3175,7 @@ export default function App() {
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Order Type *</label>
                   <select
                     required
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 cursor-pointer"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 cursor-pointer"
                     value={formData.orderType}
                     onChange={(e) => setFormData({ ...formData, orderType: e.target.value })}
                   >
@@ -2679,7 +3195,7 @@ export default function App() {
                     type="text"
                     required
                     placeholder="Enter customer name"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200"
                     value={formData.customerName}
                     onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
                   />
@@ -2690,7 +3206,7 @@ export default function App() {
                   <input
                     type="text"
                     placeholder="Enter contact number"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200"
                     value={formData.contactNumber}
                     onChange={(e) => setFormData({ ...formData, contactNumber: e.target.value })}
                   />
@@ -2702,7 +3218,7 @@ export default function App() {
                     type="text"
                     required
                     placeholder="e.g. NJ-2026-004"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200"
                     value={formData.orderSheetNo}
                     onChange={(e) => setFormData({ ...formData, orderSheetNo: e.target.value })}
                   />
@@ -2714,7 +3230,7 @@ export default function App() {
                   📷 Product Photo Capture / Upload
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
-                  <label className="cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
+                  <label className="flex-1 sm:flex-initial justify-center cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
                     <Camera className="w-4 h-4" /> Open Camera
                     <input 
                       type="file" 
@@ -2725,8 +3241,8 @@ export default function App() {
                     />
                   </label>
 
-                  <label className="cursor-pointer bg-[#222630] hover:bg-[#2c3240] text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md">
-                    <Download className="w-4 h-4 text-slate-400" /> Choose Gallery / File
+                  <label className="flex-1 sm:flex-initial justify-center cursor-pointer bg-[#222630] hover:bg-[#2c3240] text-slate-200 border border-slate-700 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-md">
+                    <Download className="w-4 h-4 text-slate-400" /> Gallery / File
                     <input 
                       type="file" 
                       accept="image/*" 
@@ -2746,7 +3262,7 @@ export default function App() {
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Jewellery Item Name *</label>
                   <div
                     onClick={() => setJewelleryDropdownOpen(prev => !prev)}
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200 flex items-center justify-between cursor-pointer"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200 flex items-center justify-between cursor-pointer"
                   >
                     <span className={formData.jewelleryItem ? 'text-white font-semibold' : 'text-slate-500'}>
                       {formData.jewelleryItem || 'Select or search jewellery item...'}
@@ -2809,7 +3325,7 @@ export default function App() {
                     type="text"
                     required
                     placeholder="e.g. TAG-8821"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200"
                     value={formData.tagNumber}
                     onChange={(e) => setFormData({ ...formData, tagNumber: e.target.value })}
                   />
@@ -2824,7 +3340,7 @@ export default function App() {
                     <input
                       type="text"
                       placeholder="e.g. 45.2"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200"
+                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200"
                       value={formData.goldWeight}
                       onChange={(e) => setFormData({ ...formData, goldWeight: e.target.value })}
                     />
@@ -2835,7 +3351,7 @@ export default function App() {
                     <input
                       type="text"
                       placeholder="e.g. 2.15"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200"
+                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200"
                       value={formData.diamondWeight}
                       onChange={(e) => setFormData({ ...formData, diamondWeight: e.target.value })}
                     />
@@ -2846,7 +3362,7 @@ export default function App() {
                     <input
                       type="number"
                       placeholder="e.g. 5000"
-                      className="w-full bg-[#181b22] border border-amber-500/50 rounded-lg px-2 py-1.5 text-sm text-amber-300 font-bold"
+                      className="w-full bg-[#181b22] border border-amber-500/50 rounded-lg px-2.5 py-2 text-sm text-amber-300 font-bold"
                       value={formData.advanceAmount}
                       onChange={(e) => setFormData({ ...formData, advanceAmount: e.target.value })}
                     />
@@ -2856,7 +3372,7 @@ export default function App() {
                     <label className="block text-xs text-slate-400 mb-1">Gold Purity *</label>
                     <select
                       required
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200 cursor-pointer"
+                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200 cursor-pointer"
                       value={formData.purity}
                       onChange={(e) => setFormData({ ...formData, purity: e.target.value })}
                     >
@@ -2873,7 +3389,7 @@ export default function App() {
                     <input
                       type="text"
                       placeholder="e.g. Yellow Gold"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200"
+                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200"
                       value={formData.colorTone}
                       onChange={(e) => setFormData({ ...formData, colorTone: e.target.value })}
                     />
@@ -2884,7 +3400,7 @@ export default function App() {
                     <input
                       type="text"
                       placeholder="e.g. 16 inch"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-sm text-slate-200"
+                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200"
                       value={formData.size}
                       onChange={(e) => setFormData({ ...formData, size: e.target.value })}
                     />
@@ -2922,7 +3438,7 @@ export default function App() {
                   <label className="block text-xs font-semibold text-slate-300 mb-1">Order Taken Date</label>
                   <input
                     type="date"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200"
                     value={formData.orderTakenDate}
                     onChange={(e) => setFormData({ ...formData, orderTakenDate: e.target.value })}
                   />
@@ -2933,7 +3449,7 @@ export default function App() {
                   <input
                     type="date"
                     required
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-200"
+                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-200"
                     value={formData.deliveryDate}
                     onChange={(e) => setFormData({ ...formData, deliveryDate: e.target.value })}
                   />
@@ -2944,7 +3460,7 @@ export default function App() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-6 py-2.5 rounded-xl transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
+                  className="w-full sm:w-auto bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black px-6 py-3 rounded-xl transition-all shadow-lg shadow-amber-500/20 cursor-pointer"
                 >
                   {submitting ? 'Saving to Drive & Sheets...' : 'Save Order to Google Sheets'}
                 </button>
@@ -3009,13 +3525,13 @@ export default function App() {
           const currentExecReminders = reminders.filter(r => r.executive.toLowerCase() === karigarSubTab.toLowerCase());
 
           return (
-            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-6 shadow-2xl space-y-6">
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-4">
-                <h3 className="text-lg font-black text-amber-400 flex items-center gap-2">
+            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 sm:p-6 shadow-2xl space-y-5 sm:space-y-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 sm:gap-4 border-b border-slate-800 pb-4">
+                <h3 className="text-base sm:text-lg font-black text-amber-400 flex items-center gap-2">
                   <Send className="w-5 h-5" /> Active Karigar Work Orders
                 </h3>
                 
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
                   <div className="relative w-full sm:w-64">
                     <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-3" />
                     <input
@@ -3027,7 +3543,7 @@ export default function App() {
                     />
                   </div>
 
-                  <div className="flex bg-[#111317] p-1.5 rounded-xl border border-slate-800">
+                  <div className="grid grid-cols-2 bg-[#111317] p-1.5 rounded-xl border border-slate-800">
                     <button
                       onClick={() => { setKarigarSubTab('Amardeep'); setSelectedKarigarTagFilter('ALL'); }}
                       className={`px-4 py-2 rounded-lg text-xs font-bold transition-all cursor-pointer ${
@@ -3053,26 +3569,26 @@ export default function App() {
               </div>
 
               {/* REMINDERS / FOLLOW-UP SECTION FOR AMARDEEP / GAUTAM */}
-              <div className="bg-[#111318] border border-amber-500/30 rounded-2xl p-4 space-y-3 shadow-lg">
-                <div className="flex justify-between items-center border-b border-slate-800 pb-2.5">
-                  <h4 className="text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
-                    <Bell className="w-4 h-4 text-amber-400 animate-bounce" /> {karigarSubTab}'s Reminders & Follow-ups ({currentExecReminders.length})
+              <div className="bg-[#111318] border border-amber-500/30 rounded-2xl p-3.5 sm:p-4 space-y-3 shadow-lg">
+                <div className="flex justify-between items-center border-b border-slate-800 pb-2.5 gap-2">
+                  <h4 className="text-[11px] sm:text-xs font-black text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Bell className="w-4 h-4 text-amber-400 animate-bounce shrink-0" /> {karigarSubTab}'s Reminders ({currentExecReminders.length})
                   </h4>
                   <button
                     onClick={() => {
                       setReminderTargetExec(karigarSubTab);
                       setShowAddReminderModal(true);
                     }}
-                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-md cursor-pointer"
+                    className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 rounded-xl text-xs font-extrabold flex items-center gap-1 shadow-md cursor-pointer shrink-0"
                   >
-                    <PlusCircle className="w-3.5 h-3.5" /> Add Reminder
+                    <PlusCircle className="w-3.5 h-3.5" /> Add
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {currentExecReminders.length === 0 ? (
                     <div className="col-span-full py-4 text-center text-slate-500 text-xs italic">
-                      No active reminders set for {karigarSubTab}. Click "Add Reminder" to create one.
+                      No active reminders set for {karigarSubTab}. Click "Add" to create one.
                     </div>
                   ) : (
                     currentExecReminders.map(rem => (
@@ -3081,7 +3597,7 @@ export default function App() {
                           <p className="text-xs font-bold text-slate-100">{rem.title}</p>
                           <div className="text-[10px] font-mono text-amber-300 flex items-center gap-2">
                             <span>Due: {formatDDMM(rem.dueDate)}</span>
-                            {rem.setBy && <span className="text-slate-400">| Set By: <strong className="text-slate-200">{rem.setBy}</strong></span>}
+                            {rem.setBy && <span className="text-slate-400">| By: <strong className="text-slate-200">{rem.setBy}</strong></span>}
                           </div>
                         </div>
                         <button
@@ -3107,7 +3623,7 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
                 <button
                   onClick={() => { setKarigarTimelineTab('ALL'); setSelectedKarigarTagFilter('ALL'); }}
                   className={`p-3 rounded-xl border text-xs font-bold transition-all flex items-center justify-between cursor-pointer ${
@@ -3116,7 +3632,7 @@ export default function App() {
                       : 'bg-[#111318] text-slate-300 border-slate-700 hover:border-amber-500/50'
                   }`}
                 >
-                  <span>All Active Karigar Orders</span>
+                  <span className="text-left">All Active</span>
                   <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'ALL' ? 'bg-slate-950 text-amber-400 font-bold' : 'bg-slate-800 text-slate-300'}`}>
                     {targetKarigarList.length}
                   </span>
@@ -3130,7 +3646,7 @@ export default function App() {
                       : 'bg-[#111318] text-red-400 border-red-500/30 hover:border-red-500'
                   }`}
                 >
-                  <span>1 - Overdue Orders on Karigar</span>
+                  <span className="text-left">1 - Overdue</span>
                   <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'OVERDUE' ? 'bg-slate-950 text-red-400 font-bold' : 'bg-red-500/10 text-red-400'}`}>
                     {overdueCount}
                   </span>
@@ -3144,7 +3660,7 @@ export default function App() {
                       : 'bg-[#111318] text-amber-400 border-amber-500/30 hover:border-amber-500'
                   }`}
                 >
-                  <span>2 - Today DOD on Karigar</span>
+                  <span className="text-left">2 - Today DOD</span>
                   <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'TODAY' ? 'bg-slate-950 text-amber-400 font-bold' : 'bg-amber-500/10 text-amber-400'}`}>
                     {todayCount}
                   </span>
@@ -3158,7 +3674,7 @@ export default function App() {
                       : 'bg-[#111318] text-emerald-400 border-emerald-500/30 hover:border-emerald-500'
                   }`}
                 >
-                  <span>3 - Upcoming DOD on Karigar</span>
+                  <span className="text-left">3 - Upcoming</span>
                   <span className={`px-2 py-0.5 rounded-lg text-[10px] ${karigarTimelineTab === 'UPCOMING' ? 'bg-slate-950 text-emerald-400 font-bold' : 'bg-emerald-500/10 text-emerald-400'}`}>
                     {upcomingCount}
                   </span>
@@ -3250,7 +3766,7 @@ export default function App() {
                             )}
                           </div>
 
-                          <button onClick={() => setWhatsappModalData(order)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2 rounded-xl text-xs w-full transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer">
+                          <button onClick={() => setWhatsappModalData(order)} className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-3 py-2.5 rounded-xl text-xs w-full transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer">
                             <Send className="w-3.5 h-3.5" /> Send WhatsApp Slip
                           </button>
                         </div>
@@ -3566,10 +4082,10 @@ export default function App() {
 
       {selectedCustomerCRM && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-2xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-2xl w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
               <div>
-                <h3 className="text-md font-bold text-amber-400">{selectedCustomerCRM.customerName} - CRM Profile</h3>
+                <h3 className="text-sm sm:text-md font-bold text-amber-400">{selectedCustomerCRM.customerName} - CRM Profile</h3>
                 <p className="text-xs text-slate-400">Contact: {selectedCustomerCRM.contactNumber}</p>
               </div>
               <button onClick={() => setSelectedCustomerCRM(null)} className="text-slate-400 hover:text-white cursor-pointer">
@@ -3581,12 +4097,12 @@ export default function App() {
               <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Order History ({selectedCustomerCRM.ordersList.length})</h4>
               <div className="space-y-2 max-h-60 overflow-y-auto">
                 {selectedCustomerCRM.ordersList.map((ord, i) => (
-                  <div key={i} className="bg-[#111318] border border-slate-800 p-3 rounded-xl flex items-center justify-between text-xs">
+                  <div key={i} className="bg-[#111318] border border-slate-800 p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div>
                       <p className="font-bold text-amber-400">{ord.orderSheetNo} - {ord.jewelleryItem}</p>
                       <p className="text-[11px] text-slate-400">Tag: {ord.tagNumber} | Salesperson: {ord.salesPerson} {ord.advanceAmount ? `| Advance: ₹${ord.advanceAmount}` : ''}</p>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-lg border font-bold text-xs ${
+                    <span className={`self-start sm:self-center px-2.5 py-1 rounded-lg border font-bold text-xs ${
                       !ord.productStatus || ord.productStatus.includes('Not Assign')
                         ? 'bg-slate-900 text-slate-400 border-slate-700'
                         : ord.productStatus.toLowerCase() === 'packed'
@@ -3610,7 +4126,7 @@ export default function App() {
                   navigator.clipboard.writeText(buildConsolidatedCustomerMessage(selectedCustomerCRM));
                   alert("Consolidated client slip copied to clipboard!");
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5" /> Copy Full Slip
               </button>
@@ -3619,14 +4135,14 @@ export default function App() {
                 href={'https://wa.me/?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
               >
                 <Send className="w-4 h-4" /> Send Consolidated WhatsApp Slip
               </a>
               
               <button 
                 onClick={() => setSelectedCustomerCRM(null)} 
-                className="px-4 py-2 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs font-semibold cursor-pointer border border-slate-800"
+                className="px-4 py-2.5 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs font-semibold cursor-pointer border border-slate-800"
               >
                 Close Profile
               </button>
@@ -3637,9 +4153,9 @@ export default function App() {
 
       {selectedOrderForKarigar && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-xl w-full p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-xl w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-md font-bold text-amber-400">
+              <h3 className="text-sm sm:text-md font-bold text-amber-400">
                 {selectedOrderForKarigar.karigarName ? 'Update Karigar Placing Details' : 'Assign Order to Karigar'}
               </h3>
               <button onClick={() => setSelectedOrderForKarigar(null)} className="text-slate-400 hover:text-white cursor-pointer">
@@ -3777,25 +4293,25 @@ export default function App() {
 
       {whatsappModalData && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-2xl">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-md font-bold text-emerald-400">WhatsApp Karigar Work Order</h3>
+              <h3 className="text-sm sm:text-md font-bold text-emerald-400">WhatsApp Karigar Work Order</h3>
               <button onClick={() => setWhatsappModalData(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-4 bg-[#111318] border border-slate-800 rounded-xl text-xs font-mono text-emerald-300 whitespace-pre-wrap select-all">
+            <div className="p-4 bg-[#111318] border border-slate-800 rounded-xl text-xs font-mono text-emerald-300 whitespace-pre-wrap select-all max-h-72 overflow-y-auto">
               {buildWhatsAppMessage(whatsappModalData)}
             </div>
 
-            <div className="flex justify-end gap-2">
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(buildWhatsAppMessage(whatsappModalData));
                   alert("Message caption copied to clipboard!");
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center gap-1 cursor-pointer"
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5" /> Copy Message
               </button>
@@ -3803,7 +4319,7 @@ export default function App() {
                 href={'https://wa.me/?text=' + encodeURIComponent(buildWhatsAppMessage(whatsappModalData))}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5"
               >
                 <Send className="w-4 h-4" /> Open WhatsApp
               </a>
@@ -3829,7 +4345,7 @@ export default function App() {
               <img 
                 src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
                 alt="Product Preview HD" 
-                className="max-w-[85vw] max-h-[85vh] w-auto h-auto rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
+                className="max-w-[90vw] max-h-[82vh] w-auto h-auto rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
                 onClick={(e) => e.stopPropagation()} 
               />
             </div>
