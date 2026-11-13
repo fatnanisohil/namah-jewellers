@@ -1365,22 +1365,47 @@ export default function App() {
             customerGroups[custKey].items.push(o);
           });
 
+          const getEarliestDod = (items) => {
+            const validDates = items
+              .map(i => extractDateOnly(i.deliveryDate))
+              .filter(d => d && d !== 'N/A')
+              .sort();
+            return validDates.length > 0 ? validDates[0] : 'N/A';
+          };
+
+          const sortByPromisedDod = (a, b) => {
+            if (a.earliestDod === 'N/A' && b.earliestDod === 'N/A') return 0;
+            if (a.earliestDod === 'N/A') return 1;
+            if (b.earliestDod === 'N/A') return -1;
+            return new Date(a.earliestDod).getTime() - new Date(b.earliestDod).getTime();
+          };
+
           const billPendingCustomers = [];
           const packedCustomers = [];
 
           Object.values(customerGroups).forEach(cust => {
+            const earliestDod = getEarliestDod(cust.items);
+            const uniqueDodsDisplay = Array.from(
+              new Set(cust.items.map(i => formatDateDDMM(i.deliveryDate)).filter(d => d && d !== 'N/A'))
+            ).join(', ') || 'N/A';
+
+            const enrichedCust = { ...cust, earliestDod, uniqueDodsDisplay };
+
             const allBillPending = cust.items.length > 0 && cust.items.every(item => {
               const st = (item.productStatus || '').toLowerCase();
               return st === 'ready but bill pending' || st.includes('bill pending');
             });
-            if (allBillPending) billPendingCustomers.push(cust);
+            if (allBillPending) billPendingCustomers.push(enrichedCust);
 
             const allPacked = cust.items.length > 0 && cust.items.every(item => {
               const st = (item.productStatus || '').toLowerCase();
               return st === 'packed';
             });
-            if (allPacked) packedCustomers.push(cust);
+            if (allPacked) packedCustomers.push(enrichedCust);
           });
+
+          billPendingCustomers.sort(sortByPromisedDod);
+          packedCustomers.sort(sortByPromisedDod);
 
           const hasActiveDashboardFilters =
             dashboardSalesFilter !== 'ALL' ||
@@ -1788,9 +1813,14 @@ export default function App() {
 
               {/* CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" */}
               <div id="bill-pending-section" className="bg-[#181b22] border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-4">
-                <h4 className="text-xs sm:text-sm font-black text-emerald-400 uppercase">
-                  CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
-                </h4>
+                <div className="flex flex-wrap justify-between items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-black text-emerald-400 uppercase">
+                    CUSTOMERS WITH ALL ITEMS "READY BUT BILL PENDING" ({billPendingCustomers.length})
+                  </h4>
+                  <span className="text-[10px] sm:text-[11px] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-xl font-bold">
+                    Sorted by Promised DOD ↑
+                  </span>
+                </div>
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-2.5">
@@ -1800,16 +1830,22 @@ export default function App() {
                     billPendingCustomers.map((cust, idx) => {
                       const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
                       const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                      const isToday = cust.earliestDod === todayDateStr;
                       return (
-                        <div key={idx} className="bg-[#111318] border border-emerald-500/25 rounded-xl p-3.5 space-y-2 text-xs">
+                        <div key={idx} className={`bg-[#111318] border rounded-xl p-3.5 space-y-2 text-xs ${isToday ? 'border-amber-500/50 bg-amber-500/5' : 'border-emerald-500/25'}`}>
                           <div className="flex justify-between items-start">
                             <div>
                               <h5 className="font-bold text-emerald-300 text-sm">{cust.customerName}</h5>
                               <p className="font-mono text-slate-400 text-[11px]">{cust.contactNumber}</p>
                             </div>
-                            <span className="bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                              {cust.items.length} Item(s)
-                            </span>
+                            <div className="text-right space-y-1">
+                              <span className="block bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                                {cust.items.length} Item(s)
+                              </span>
+                              <span className={`block font-mono text-[11px] font-bold ${isToday ? 'text-amber-400' : 'text-slate-300'}`}>
+                                DOD: {cust.uniqueDodsDisplay} {isToday && '⭐'}
+                              </span>
+                            </div>
                           </div>
                           <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
                             <span>Sales: <strong className="text-amber-300">{salesPersons || 'N/A'}</strong></span>
@@ -1826,30 +1862,37 @@ export default function App() {
 
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[980px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Contact Number</th>
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Order Person</th>
+                        <th className="p-3">Promised DOD ↑</th>
                         <th className="p-3">Total Items</th>
                         <th className="p-3">Order Sheets / Tags</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {billPendingCustomers.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
+                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">No customers found with all items ready and bill pending.</td></tr>
                       ) : (
                         billPendingCustomers.map((cust, idx) => {
                           const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
                           const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                          const isToday = cust.earliestDod === todayDateStr;
                           return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
+                            <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
                               <td className="p-3 font-bold text-emerald-300">{cust.customerName}</td>
                               <td className="p-3 font-mono">{cust.contactNumber}</td>
                               <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
                               <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                              <td className="p-3 font-mono font-bold">
+                                <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
+                                  {cust.uniqueDodsDisplay} {isToday && '⭐'}
+                                </span>
+                              </td>
                               <td className="p-3">{cust.items.length}</td>
                               <td className="p-3 text-amber-400 font-mono">
                                 {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
@@ -1865,9 +1908,14 @@ export default function App() {
 
               {/* CUSTOMERS WITH ALL ITEMS "PACKED" */}
               <div id="packed-section" className="bg-[#181b22] border border-slate-800 p-4 sm:p-5 rounded-2xl space-y-4">
-                <h4 className="text-xs sm:text-sm font-black text-purple-400 uppercase">
-                  CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
-                </h4>
+                <div className="flex flex-wrap justify-between items-center gap-2">
+                  <h4 className="text-xs sm:text-sm font-black text-purple-400 uppercase">
+                    CUSTOMERS WITH ALL ITEMS "PACKED" ({packedCustomers.length})
+                  </h4>
+                  <span className="text-[10px] sm:text-[11px] text-purple-300 bg-purple-500/10 border border-purple-500/20 px-2.5 py-1 rounded-xl font-bold">
+                    Sorted by Promised DOD ↑
+                  </span>
+                </div>
 
                 {/* Mobile Cards */}
                 <div className="md:hidden space-y-2.5">
@@ -1877,16 +1925,22 @@ export default function App() {
                     packedCustomers.map((cust, idx) => {
                       const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
                       const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                      const isToday = cust.earliestDod === todayDateStr;
                       return (
-                        <div key={idx} className="bg-[#111318] border border-purple-500/25 rounded-xl p-3.5 space-y-2 text-xs">
+                        <div key={idx} className={`bg-[#111318] border rounded-xl p-3.5 space-y-2 text-xs ${isToday ? 'border-amber-500/50 bg-amber-500/5' : 'border-purple-500/25'}`}>
                           <div className="flex justify-between items-start">
                             <div>
                               <h5 className="font-bold text-purple-300 text-sm">{cust.customerName}</h5>
                               <p className="font-mono text-slate-400 text-[11px]">{cust.contactNumber}</p>
                             </div>
-                            <span className="bg-purple-500/15 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold">
-                              {cust.items.length} Item(s)
-                            </span>
+                            <div className="text-right space-y-1">
+                              <span className="block bg-purple-500/15 text-purple-300 border border-purple-500/30 px-2 py-0.5 rounded-lg text-[10px] font-bold">
+                                {cust.items.length} Item(s)
+                              </span>
+                              <span className={`block font-mono text-[11px] font-bold ${isToday ? 'text-amber-400' : 'text-slate-300'}`}>
+                                DOD: {cust.uniqueDodsDisplay} {isToday && '⭐'}
+                              </span>
+                            </div>
                           </div>
                           <div className="flex justify-between text-[11px] text-slate-300 pt-1 border-t border-slate-800">
                             <span>Sales: <strong className="text-amber-300">{salesPersons || 'N/A'}</strong></span>
@@ -1903,30 +1957,37 @@ export default function App() {
 
                 {/* Desktop Table */}
                 <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full text-left text-xs text-slate-300 min-w-[900px]">
+                  <table className="w-full text-left text-xs text-slate-300 min-w-[980px]">
                     <thead className="bg-[#121419] text-slate-400 uppercase text-[10px]">
                       <tr>
                         <th className="p-3">Customer Name</th>
                         <th className="p-3">Contact Number</th>
                         <th className="p-3">Sales Person</th>
                         <th className="p-3">Order Person</th>
+                        <th className="p-3">Promised DOD ↑</th>
                         <th className="p-3">Total Items</th>
                         <th className="p-3">Order Sheets / Tags</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/50">
                       {packedCustomers.length === 0 ? (
-                        <tr><td colSpan="6" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
+                        <tr><td colSpan="7" className="p-6 text-center text-slate-500">No customers found with all items packed.</td></tr>
                       ) : (
                         packedCustomers.map((cust, idx) => {
                           const salesPersons = Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ');
                           const orderPersons = Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ');
+                          const isToday = cust.earliestDod === todayDateStr;
                           return (
-                            <tr key={idx} className="hover:bg-[#111318]/50">
+                            <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
                               <td className="p-3 font-bold text-purple-300">{cust.customerName}</td>
                               <td className="p-3 font-mono">{cust.contactNumber}</td>
                               <td className="p-3 text-amber-300 font-medium">{salesPersons || 'N/A'}</td>
                               <td className="p-3 text-blue-300 font-medium">{orderPersons || 'N/A'}</td>
+                              <td className="p-3 font-mono font-bold">
+                                <span className={isToday ? 'text-amber-400 bg-amber-500/20 px-2 py-0.5 rounded-lg border border-amber-500/30' : 'text-slate-300'}>
+                                  {cust.uniqueDodsDisplay} {isToday && '⭐'}
+                                </span>
+                              </td>
                               <td className="p-3">{cust.items.length}</td>
                               <td className="p-3 text-amber-400 font-mono">
                                 {cust.items.map(i => `${i.orderSheetNo} (${i.tagNumber})`).join(', ')}
