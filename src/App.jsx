@@ -399,8 +399,23 @@ export default function App() {
   const handleCreateOrder = (e) => {
     e.preventDefault();
 
-    const finalJewelleryItem = formData.jewelleryItem.includes('OTHER') 
-      ? (formData.otherJewelleryItem ? formData.otherJewelleryItem.toUpperCase() : 'OTHER')
+    // 1. Mandatory Product Photo Check
+    if (!formData.imageBase64 && !formData.imagePreviewLocal) {
+      alert("⚠️ Product Photo is mandatory! Please capture or upload a photo before submitting.");
+      return;
+    }
+
+    // 2. Mandatory Custom Jewellery Input Check when "OTHER" is selected
+    if (
+      formData.jewelleryItem.includes('OTHER') &&
+      !(formData.otherJewelleryItem || '').trim()
+    ) {
+      alert("⚠️ Please specify the custom jewellery item name before submitting!");
+      return;
+    }
+
+    const finalJewelleryItem = formData.jewelleryItem.includes('OTHER')
+      ? formData.otherJewelleryItem.trim().toUpperCase()
       : formData.jewelleryItem;
 
     const submissionData = {
@@ -3282,7 +3297,7 @@ export default function App() {
 
               <div className="p-4 bg-[#111318] border border-slate-800/80 rounded-xl space-y-3">
                 <label className="block text-xs font-bold text-amber-400 uppercase">
-                  📷 Product Photo Capture / Upload
+                  📷 PRODUCT PHOTO CAPTURE / UPLOAD *
                 </label>
                 <div className="flex flex-wrap items-center gap-3">
                   <label className="flex-1 sm:flex-initial justify-center cursor-pointer bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center gap-2 shadow-lg">
@@ -3365,7 +3380,7 @@ export default function App() {
                       <input
                         type="text"
                         required
-                        placeholder="Please specify custom jewellery item..."
+                        placeholder="Please specify custom jewellery item...*"
                         className="w-full bg-[#111318] border border-amber-500/60 rounded-xl px-3 py-2 text-sm text-amber-300 font-bold focus:outline-none"
                         value={formData.otherJewelleryItem}
                         onChange={(e) => setFormData({ ...formData, otherJewelleryItem: e.target.value })}
