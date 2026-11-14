@@ -483,7 +483,7 @@ export default function App() {
             key !== 'otherJewelleryItem' &&
             key !== '_localTimestamp' &&
             key !== 'imagePreviewLocal' &&
-            key !== 'productImageLink'
+            key !== 'imageBase64'
           ) {
             payload.append(key, submissionData[key] || '');
           }
