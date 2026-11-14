@@ -1443,11 +1443,11 @@ export default function App() {
 
               <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
                 <div className="bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg">
-                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">TOTAL LIVE ORDERS</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">TOTAL ACTIVE ORDERS</p>
                   <h4 className="text-xl sm:text-2xl font-black text-white mt-1">{totalLiveOrders}</h4>
                 </div>
                 <div className="bg-[#181b22] border border-slate-800 p-3.5 sm:p-4 rounded-2xl shadow-lg">
-                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">LIVE CUSTOMERS</p>
+                  <p className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">TOTAL ACTIVE ORDER SHEET</p>
                   <h4 className="text-xl sm:text-2xl font-black text-amber-400 mt-1">{totalUniqueLiveOrders}</h4>
                 </div>
                 
