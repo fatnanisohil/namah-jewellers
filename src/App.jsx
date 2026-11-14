@@ -381,19 +381,42 @@ export default function App() {
 
   const handleImageCapture = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      const localUrl = URL.createObjectURL(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData(prev => ({
-          ...prev,
-          imageBase64: reader.result,
-          productImageLink: reader.result,
-          imagePreviewLocal: localUrl
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    const localUrl = URL.createObjectURL(file);
+    const img = new Image();
+
+    img.onload = () => {
+      // Compress & resize phone camera photo to max 800px (~60-100 KB)
+      const MAX_SIZE = 800;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > height && width > MAX_SIZE) {
+        height = Math.round((height * MAX_SIZE) / width);
+        width = MAX_SIZE;
+      } else if (height > MAX_SIZE) {
+        width = Math.round((width * MAX_SIZE) / height);
+        height = MAX_SIZE;
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.72);
+
+      setFormData(prev => ({
+        ...prev,
+        imageBase64: compressedBase64,
+        productImageLink: compressedBase64,
+        imagePreviewLocal: localUrl
+      }));
+    };
+
+    img.src = localUrl;
   };
 
   const handleCreateOrder = (e) => {
@@ -431,13 +454,18 @@ export default function App() {
       productStatus: '',
       placingStatus: false,
       karigarName: '',
-      _fetchIndex: -999999, 
+      _fetchIndex: -999999,
     };
 
     setOrders(prev => {
       const updated = [optimisticNewOrder, ...prev];
       try {
-        const lightOrders = updated.map(o => ({ ...o, imageBase64: undefined, imagePreviewLocal: undefined }));
+        const lightOrders = updated.map(o => ({
+          ...o,
+          imageBase64: undefined,
+          imagePreviewLocal: undefined,
+          productImageLink: (o.productImageLink || '').startsWith('data:') ? '' : o.productImageLink
+        }));
         localStorage.setItem('namah_local_orders', JSON.stringify(lightOrders));
       } catch (err) {}
       return updated;
@@ -450,19 +478,31 @@ export default function App() {
       try {
         const payload = new URLSearchParams();
         Object.keys(submissionData).forEach(key => {
-          if (key !== 'otherJewelleryItem' && key !== '_localTimestamp') {
+          // Skip temporary local keys & avoid sending duplicate giant Base64 in productImageLink
+          if (
+            key !== 'otherJewelleryItem' &&
+            key !== '_localTimestamp' &&
+            key !== 'imagePreviewLocal' &&
+            key !== 'productImageLink'
+          ) {
             payload.append(key, submissionData[key] || '');
           }
         });
 
-        await fetch(GOOGLE_SHEETS_API_URL, {
+        const res = await fetch(GOOGLE_SHEETS_API_URL, {
           method: "POST",
           body: payload
         });
-        
-        setTimeout(fetchOrdersFromSheet, 1500);
+
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
+
+        // Wait 4.5s so Google Drive image upload & Sheet append finish before refreshing
+        setTimeout(fetchOrdersFromSheet, 4500);
       } catch (err) {
         console.error("Background sync error:", err);
+        alert("⚠️ Order failed to sync with Google Sheets! Please check mobile internet and try again.");
       }
     }, 10);
   };
