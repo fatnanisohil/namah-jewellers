@@ -2375,69 +2375,78 @@ export default function App() {
                         </span>
                       </div>
 
-                      {/* Action & Status Footer */}
-                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800">
-                        <div>
-                          {!isAssigned || productStatus.includes('not assign') || productStatus === '' ? (
-                            <button
-                              onClick={() => {
-                                if (!isAuthorizedToEdit) {
-                                  alert("🔒 Restricted: Please login as Admin or Order Desk to place orders.");
-                                  return;
-                                }
-                                setSelectedOrderForKarigar(order);
-                              }}
-                              className={`w-full justify-center text-xs font-bold px-3 py-2 rounded-xl border transition-all flex items-center gap-1 cursor-pointer ${
-                                isAuthorizedToEdit
-                                  ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
-                                  : 'text-slate-500 bg-slate-900 border-slate-800 opacity-70'
-                              }`}
-                            >
-                              Place Order
-                            </button>
-                          ) : productStatus.includes('ready but bill pending') || productStatus.includes('bill pending') ? (
-                            <div className="px-2.5 py-1.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-[10px] font-bold text-center leading-tight">
-                              Received ({karigarName})
-                            </div>
-                          ) : productStatus.includes('packed') || productStatus.includes('dispatch') ? (
-                            <div className="px-2.5 py-2 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold text-center">
-                              Ready to Dispatch
-                            </div>
-                          ) : (
-                            <div className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[10px] font-bold text-center leading-tight">
+                      {/* Action & Status Footer (Equal Height & Width) */}
+                      <div className="grid grid-cols-2 gap-2.5 pt-2.5 border-t border-slate-800 items-stretch">
+                        {!isAssigned || productStatus.includes('not assign') || productStatus === '' ? (
+                          <button
+                            onClick={() => {
+                              if (!isAuthorizedToEdit) {
+                                alert("🔒 Restricted: Please login as Admin or Order Desk to place orders.");
+                                return;
+                              }
+                              setSelectedOrderForKarigar(order);
+                            }}
+                            className={`h-10 w-full px-3 rounded-xl border text-[11px] font-bold flex items-center justify-center transition-all cursor-pointer ${
+                              isAuthorizedToEdit
+                                ? 'text-amber-400 bg-amber-500/10 border-amber-500/30'
+                                : 'text-slate-500 bg-slate-900 border-slate-800 opacity-70'
+                            }`}
+                          >
+                            Place Order
+                          </button>
+                        ) : productStatus.includes('ready but bill pending') || productStatus.includes('bill pending') ? (
+                          <div
+                            title={`Received (${karigarName})`}
+                            className="h-10 w-full px-2.5 rounded-xl bg-yellow-500/15 border border-yellow-500/30 text-yellow-400 text-[11px] font-bold flex items-center justify-center text-center"
+                          >
+                            <span className="truncate">Received ({karigarName})</span>
+                          </div>
+                        ) : productStatus.includes('packed') || productStatus.includes('dispatch') ? (
+                          <div className="h-10 w-full px-2.5 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 text-[11px] font-bold flex items-center justify-center text-center">
+                            <span className="truncate">Ready to Dispatch</span>
+                          </div>
+                        ) : (
+                          <div
+                            title={`${karigarName}${karigarDOD ? ` (${formatDDMM(karigarDOD)})` : ''}`}
+                            className="h-10 w-full px-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-[11px] font-bold flex items-center justify-center text-center"
+                          >
+                            <span className="truncate">
                               {karigarName} {karigarDOD && `(${formatDDMM(karigarDOD)})`}
-                            </div>
-                          )}
-                        </div>
+                            </span>
+                          </div>
+                        )}
 
-                        <div>
-                          {isAssigned && order.isOn && isAuthorizedToEdit ? (
+                        {isAssigned && order.isOn && isAuthorizedToEdit ? (
+                          <div className="relative h-10 w-full">
                             <select
                               value={order.productStatus || 'Under Process'}
                               onChange={(e) => handleStatusChange(order.orderSheetNo, order.tagNumber, order.jewelleryItem, e.target.value)}
-                              className="w-full px-2.5 py-2 rounded-xl text-[11px] font-bold cursor-pointer border focus:outline-none bg-amber-900/30 text-amber-300 border-amber-600/40"
+                              className="h-10 w-full appearance-none pl-2.5 pr-6 rounded-xl text-[11px] font-bold cursor-pointer border focus:outline-none bg-amber-900/30 text-amber-300 border-amber-600/40 text-center truncate"
                             >
                               <option value="Under Process" className="bg-[#181b22] text-amber-300">Under Process</option>
                               <option value="Ready but bill pending" className="bg-[#181b22] text-emerald-300">Ready but bill pending</option>
                               <option value="Packed" className="bg-[#181b22] text-purple-300">Packed</option>
                               {isAdminUser && <option value="Delivered" className="bg-[#181b22] text-blue-300">Delivered</option>}
                             </select>
-                          ) : (
-                            <div className={`w-full text-center text-[11px] font-bold px-2.5 py-2 rounded-xl border truncate ${
-                              !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
-                                ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
-                                : (order.productStatus || '').toLowerCase() === 'packed'
-                                ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
-                                : (order.productStatus || '').toLowerCase().includes('bill pending')
-                                ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
-                                : (order.productStatus || '').toLowerCase() === 'delivered'
-                                ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
-                                : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
-                            }`}>
+                            <ChevronDown className="w-3.5 h-3.5 text-amber-300 pointer-events-none absolute right-2 top-1/2 -translate-y-1/2" />
+                          </div>
+                        ) : (
+                          <div className={`h-10 w-full px-2.5 rounded-xl border text-[11px] font-bold flex items-center justify-center text-center ${
+                            !isAssigned || order.productStatus === '' || order.productStatus.includes('Not Assign')
+                              ? 'bg-slate-900/60 text-slate-400 border-slate-700/60'
+                              : (order.productStatus || '').toLowerCase() === 'packed'
+                              ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
+                              : (order.productStatus || '').toLowerCase().includes('bill pending')
+                              ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
+                              : (order.productStatus || '').toLowerCase() === 'delivered'
+                              ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
+                              : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
+                          }`}>
+                            <span className="truncate">
                               {isAssigned && order.productStatus && !order.productStatus.includes('Not Assign') ? order.productStatus : '--Not Assign--'}
-                            </div>
-                          )}
-                        </div>
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
