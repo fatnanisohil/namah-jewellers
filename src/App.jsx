@@ -913,27 +913,32 @@ export default function App() {
       })
       .join('');
 
+    const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
+
     const slipHtml = `
       <div style="font-family: Arial, Helvetica, sans-serif; color: #111; padding: 24px; max-width: 760px; margin: 0 auto; border: 2px solid #b45309; background: #fff;">
         
         <!-- TOP HEADER -->
         <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #b45309; padding-bottom: 12px;">
-          <div style="font-size: 11px; line-height: 1.6;">
+          <div style="font-size: 11px; line-height: 1.6; width: 32%;">
             <div><strong>Sohil Fatnani:</strong> +91-9999629792</div>
             <div><strong>Mohit Fatnani:</strong> +91-9871761663</div>
             <div><strong>Namah Customer Care:</strong> +91-8368582277</div>
             <div style="margin-top: 4px; color: #b45309; font-weight: bold;">GST No.: 07AAOFN7544G1ZW</div>
           </div>
 
-          <div style="text-align: center;">
-            <div style="font-size: 26px; font-weight: 900; letter-spacing: 3px; color: #92400e; line-height: 1.1;">NAMAH</div>
-            <div style="font-size: 13px; font-weight: 800; letter-spacing: 4px; color: #111;">JEWELLERS</div>
-            <div style="margin-top: 6px; display: inline-block; background: #fef3c7; border: 1px solid #d97706; padding: 3px 12px; font-size: 11px; font-weight: bold; border-radius: 4px;">
+          <div style="text-align: center; width: 36%; display: flex; flex-direction: column; align-items: center;">
+            <img 
+              src="${logoUrl}" 
+              alt="Namah Jewellers" 
+              style="max-height: 58px; max-width: 170px; object-fit: contain; margin-bottom: 6px;" 
+            />
+            <div style="display: inline-flex; align-items: center; justify-content: center; background: #fef3c7; border: 1px solid #d97706; padding: 5px 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; line-height: 1; border-radius: 4px; color: #111;">
               CUSTOMER ORDER SLIP
             </div>
           </div>
 
-          <div style="font-size: 11px; line-height: 1.6; text-align: right;">
+          <div style="font-size: 11px; line-height: 1.6; text-align: right; width: 32%;">
             <div><strong>S. No:</strong> <span style="font-size: 14px; font-weight: 900; color: #92400e;">${orderSheetNumbers}</span></div>
             <div><strong>Date:</strong> ${orderDate}</div>
             <div style="margin-top: 4px; font-weight: bold;">Sales Executive Number:</div>
