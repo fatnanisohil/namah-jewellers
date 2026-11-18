@@ -57,8 +57,8 @@ const JEWELLERY_ITEMS_LIST = [
   'RING',
   'STONE MALA',
   'TIMANIYA',
-  'TOPS',
-  'OTHER (SPECIFY IN DESCRIPTION)'
+  'TOPS'
+  // 'OTHER (SPECIFY IN DESCRIPTION)'
 ];
 
 // Proper Case text helper function
@@ -429,13 +429,13 @@ export default function App() {
     }
 
     // 2. Mandatory Custom Jewellery Input Check when "OTHER" is selected
-    if (
-      formData.jewelleryItem.includes('OTHER') &&
-      !(formData.otherJewelleryItem || '').trim()
-    ) {
-      alert("⚠️ Please specify the custom jewellery item name before submitting!");
-      return;
-    }
+    // if (
+    //   formData.jewelleryItem.includes('OTHER') &&
+    //   !(formData.otherJewelleryItem || '').trim()
+    // ) {
+    //   alert("⚠️ Please specify the custom jewellery item name before submitting!");
+    //   return;
+    // }
 
     const finalJewelleryItem = formData.jewelleryItem.includes('OTHER')
       ? formData.otherJewelleryItem.trim().toUpperCase()
