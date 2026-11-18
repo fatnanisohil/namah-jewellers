@@ -935,11 +935,12 @@ export default function App() {
                 alt="Namah Jewellers" 
                 style="height: 54px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
               />
-              <div style="display: inline-block; background: #fef3c7; border: 1.5px solid #d97706; border-radius: 4px; height: 24px; padding: 0 14px; text-align: center;">
-                <span style="position: relative; top: -4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #111; line-height: 24px;">
+              <svg width="176" height="26" viewBox="0 0 176 26" style="display: block; margin: 0 auto;">
+                <rect x="1" y="1" width="174" height="24" rx="4" ry="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
+                <text x="88" y="13" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="11" font-weight="800" letter-spacing="0.5" fill="#111111">
                   CUSTOMER ORDER SLIP
-                </span>
-              </div>
+                </text>
+              </svg>
             </td>
 
             <td style="width: 33%; vertical-align: middle; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
