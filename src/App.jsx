@@ -935,7 +935,7 @@ export default function App() {
                 alt="Namah Jewellers" 
                 style="height: 54px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
               />
-              <svg width="185" height="26" viewBox="0 0 185 26" style="display: block; margin: 0 auto;">
+              <svg width="200" height="26" viewBox="0 0 185 26" style="display: block; margin: 0 auto;">
                 <rect x="1" y="1" width="183" height="24" rx="4" ry="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
                 <text x="92.5" y="13" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="800" letter-spacing="0.4" fill="#111111">
                   CUSTOMER ORDER SLIP
