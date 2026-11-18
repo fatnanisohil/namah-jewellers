@@ -935,12 +935,11 @@ export default function App() {
                 alt="Namah Jewellers" 
                 style="height: 54px; width: auto; max-width: 170px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
               />
-              <svg width="165" height="24" viewBox="0 0 165 24" style="display: block; margin: 0 auto; overflow: visible;">
-                <rect x="1" y="1" width="163" height="22" rx="4" ry="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
-                <text x="82.5" y="12" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="800" letter-spacing="0.3" fill="#111111">
-                  CUSTOMER ORDER SLIP
-                </text>
-              </svg>
+              <img 
+                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='26' viewBox='0 0 180 26'><rect x='1' y='1' width='178' height='24' rx='4' ry='4' fill='%23fef3c7' stroke='%23d97706' stroke-width='1.5'/><text x='90' y='13.5' text-anchor='middle' dominant-baseline='central' font-family='Arial, Helvetica, sans-serif' font-size='10.5' font-weight='800' letter-spacing='0.4' fill='%23111111'>CUSTOMER ORDER SLIP</text></svg>" 
+                alt="Customer Order Slip" 
+                style="width: 180px; height: 26px; display: block; margin: 0 auto;" 
+              />
             </td>
 
             <td style="width: 31%; vertical-align: middle; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
