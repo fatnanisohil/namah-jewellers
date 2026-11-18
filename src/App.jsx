@@ -230,13 +230,14 @@ export default function App() {
     return clean;
   };
 
-  const formatDriveUrl = (order) => {
+  // Supports dynamic thumbnail vs full-screen resolution (e.g., 'w200' for lists, 'w1600' for modal preview)
+  const formatDriveUrl = (order, size = 'w200') => {
     if (order.imagePreviewLocal) return order.imagePreviewLocal;
 
     const rawUrl = order.productImageLink || '';
     if (!rawUrl || typeof rawUrl !== 'string') return '';
 
-    if (rawUrl.startsWith('data:image')) return ''; 
+    if (rawUrl.startsWith('data:image')) return rawUrl;
     if (rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
       return rawUrl;
     }
@@ -251,7 +252,7 @@ export default function App() {
     }
 
     if (fileId) {
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w150`;
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=${size}`;
     }
     return '';
   };
@@ -392,7 +393,7 @@ export default function App() {
     const img = new Image();
 
     img.onload = () => {
-      const MAX_SIZE = 800;
+      const MAX_SIZE = 1200;
       let width = img.width;
       let height = img.height;
 
@@ -410,7 +411,7 @@ export default function App() {
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, width, height);
 
-      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.72);
+      const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
 
       setFormData(prev => ({
         ...prev,
@@ -807,7 +808,7 @@ export default function App() {
     if (fullOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${fullOrder.alterationDetails}\n`;
     
     msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n` +
-      `📷 *Image URL:* ${formatDriveUrl(fullOrder)}`;
+      `📷 *Image URL:* ${formatDriveUrl(fullOrder, 'w1600')}`;
 
     return msg;
   };
@@ -839,7 +840,7 @@ export default function App() {
     activeItems.forEach((ord, index) => {
       const goldWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
       const diamondWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
-      const imgUrl = formatDriveUrl(ord);
+      const imgUrl = formatDriveUrl(ord, 'w1600');
 
       msg += `*Item #${index + 1}: ${ord.jewelleryItem || 'Jewellery'}*\n` +
         `🔢 *Order Sheet:* ${ord.orderSheetNo || 'N/A'}\n` +
@@ -1922,7 +1923,8 @@ export default function App() {
                       const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                       const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
                       const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
-                      const imgUrl = formatDriveUrl(ord);
+                      const thumbUrl = formatDriveUrl(ord, 'w200');
+                      const fullUrl = formatDriveUrl(ord, 'w1600');
 
                       return (
                         <div
@@ -1935,11 +1937,11 @@ export default function App() {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              {imgUrl ? (
+                              {thumbUrl ? (
                                 <img
-                                  src={imgUrl}
+                                  src={thumbUrl}
                                   alt=""
-                                  onClick={() => setPreviewImage(imgUrl)}
+                                  onClick={() => setPreviewImage(fullUrl)}
                                   className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
                                 />
                               ) : (
@@ -2015,16 +2017,17 @@ export default function App() {
                           const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                           const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
                           const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
-                          const imgUrl = formatDriveUrl(ord);
+                          const thumbUrl = formatDriveUrl(ord, 'w200');
+                          const fullUrl = formatDriveUrl(ord, 'w1600');
                           
                           return (
                             <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
                               <td className="p-3">
-                                {imgUrl ? (
+                                {thumbUrl ? (
                                   <img 
-                                    src={imgUrl} 
+                                    src={thumbUrl} 
                                     alt="" 
-                                    onClick={() => setPreviewImage(imgUrl)} 
+                                    onClick={() => setPreviewImage(fullUrl)} 
                                     className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform" 
                                   />
                                 ) : (
@@ -2529,17 +2532,19 @@ export default function App() {
                   const gWt = order['Gold Weight(g)'] || order.goldWeight;
                   const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
                   const adv = order.advanceAmount;
+                  const thumbUrl = formatDriveUrl(order, 'w200');
+                  const fullUrl = formatDriveUrl(order, 'w1600');
 
                   return (
                     <div key={idx} className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 space-y-3 shadow-xl">
                       {/* Header Row: Image + Order Sheet + Toggle */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          {formatDriveUrl(order) ? (
+                          {thumbUrl ? (
                             <img
-                              src={formatDriveUrl(order)}
+                              src={thumbUrl}
                               alt=""
-                              onClick={() => setPreviewImage(formatDriveUrl(order))}
+                              onClick={() => setPreviewImage(fullUrl)}
                               className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md shrink-0 cursor-pointer"
                             />
                           ) : (
@@ -2736,14 +2741,16 @@ export default function App() {
                   ) : (
                     filteredOrders.map((order, idx) => {
                       const isAssigned = order.karigarName || (order.productStatus && !order.productStatus.includes('Not Assign') && order.productStatus !== '');
+                      const thumbUrl = formatDriveUrl(order, 'w200');
+                      const fullUrl = formatDriveUrl(order, 'w1600');
                       return (
                         <tr key={idx} className="hover:bg-[#20242e]/60 transition-all group">
                           <td className="p-4">
-                            {formatDriveUrl(order) ? (
+                            {thumbUrl ? (
                               <img
-                                src={formatDriveUrl(order)}
+                                src={thumbUrl}
                                 alt=""
-                                onClick={() => setPreviewImage(formatDriveUrl(order))}
+                                onClick={() => setPreviewImage(fullUrl)}
                                 className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md group-hover:scale-105 transition-transform cursor-pointer"
                               />
                             ) : (
@@ -3003,16 +3010,18 @@ export default function App() {
                   const gWt = order['Gold Weight(g)'] || order.goldWeight;
                   const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
                   const adv = order.advanceAmount;
+                  const thumbUrl = formatDriveUrl(order, 'w200');
+                  const fullUrl = formatDriveUrl(order, 'w1600');
 
                   return (
                     <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          {formatDriveUrl(order) ? (
+                          {thumbUrl ? (
                             <img
-                              src={formatDriveUrl(order)}
+                              src={thumbUrl}
                               alt=""
-                              onClick={() => setPreviewImage(formatDriveUrl(order))}
+                              onClick={() => setPreviewImage(fullUrl)}
                               className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
                             />
                           ) : (
@@ -3116,11 +3125,13 @@ export default function App() {
                   ) : (
                     offOrders.map((order, idx) => {
                       const isAssigned = order.karigarName || (order.productStatus && !order.productStatus.includes('Not Assign') && order.productStatus !== '');
+                      const thumbUrl = formatDriveUrl(order, 'w200');
+                      const fullUrl = formatDriveUrl(order, 'w1600');
                       return (
                         <tr key={idx} className="hover:bg-[#20242e]/60 transition-all group">
                           <td className="p-4">
-                            {formatDriveUrl(order) ? (
-                              <img src={formatDriveUrl(order)} alt="" onClick={() => setPreviewImage(formatDriveUrl(order))} className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer" />
+                            {thumbUrl ? (
+                              <img src={thumbUrl} alt="" onClick={() => setPreviewImage(fullUrl)} className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer" />
                             ) : (
                               <div className="w-14 h-14 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px]">Product</div>
                             )}
@@ -4047,6 +4058,8 @@ export default function App() {
                       badgeColor = 'text-amber-400 bg-amber-500/10 border-amber-500/30';
                       badgeText = 'DUE TODAY';
                     }
+                    const thumbUrl = formatDriveUrl(order, 'w200');
+                    const fullUrl = formatDriveUrl(order, 'w1600');
 
                     return (
                       <div key={idx} className="bg-[#111318] p-4 rounded-2xl border border-slate-800 space-y-3 shadow-xl relative">
@@ -4055,8 +4068,8 @@ export default function App() {
                             <span className="text-xs font-black text-amber-400">{order.orderSheetNo}</span>
                             <h4 className="text-sm font-bold text-slate-100">{order.jewelleryItem}</h4>
                           </div>
-                          {formatDriveUrl(order) && (
-                            <img src={formatDriveUrl(order)} alt="" onClick={() => setPreviewImage(formatDriveUrl(order))} className="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-slate-800 cursor-pointer" />
+                          {thumbUrl && (
+                            <img src={thumbUrl} alt="" onClick={() => setPreviewImage(fullUrl)} className="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-slate-800 cursor-pointer" />
                           )}
                         </div>
                         <div className="flex justify-between items-center text-xs">
@@ -4466,20 +4479,13 @@ export default function App() {
               </button>
               
               <a
-                href={'https://wa.me/?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
+                href={'https://wa.me/' + selectedCustomerCRM.contactNumber.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
                 target="_blank"
-                rel="noreferrer"
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
+                rel="noopener noreferrer"
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer"
               >
-                <Send className="w-4 h-4" /> Send Consolidated WhatsApp Slip
+                <Send className="w-3.5 h-3.5" /> Send Consolidated WhatsApp
               </a>
-              
-              <button 
-                onClick={() => setSelectedCustomerCRM(null)} 
-                className="px-4 py-2.5 bg-slate-900 text-slate-400 hover:text-white rounded-xl text-xs font-semibold cursor-pointer border border-slate-800"
-              >
-                Close Profile
-              </button>
             </div>
           </div>
         </div>
@@ -4489,67 +4495,113 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign to Karigar ({selectedOrderForKarigar.orderSheetNo})</h3>
+              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign to Karigar & Edit Work Order</h3>
               <button onClick={() => setSelectedOrderForKarigar(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleKarigarSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <form onSubmit={handleKarigarSubmit} className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Karigar Name *</label>
-                  <input type="text" name="karigarName" required placeholder="e.g. Vijay Karigar" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Order Sheet</label>
+                  <input type="text" readOnly value={selectedOrderForKarigar.orderSheetNo} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-slate-300" />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Karigar DOD *</label>
-                  <input type="date" name="karigarDod" required className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Gold (g)</label>
-                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Diamond (ct)</label>
-                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Color Stone</label>
-                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone} placeholder="e.g. Emerald" className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
-                </div>
-                <div>
-                  <label className="block text-[11px] text-slate-400 mb-1">Purity</label>
-                  <input type="text" name="purity" defaultValue={selectedOrderForKarigar.purity} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
+                  <label className="block text-slate-400 mb-1">Tag Number</label>
+                  <input type="text" readOnly value={selectedOrderForKarigar.tagNumber} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-slate-300" />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Color Tone</label>
-                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-300 mb-1 font-semibold">Karigar Name *</label>
+                  <select
+                    name="karigarName"
+                    required
+                    defaultValue={selectedOrderForKarigar.karigarName || ''}
+                    className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100 cursor-pointer"
+                  >
+                    <option value="" disabled>Select Karigar</option>
+                    <option value="Sankar">Sankar</option>
+                    <option value="Vijay">Vijay</option>
+                    <option value="Gautam">Gautam</option>
+                    <option value="Bhola">Bhola</option>
+                    <option value="Ajay">Ajay</option>
+                    <option value="Subrata">Subrata</option>
+                    <option value="Bapi">Bapi</option>
+                    <option value="Ananda">Ananda</option>
+                    <option value="Hira">Hira</option>
+                    <option value="Dilip">Dilip</option>
+                    <option value="Sanjoy">Sanjoy</option>
+                    <option value="Tarun">Tarun</option>
+                    <option value="Uzzal">Uzzal</option>
+                    <option value="Tapas">Tapas</option>
+                    <option value="Kartik">Kartik</option>
+                    <option value="Suraj">Suraj</option>
+                    <option value="Kamal">Kamal</option>
+                    <option value="Raju">Raju</option>
+                    <option value="Pintu">Pintu</option>
+                    <option value="Others">Others</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 mb-1 font-semibold">Karigar DOD *</label>
+                  <input type="date" name="karigarDod" required defaultValue={extractDateOnly(selectedOrderForKarigar.karigarDod)} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1">Gold Wt (g)</label>
+                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1">Size</label>
-                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Diamond Wt (ct)</label>
+                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Color Stone</label>
+                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Color Tone</label>
+                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1">Purity</label>
+                  <input type="text" name="purity" defaultValue={selectedOrderForKarigar.purity || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
+                </div>
+                <div>
+                  <label className="block text-slate-400 mb-1">Size</label>
+                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-slate-400 mb-1">Order Description</label>
-                <textarea name="orderDescription" rows="2" defaultValue={selectedOrderForKarigar.orderDescription} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></textarea>
+                <label className="block text-slate-300 mb-1 font-semibold">Order Description *</label>
+                <textarea 
+                  name="orderDescription" 
+                  rows="2" 
+                  required
+                  defaultValue={selectedOrderForKarigar.orderDescription || ''}
+                  placeholder="Enter exact order description..."
+                  className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100"
+                ></textarea>
               </div>
 
               <div>
-                <label className="block text-xs text-amber-400 font-semibold mb-1">Alternation If Any</label>
-                <textarea name="alterationDetails" rows="2" placeholder="Specify alterations..." className="w-full bg-[#111318] border border-amber-500/40 rounded-xl px-3 py-2 text-sm text-white"></textarea>
+                <label className="block text-slate-300 mb-1 font-semibold">Alteration If Any</label>
+                <textarea name="alterationDetails" rows="2" placeholder="Specify any alteration or special adjustments..." className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100"></textarea>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2">
-                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-xs font-semibold text-slate-300 cursor-pointer">Cancel</button>
-                <button type="submit" className="px-5 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Save & Generate Slip</button>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-slate-300 cursor-pointer">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl cursor-pointer">Save & Generate Slip</button>
               </div>
             </form>
           </div>
@@ -4558,69 +4610,63 @@ export default function App() {
 
       {whatsappModalData && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-emerald-400 flex items-center gap-2"><Check className="w-5 h-5" /> Work Order Slip</h3>
+              <h3 className="text-sm sm:text-md font-bold text-emerald-400">Karigar WhatsApp Work Order Slip</h3>
               <button onClick={() => setWhatsappModalData(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {formatDriveUrl(whatsappModalData) && (
-              <div className="flex items-center gap-3 bg-[#111318] p-3 rounded-xl border border-slate-800">
-                <img src={formatDriveUrl(whatsappModalData)} alt="" onClick={() => setPreviewImage(formatDriveUrl(whatsappModalData))} className="w-16 h-16 rounded-lg object-cover border border-amber-500/40 cursor-pointer" />
-                <div>
-                  <span className="text-xs font-bold text-amber-400 block">Product Photo Attached</span>
-                  <span className="text-[11px] text-slate-400">Included in WhatsApp message link</span>
-                </div>
-              </div>
-            )}
-
-            <div className="bg-[#111318] p-4 rounded-xl border border-slate-800 text-xs text-slate-300 whitespace-pre-line font-mono max-h-64 overflow-y-auto">
+            <pre className="bg-[#111318] p-4 rounded-xl border border-slate-800 text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto">
               {buildWhatsAppMessage(whatsappModalData)}
-            </div>
+            </pre>
 
-            <div className="flex flex-col sm:flex-row justify-end gap-2">
+            <div className="flex justify-end gap-2 pt-2">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(buildWhatsAppMessage(whatsappModalData));
                   alert("Slip copied to clipboard!");
                 }}
-                className="px-4 py-2.5 bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Message
+                <Copy className="w-3.5 h-3.5" /> Copy Text
               </button>
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(buildWhatsAppMessage(whatsappModalData))}`}
                 target="_blank"
-                rel="noreferrer"
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
+                rel="noopener noreferrer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1 cursor-pointer"
               >
-                <Send className="w-4 h-4" /> Send via WhatsApp
+                <Send className="w-3.5 h-3.5" /> Share on WhatsApp
               </a>
             </div>
           </div>
         </div>
       )}
 
+      {/* FULL-SIZE IMAGE LIGHTBOX MODAL */}
       {previewImage && (
-        <div
-          onClick={() => setPreviewImage(null)}
-          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-pointer"
+        <div 
+          onClick={() => setPreviewImage(null)} 
+          className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 cursor-pointer"
         >
-          <div className="relative max-w-4xl max-h-[90vh] flex items-center justify-center">
-            <img
-              src={previewImage}
-              alt="Full Size Product Preview"
-              className="max-w-full max-h-[85vh] rounded-2xl border-2 border-amber-500/60 shadow-2xl object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="absolute -top-4 -right-4 bg-amber-500 text-slate-950 p-2 rounded-full shadow-lg hover:bg-amber-400 transition-all cursor-pointer"
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative flex flex-col items-center justify-center max-w-[95vw] max-h-[92vh]"
+          >
+            <button 
+              onClick={() => setPreviewImage(null)} 
+              className="fixed top-4 right-4 z-50 bg-slate-900/90 hover:bg-red-500 text-white p-2.5 rounded-full border border-slate-700 shadow-2xl cursor-pointer transition-colors"
+              title="Close Preview"
             >
-              <X className="w-5 h-5" />
+              <X className="w-6 h-6" />
             </button>
+            <img 
+              src={previewImage} 
+              alt="Full Size Preview" 
+              className="w-auto h-auto max-w-[92vw] max-h-[85vh] min-w-[280px] sm:min-w-[450px] object-contain rounded-2xl border-2 border-slate-700/80 shadow-2xl bg-slate-900" 
+            />
           </div>
         </div>
       )}
