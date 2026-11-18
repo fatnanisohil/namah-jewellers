@@ -30,6 +30,7 @@ import {
   Calendar
 } from 'lucide-react';
 
+import html2pdf from 'html2pdf.js';
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
 
 // Salesperson Phone Directory Lookup
@@ -853,6 +854,169 @@ export default function App() {
 
     msg += `Thank you for shopping with Namah Jewellers! ✨`;
     return msg;
+  };
+
+  const generateCustomerPDFSlip = (client) => {
+    const activeItems = client.ordersList.filter(ord => {
+      const status = (ord.productStatus || ord.status || '').toLowerCase();
+      return status !== 'delivered';
+    });
+
+    const itemsToPrint = activeItems.length > 0 ? activeItems : client.ordersList;
+    const firstOrder = itemsToPrint[0] || {};
+    const salesPersonName = firstOrder.salesPerson || 'Sohil';
+    const orderSheetNumbers = Array.from(
+      new Set(itemsToPrint.map(o => o.orderSheetNo).filter(Boolean))
+    ).join(', ') || 'N/A';
+
+    const orderDate = formatDDMM(firstOrder.orderTakenDate || new Date().toISOString().split('T')[0]);
+    const dodDates = Array.from(
+      new Set(itemsToPrint.map(o => formatDDMM(o.deliveryDate)).filter(d => d && d !== 'N/A'))
+    ).join(', ') || 'N/A';
+
+    const totalAdvance = itemsToPrint.reduce(
+      (sum, ord) => sum + (parseFloat(ord.advanceAmount) || 0),
+      0
+    );
+
+    // Check which Sales Executive checkbox to tick based on salesperson
+    const isExec1 = ['hema', 'sohil'].includes(salesPersonName.toLowerCase());
+    const isExec2 = ['akansha', 'mohit', 'yogita', 'deepika', 'ziya'].includes(salesPersonName.toLowerCase());
+
+    const rowsHtml = itemsToPrint
+      .map((ord, idx) => {
+        const gWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
+        const dWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
+        const specs = [
+          ord.purity ? `Purity: ${ord.purity}` : '',
+          gWt ? `Gold: ${gWt}g` : '',
+          dWt ? `Dia: ${dWt}ct` : '',
+          ord.colorTone ? `Tone: ${ord.colorTone}` : '',
+          ord.size ? `Size: ${ord.size}` : ''
+        ]
+          .filter(Boolean)
+          .join(' | ');
+
+        return `
+          <tr>
+            <td style="border:1px solid #999; padding:7px; text-align:center; font-weight:bold;">${idx + 1}</td>
+            <td style="border:1px solid #999; padding:7px; font-weight:bold;">${ord.orderSheetNo || '-'}<br/><span style="font-size:10px; color:#555; font-weight:normal;">${ord.tagNumber || ''}</span></td>
+            <td style="border:1px solid #999; padding:7px;">
+              <strong>${ord.jewelleryItem || 'Jewellery'}</strong>
+              ${specs ? `<div style="font-size:10px; color:#333; margin-top:2px;">${specs}</div>` : ''}
+              ${ord.orderDescription ? `<div style="font-size:10px; color:#555; margin-top:2px;"><em>${ord.orderDescription}</em></div>` : ''}
+            </td>
+            <td style="border:1px solid #999; padding:7px; text-align:center;">${formatDDMM(ord.deliveryDate)}</td>
+            <td style="border:1px solid #999; padding:7px; text-align:right; font-weight:bold;">${ord.advanceAmount ? '₹' + ord.advanceAmount : '-'}</td>
+          </tr>
+        `;
+      })
+      .join('');
+
+    const slipHtml = `
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; padding: 24px; max-width: 760px; margin: 0 auto; border: 2px solid #b45309; background: #fff;">
+        
+        <!-- TOP HEADER -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #b45309; padding-bottom: 12px;">
+          <div style="font-size: 11px; line-height: 1.6;">
+            <div><strong>Sohil Fatnani:</strong> +91-9999629792</div>
+            <div><strong>Mohit Fatnani:</strong> +91-9871761663</div>
+            <div><strong>Namah Customer Care:</strong> +91-8368582277</div>
+            <div style="margin-top: 4px; color: #b45309; font-weight: bold;">GST No.: 07AAOFN7544G1ZW</div>
+          </div>
+
+          <div style="text-align: center;">
+            <div style="font-size: 26px; font-weight: 900; letter-spacing: 3px; color: #92400e; line-height: 1.1;">NAMAH</div>
+            <div style="font-size: 13px; font-weight: 800; letter-spacing: 4px; color: #111;">JEWELLERS</div>
+            <div style="margin-top: 6px; display: inline-block; background: #fef3c7; border: 1px solid #d97706; padding: 3px 12px; font-size: 11px; font-weight: bold; border-radius: 4px;">
+              CUSTOMER ORDER SLIP
+            </div>
+          </div>
+
+          <div style="font-size: 11px; line-height: 1.6; text-align: right;">
+            <div><strong>S. No:</strong> <span style="font-size: 14px; font-weight: 900; color: #92400e;">${orderSheetNumbers}</span></div>
+            <div><strong>Date:</strong> ${orderDate}</div>
+            <div style="margin-top: 4px; font-weight: bold;">Sales Executive Number:</div>
+            <div>${isExec1 ? '☑' : '☐'} 1. 7042136377</div>
+            <div>${isExec2 ? '☑' : '☐'} 2. 7042109377</div>
+          </div>
+        </div>
+
+        <!-- CUSTOMER & DOD INFO BAR -->
+        <div style="display: flex; justify-content: space-between; background: #fffbeb; border: 1px solid #fcd34d; padding: 10px 12px; margin-top: 12px; font-size: 12px;">
+          <div style="line-height: 1.6;">
+            <div><strong>Customer Name:</strong> ${client.customerName}</div>
+            <div><strong>Contact No.:</strong> ${client.contactNumber}</div>
+          </div>
+          <div style="text-align: right; line-height: 1.6;">
+            <div><strong>Sales Person:</strong> ${salesPersonName}</div>
+            <div><strong>Promised DOD:</strong> <span style="color: #047857; font-weight: bold;">${dodDates}</span></div>
+          </div>
+        </div>
+
+        <!-- ORDER ITEMS TABLE -->
+        <table style="width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 11.5px;">
+          <thead>
+            <tr style="background: #92400e; color: #fff;">
+              <th style="border: 1px solid #92400e; padding: 7px; width: 45px;">Sr.</th>
+              <th style="border: 1px solid #92400e; padding: 7px; width: 115px;">Order / Tag</th>
+              <th style="border: 1px solid #92400e; padding: 7px; text-align: left;">Jewellery Item & Specifications</th>
+              <th style="border: 1px solid #92400e; padding: 7px; width: 95px;">DOD</th>
+              <th style="border: 1px solid #92400e; padding: 7px; width: 95px; text-align: right;">Advance</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+          <tfoot>
+            <tr style="background: #fef3c7; font-weight: bold;">
+              <td colspan="4" style="border: 1px solid #999; padding: 8px; text-align: right;">TOTAL ADVANCE RECEIVED:</td>
+              <td style="border: 1px solid #999; padding: 8px; text-align: right; color: #047857; font-size: 13px;">₹${totalAdvance}</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        <!-- MANDATORY & SIGNATURES SECTION -->
+        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 12px; border-top: 1px dashed #aaa; font-size: 11px;">
+          <div style="border: 1px solid #d97706; background: #fffbeb; padding: 8px 12px; border-radius: 4px; line-height: 1.6;">
+            <div style="font-weight: 900; color: #92400e; text-decoration: underline; margin-bottom: 2px;">MANDATORY</div>
+            <div>1. Gold Rate 24KT (Charged): _________________</div>
+            <div>2. Order By: <strong>${salesPersonName}</strong></div>
+            <div>3. In File of: <strong>${firstOrder.orderPerson || 'Namah Jewellers'}</strong></div>
+          </div>
+
+          <div style="text-align: center; min-width: 140px;">
+            <div style="height: 36px;"></div>
+            <div style="border-top: 1px solid #333; padding-top: 4px; font-weight: bold;">Customer Signature</div>
+          </div>
+
+          <div style="text-align: center; min-width: 140px;">
+            <div style="height: 36px;"></div>
+            <div style="border-top: 1px solid #333; padding-top: 4px; font-weight: bold;">Owner Signature</div>
+          </div>
+        </div>
+
+        <!-- BOTTOM DISCLAIMER FOOTER -->
+        <div style="margin-top: 14px; background: #111; color: #fbbf24; text-align: center; padding: 7px 10px; font-size: 10px; font-weight: bold; letter-spacing: 0.4px; line-height: 1.5;">
+          10%-15% VARIATION POSSIBLE IN PRICING (DUE TO CHANGE IN WEIGHT)<br/>
+          <span style="color: #fff;">NEW ORDER DELIVERY 15-20 DAYS &bull; REPAIR DELIVERY 7 DAYS &bull; SUNDAY NO DELIVERY</span>
+        </div>
+      </div>
+    `;
+
+    const container = document.createElement('div');
+    container.innerHTML = slipHtml;
+
+    const cleanCustomerName = (client.customerName || 'Client').replace(/[^a-zA-Z0-9]/g, '_');
+    const opt = {
+      margin: 8,
+      filename: `Namah_Order_Slip_${cleanCustomerName}_${orderSheetNumbers.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    html2pdf().set(opt).from(container).save();
   };
 
   const orderBookAudits = useMemo(() => {
@@ -4230,7 +4394,14 @@ export default function App() {
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-slate-800">
+            <div className="flex flex-col sm:flex-row flex-wrap justify-end gap-2 pt-3 border-t border-slate-800">
+              <button
+                onClick={() => generateCustomerPDFSlip(selectedCustomerCRM)}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
+              >
+                <Download className="w-4 h-4" /> Download PDF Slip
+              </button>
+
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(buildConsolidatedCustomerMessage(selectedCustomerCRM));
