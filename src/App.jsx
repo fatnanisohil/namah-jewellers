@@ -922,28 +922,28 @@ export default function App() {
         <!-- TOP HEADER -->
         <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #b45309;">
           <tr>
-            <td style="width: 33%; vertical-align: middle; text-align: left; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
+            <td style="width: 31%; vertical-align: middle; text-align: left; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
               <div><strong>Sohil Fatnani:</strong> +91-9999629792</div>
               <div><strong>Mohit Fatnani:</strong> +91-9871761663</div>
               <div><strong>Namah Customer Care:</strong> +91-8368582277</div>
               <div style="margin-top: 4px; color: #b45309; font-weight: bold;">GST No.: 07AAOFN7544G1ZW</div>
             </td>
 
-            <td style="width: 34%; vertical-align: middle; text-align: center; padding-bottom: 12px;">
+            <td style="width: 38%; vertical-align: middle; text-align: center; padding-bottom: 12px;">
               <img 
                 src="${logoUrl}" 
                 alt="Namah Jewellers" 
-                style="height: 54px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
+                style="height: 54px; width: auto; max-width: 170px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
               />
-              <svg width="200" height="26" viewBox="0 0 185 26" style="display: block; margin: 0 auto;">
-                <rect x="1" y="1" width="183" height="24" rx="4" ry="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
-                <text x="92.5" y="13" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="10.5" font-weight="800" letter-spacing="0.4" fill="#111111">
+              <svg width="165" height="24" viewBox="0 0 165 24" style="display: block; margin: 0 auto; overflow: visible;">
+                <rect x="1" y="1" width="163" height="22" rx="4" ry="4" fill="#fef3c7" stroke="#d97706" stroke-width="1.5" />
+                <text x="82.5" y="12" text-anchor="middle" dominant-baseline="central" font-family="Arial, Helvetica, sans-serif" font-size="9.5" font-weight="800" letter-spacing="0.3" fill="#111111">
                   CUSTOMER ORDER SLIP
                 </text>
               </svg>
             </td>
 
-            <td style="width: 33%; vertical-align: middle; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
+            <td style="width: 31%; vertical-align: middle; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
               <div><strong>S. No:</strong> <span style="font-size: 13px; font-weight: 900; color: #92400e;">${orderSheetNumbers}</span></div>
               <div><strong>Date:</strong> ${orderDate}</div>
               <div style="margin-top: 4px; font-weight: bold;">Sales Executive Number:</div>
