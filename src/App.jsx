@@ -1237,7 +1237,11 @@ export default function App() {
         <div className="flex items-center justify-between w-full md:w-auto">
           <div className="flex items-center gap-2.5">
             <div className="bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-2 sm:p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-slate-950 font-bold" />
+              <img
+  src={`${import.meta.env.BASE_URL}logo.png`}
+  alt="Namah Jewellers"
+  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain bg-white/95 p-1 shadow-lg"
+/>
             </div>
             <div>
               <h1 className="text-sm sm:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500">
