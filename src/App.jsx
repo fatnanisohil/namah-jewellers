@@ -917,12 +917,12 @@ export default function App() {
       .join('');
 
     const slipHtml = `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; padding: 20px; max-width: 760px; margin: 0 auto; border: 2px solid #b45309; background: #fff;">
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; padding: 20px; max-width: 760px; margin: 0 auto; border: 2px solid #b45309; background: #fff; box-sizing: border-box;">
         
-        <!-- TOP HEADER (TABLE-BASED FOR EXACT CENTERING IN HTML2PDF) -->
+        <!-- TOP HEADER -->
         <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #b45309;">
           <tr>
-            <td style="width: 33%; vertical-align: top; text-align: left; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
+            <td style="width: 33%; vertical-align: middle; text-align: left; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
               <div><strong>Sohil Fatnani:</strong> +91-9999629792</div>
               <div><strong>Mohit Fatnani:</strong> +91-9871761663</div>
               <div><strong>Namah Customer Care:</strong> +91-8368582277</div>
@@ -935,16 +935,12 @@ export default function App() {
                 alt="Namah Jewellers" 
                 style="height: 54px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
               />
-              <table style="margin: 0 auto; border-collapse: collapse;">
-                <tr>
-                  <td style="background: #fef3c7; border: 1.5px solid #d97706; border-radius: 4px; padding: 5px 14px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #111;">
-                    CUSTOMER ORDER SLIP
-                  </td>
-                </tr>
-              </table>
+              <div style="display: inline-block; background: #fef3c7; border: 1.5px solid #d97706; border-radius: 4px; padding: 3px 14px 7px 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.1; color: #111; text-align: center;">
+                CUSTOMER ORDER SLIP
+              </div>
             </td>
 
-            <td style="width: 33%; vertical-align: top; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
+            <td style="width: 33%; vertical-align: middle; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
               <div><strong>S. No:</strong> <span style="font-size: 13px; font-weight: 900; color: #92400e;">${orderSheetNumbers}</span></div>
               <div><strong>Date:</strong> ${orderDate}</div>
               <div style="margin-top: 4px; font-weight: bold;">Sales Executive Number:</div>
@@ -957,11 +953,11 @@ export default function App() {
         <!-- CUSTOMER & DOD INFO BAR -->
         <table style="width: 100%; border-collapse: collapse; background: #fffbeb; border: 1px solid #fcd34d; margin-top: 12px; font-size: 12px;">
           <tr>
-            <td style="width: 55%; padding: 9px 12px; text-align: left; vertical-align: middle; line-height: 1.6;">
+            <td style="width: 55%; padding: 7px 12px 10px 12px; text-align: left; vertical-align: middle; line-height: 1.6;">
               <div><strong>Customer Name:</strong> ${client.customerName}</div>
               <div><strong>Contact No.:</strong> ${client.contactNumber}</div>
             </td>
-            <td style="width: 45%; padding: 9px 12px; text-align: right; vertical-align: middle; line-height: 1.6;">
+            <td style="width: 45%; padding: 7px 12px 10px 12px; text-align: right; vertical-align: middle; line-height: 1.6;">
               <div><strong>Sales Person:</strong> ${salesPersonName}</div>
               <div><strong>Promised DOD:</strong> <span style="color: #047857; font-weight: bold;">${dodDates}</span></div>
             </td>
@@ -972,11 +968,11 @@ export default function App() {
         <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 11.5px;">
           <thead>
             <tr style="background: #92400e; color: #fff;">
-              <th style="border: 1px solid #92400e; padding: 8px 6px; width: 42px; text-align: center; vertical-align: middle;">Sr.</th>
-              <th style="border: 1px solid #92400e; padding: 8px 8px; width: 105px; text-align: center; vertical-align: middle;">Order / Tag</th>
-              <th style="border: 1px solid #92400e; padding: 8px 10px; text-align: left; vertical-align: middle;">Jewellery Item &amp; Specifications</th>
-              <th style="border: 1px solid #92400e; padding: 8px 6px; width: 95px; text-align: center; vertical-align: middle;">DOD</th>
-              <th style="border: 1px solid #92400e; padding: 8px 10px; width: 90px; text-align: right; vertical-align: middle;">Advance</th>
+              <th style="border: 1px solid #92400e; padding: 6px 6px 9px 6px; width: 42px; text-align: center; vertical-align: middle; line-height: 1.2;">Sr.</th>
+              <th style="border: 1px solid #92400e; padding: 6px 8px 9px 8px; width: 105px; text-align: center; vertical-align: middle; line-height: 1.2;">Order / Tag</th>
+              <th style="border: 1px solid #92400e; padding: 6px 10px 9px 10px; text-align: left; vertical-align: middle; line-height: 1.2;">Jewellery Item &amp; Specifications</th>
+              <th style="border: 1px solid #92400e; padding: 6px 6px 9px 6px; width: 95px; text-align: center; vertical-align: middle; line-height: 1.2;">DOD</th>
+              <th style="border: 1px solid #92400e; padding: 6px 10px 9px 10px; width: 90px; text-align: right; vertical-align: middle; line-height: 1.2;">Advance</th>
             </tr>
           </thead>
           <tbody>
@@ -984,8 +980,8 @@ export default function App() {
           </tbody>
           <tfoot>
             <tr style="background: #fef3c7; font-weight: bold;">
-              <td colspan="4" style="border: 1px solid #999; padding: 8px 10px; text-align: right; vertical-align: middle;">TOTAL ADVANCE RECEIVED:</td>
-              <td style="border: 1px solid #999; padding: 8px 10px; text-align: right; vertical-align: middle; color: #047857; font-size: 13px;">₹${totalAdvance}</td>
+              <td colspan="4" style="border: 1px solid #999; padding: 6px 10px 9px 10px; text-align: right; vertical-align: middle; line-height: 1.2;">TOTAL ADVANCE RECEIVED:</td>
+              <td style="border: 1px solid #999; padding: 6px 10px 9px 10px; text-align: right; vertical-align: middle; line-height: 1.2; color: #047857; font-size: 13px;">₹${totalAdvance}</td>
             </tr>
           </tfoot>
         </table>
@@ -994,7 +990,7 @@ export default function App() {
         <table style="width: 100%; border-collapse: collapse; margin-top: 18px; border-top: 1px dashed #aaa; font-size: 11px;">
           <tr>
             <td style="width: 46%; padding-top: 12px; vertical-align: bottom; text-align: left;">
-              <div style="border: 1px solid #d97706; background: #fffbeb; padding: 8px 12px; border-radius: 4px; line-height: 1.65;">
+              <div style="border: 1px solid #d97706; background: #fffbeb; padding: 7px 12px 10px 12px; border-radius: 4px; line-height: 1.65;">
                 <div style="font-weight: 900; color: #92400e; text-decoration: underline; margin-bottom: 2px;">MANDATORY</div>
                 <div>1. Gold Rate 24KT (Charged): _______________</div>
                 <div>2. Order By: <strong>${salesPersonName}</strong></div>
@@ -1017,7 +1013,7 @@ export default function App() {
         <!-- BOTTOM DISCLAIMER FOOTER -->
         <table style="width: 100%; border-collapse: collapse; margin-top: 14px;">
           <tr>
-            <td style="background: #111; color: #fbbf24; text-align: center; vertical-align: middle; padding: 8px 10px; font-size: 10px; font-weight: bold; letter-spacing: 0.4px; line-height: 1.55;">
+            <td style="background: #111; color: #fbbf24; text-align: center; vertical-align: middle; padding: 7px 10px 10px 10px; font-size: 10px; font-weight: bold; letter-spacing: 0.4px; line-height: 1.55;">
               10%-15% VARIATION POSSIBLE IN PRICING (DUE TO CHANGE IN WEIGHT)<br/>
               <span style="color: #fff;">NEW ORDER DELIVERY 15-20 DAYS &bull; REPAIR DELIVERY 7 DAYS &bull; SUNDAY NO DELIVERY</span>
             </td>
