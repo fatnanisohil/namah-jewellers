@@ -935,8 +935,10 @@ export default function App() {
                 alt="Namah Jewellers" 
                 style="height: 54px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
               />
-              <div style="display: inline-block; background: #fef3c7; border: 1.5px solid #d97706; border-radius: 4px; padding: 3px 14px 7px 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; line-height: 1.1; color: #111; text-align: center;">
-                CUSTOMER ORDER SLIP
+              <div style="display: inline-block; background: #fef3c7; border: 1.5px solid #d97706; border-radius: 4px; height: 24px; padding: 0 14px; text-align: center;">
+                <span style="position: relative; top: -4px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #111; line-height: 24px;">
+                  CUSTOMER ORDER SLIP
+                </span>
               </div>
             </td>
 
