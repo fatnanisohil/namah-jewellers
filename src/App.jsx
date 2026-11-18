@@ -879,9 +879,9 @@ export default function App() {
       0
     );
 
-    // Check which Sales Executive checkbox to tick based on salesperson
     const isExec1 = ['hema', 'sohil'].includes(salesPersonName.toLowerCase());
     const isExec2 = ['akansha', 'mohit', 'yogita', 'deepika', 'ziya'].includes(salesPersonName.toLowerCase());
+    const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
 
     const rowsHtml = itemsToPrint
       .map((ord, idx) => {
@@ -899,75 +899,84 @@ export default function App() {
 
         return `
           <tr>
-            <td style="border:1px solid #999; padding:7px; text-align:center; font-weight:bold;">${idx + 1}</td>
-            <td style="border:1px solid #999; padding:7px; font-weight:bold;">${ord.orderSheetNo || '-'}<br/><span style="font-size:10px; color:#555; font-weight:normal;">${ord.tagNumber || ''}</span></td>
-            <td style="border:1px solid #999; padding:7px;">
-              <strong>${ord.jewelleryItem || 'Jewellery'}</strong>
+            <td style="border:1px solid #999; padding:8px 6px; text-align:center; vertical-align:middle; font-weight:bold;">${idx + 1}</td>
+            <td style="border:1px solid #999; padding:8px 8px; text-align:center; vertical-align:middle; font-weight:bold;">
+              <div>${ord.orderSheetNo || '-'}</div>
+              ${ord.tagNumber ? `<div style="font-size:10px; color:#555; font-weight:normal; margin-top:2px;">${ord.tagNumber}</div>` : ''}
+            </td>
+            <td style="border:1px solid #999; padding:8px 10px; text-align:left; vertical-align:middle;">
+              <div style="font-weight:bold; color:#111;">${ord.jewelleryItem || 'Jewellery'}</div>
               ${specs ? `<div style="font-size:10px; color:#333; margin-top:2px;">${specs}</div>` : ''}
               ${ord.orderDescription ? `<div style="font-size:10px; color:#555; margin-top:2px;"><em>${ord.orderDescription}</em></div>` : ''}
             </td>
-            <td style="border:1px solid #999; padding:7px; text-align:center;">${formatDDMM(ord.deliveryDate)}</td>
-            <td style="border:1px solid #999; padding:7px; text-align:right; font-weight:bold;">${ord.advanceAmount ? '₹' + ord.advanceAmount : '-'}</td>
+            <td style="border:1px solid #999; padding:8px 6px; text-align:center; vertical-align:middle;">${formatDDMM(ord.deliveryDate)}</td>
+            <td style="border:1px solid #999; padding:8px 10px; text-align:right; vertical-align:middle; font-weight:bold;">${ord.advanceAmount ? '₹' + ord.advanceAmount : '-'}</td>
           </tr>
         `;
       })
       .join('');
 
-    const logoUrl = `${import.meta.env.BASE_URL}logo.png`;
-
     const slipHtml = `
-      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; padding: 24px; max-width: 760px; margin: 0 auto; border: 2px solid #b45309; background: #fff;">
+      <div style="font-family: Arial, Helvetica, sans-serif; color: #111; padding: 20px; max-width: 760px; margin: 0 auto; border: 2px solid #b45309; background: #fff;">
         
-        <!-- TOP HEADER -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #b45309; padding-bottom: 12px;">
-          <div style="font-size: 11px; line-height: 1.6; width: 32%;">
-            <div><strong>Sohil Fatnani:</strong> +91-9999629792</div>
-            <div><strong>Mohit Fatnani:</strong> +91-9871761663</div>
-            <div><strong>Namah Customer Care:</strong> +91-8368582277</div>
-            <div style="margin-top: 4px; color: #b45309; font-weight: bold;">GST No.: 07AAOFN7544G1ZW</div>
-          </div>
+        <!-- TOP HEADER (TABLE-BASED FOR EXACT CENTERING IN HTML2PDF) -->
+        <table style="width: 100%; border-collapse: collapse; border-bottom: 2px solid #b45309;">
+          <tr>
+            <td style="width: 33%; vertical-align: top; text-align: left; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
+              <div><strong>Sohil Fatnani:</strong> +91-9999629792</div>
+              <div><strong>Mohit Fatnani:</strong> +91-9871761663</div>
+              <div><strong>Namah Customer Care:</strong> +91-8368582277</div>
+              <div style="margin-top: 4px; color: #b45309; font-weight: bold;">GST No.: 07AAOFN7544G1ZW</div>
+            </td>
 
-          <div style="text-align: center; width: 36%; display: flex; flex-direction: column; align-items: center;">
-            <img 
-              src="${logoUrl}" 
-              alt="Namah Jewellers" 
-              style="max-height: 58px; max-width: 170px; object-fit: contain; margin-bottom: 6px;" 
-            />
-            <div style="display: inline-flex; align-items: center; justify-content: center; background: #fef3c7; border: 1px solid #d97706; padding: 5px 14px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; line-height: 1; border-radius: 4px; color: #111;">
-              CUSTOMER ORDER SLIP
-            </div>
-          </div>
+            <td style="width: 34%; vertical-align: middle; text-align: center; padding-bottom: 12px;">
+              <img 
+                src="${logoUrl}" 
+                alt="Namah Jewellers" 
+                style="height: 54px; width: auto; max-width: 180px; object-fit: contain; display: block; margin: 0 auto 8px auto;" 
+              />
+              <table style="margin: 0 auto; border-collapse: collapse;">
+                <tr>
+                  <td style="background: #fef3c7; border: 1.5px solid #d97706; border-radius: 4px; padding: 5px 14px; text-align: center; vertical-align: middle; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; color: #111;">
+                    CUSTOMER ORDER SLIP
+                  </td>
+                </tr>
+              </table>
+            </td>
 
-          <div style="font-size: 11px; line-height: 1.6; text-align: right; width: 32%;">
-            <div><strong>S. No:</strong> <span style="font-size: 14px; font-weight: 900; color: #92400e;">${orderSheetNumbers}</span></div>
-            <div><strong>Date:</strong> ${orderDate}</div>
-            <div style="margin-top: 4px; font-weight: bold;">Sales Executive Number:</div>
-            <div>${isExec1 ? '☑' : '☐'} 1. 7042136377</div>
-            <div>${isExec2 ? '☑' : '☐'} 2. 7042109377</div>
-          </div>
-        </div>
+            <td style="width: 33%; vertical-align: top; text-align: right; padding-bottom: 12px; font-size: 11px; line-height: 1.65;">
+              <div><strong>S. No:</strong> <span style="font-size: 13px; font-weight: 900; color: #92400e;">${orderSheetNumbers}</span></div>
+              <div><strong>Date:</strong> ${orderDate}</div>
+              <div style="margin-top: 4px; font-weight: bold;">Sales Executive Number:</div>
+              <div>${isExec1 ? '☑' : '☐'} 1. 7042136377</div>
+              <div>${isExec2 ? '☑' : '☐'} 2. 7042109377</div>
+            </td>
+          </tr>
+        </table>
 
         <!-- CUSTOMER & DOD INFO BAR -->
-        <div style="display: flex; justify-content: space-between; background: #fffbeb; border: 1px solid #fcd34d; padding: 10px 12px; margin-top: 12px; font-size: 12px;">
-          <div style="line-height: 1.6;">
-            <div><strong>Customer Name:</strong> ${client.customerName}</div>
-            <div><strong>Contact No.:</strong> ${client.contactNumber}</div>
-          </div>
-          <div style="text-align: right; line-height: 1.6;">
-            <div><strong>Sales Person:</strong> ${salesPersonName}</div>
-            <div><strong>Promised DOD:</strong> <span style="color: #047857; font-weight: bold;">${dodDates}</span></div>
-          </div>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; background: #fffbeb; border: 1px solid #fcd34d; margin-top: 12px; font-size: 12px;">
+          <tr>
+            <td style="width: 55%; padding: 9px 12px; text-align: left; vertical-align: middle; line-height: 1.6;">
+              <div><strong>Customer Name:</strong> ${client.customerName}</div>
+              <div><strong>Contact No.:</strong> ${client.contactNumber}</div>
+            </td>
+            <td style="width: 45%; padding: 9px 12px; text-align: right; vertical-align: middle; line-height: 1.6;">
+              <div><strong>Sales Person:</strong> ${salesPersonName}</div>
+              <div><strong>Promised DOD:</strong> <span style="color: #047857; font-weight: bold;">${dodDates}</span></div>
+            </td>
+          </tr>
+        </table>
 
         <!-- ORDER ITEMS TABLE -->
-        <table style="width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 11.5px;">
+        <table style="width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 11.5px;">
           <thead>
             <tr style="background: #92400e; color: #fff;">
-              <th style="border: 1px solid #92400e; padding: 7px; width: 45px;">Sr.</th>
-              <th style="border: 1px solid #92400e; padding: 7px; width: 115px;">Order / Tag</th>
-              <th style="border: 1px solid #92400e; padding: 7px; text-align: left;">Jewellery Item & Specifications</th>
-              <th style="border: 1px solid #92400e; padding: 7px; width: 95px;">DOD</th>
-              <th style="border: 1px solid #92400e; padding: 7px; width: 95px; text-align: right;">Advance</th>
+              <th style="border: 1px solid #92400e; padding: 8px 6px; width: 42px; text-align: center; vertical-align: middle;">Sr.</th>
+              <th style="border: 1px solid #92400e; padding: 8px 8px; width: 105px; text-align: center; vertical-align: middle;">Order / Tag</th>
+              <th style="border: 1px solid #92400e; padding: 8px 10px; text-align: left; vertical-align: middle;">Jewellery Item &amp; Specifications</th>
+              <th style="border: 1px solid #92400e; padding: 8px 6px; width: 95px; text-align: center; vertical-align: middle;">DOD</th>
+              <th style="border: 1px solid #92400e; padding: 8px 10px; width: 90px; text-align: right; vertical-align: middle;">Advance</th>
             </tr>
           </thead>
           <tbody>
@@ -975,37 +984,46 @@ export default function App() {
           </tbody>
           <tfoot>
             <tr style="background: #fef3c7; font-weight: bold;">
-              <td colspan="4" style="border: 1px solid #999; padding: 8px; text-align: right;">TOTAL ADVANCE RECEIVED:</td>
-              <td style="border: 1px solid #999; padding: 8px; text-align: right; color: #047857; font-size: 13px;">₹${totalAdvance}</td>
+              <td colspan="4" style="border: 1px solid #999; padding: 8px 10px; text-align: right; vertical-align: middle;">TOTAL ADVANCE RECEIVED:</td>
+              <td style="border: 1px solid #999; padding: 8px 10px; text-align: right; vertical-align: middle; color: #047857; font-size: 13px;">₹${totalAdvance}</td>
             </tr>
           </tfoot>
         </table>
 
         <!-- MANDATORY & SIGNATURES SECTION -->
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 24px; padding-top: 12px; border-top: 1px dashed #aaa; font-size: 11px;">
-          <div style="border: 1px solid #d97706; background: #fffbeb; padding: 8px 12px; border-radius: 4px; line-height: 1.6;">
-            <div style="font-weight: 900; color: #92400e; text-decoration: underline; margin-bottom: 2px;">MANDATORY</div>
-            <div>1. Gold Rate 24KT (Charged): _________________</div>
-            <div>2. Order By: <strong>${salesPersonName}</strong></div>
-            <div>3. In File of: <strong>${firstOrder.orderPerson || 'Namah Jewellers'}</strong></div>
-          </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 18px; border-top: 1px dashed #aaa; font-size: 11px;">
+          <tr>
+            <td style="width: 46%; padding-top: 12px; vertical-align: bottom; text-align: left;">
+              <div style="border: 1px solid #d97706; background: #fffbeb; padding: 8px 12px; border-radius: 4px; line-height: 1.65;">
+                <div style="font-weight: 900; color: #92400e; text-decoration: underline; margin-bottom: 2px;">MANDATORY</div>
+                <div>1. Gold Rate 24KT (Charged): _______________</div>
+                <div>2. Order By: <strong>${salesPersonName}</strong></div>
+                <div>3. In File of: <strong>${firstOrder.orderPerson || 'Namah Jewellers'}</strong></div>
+              </div>
+            </td>
 
-          <div style="text-align: center; min-width: 140px;">
-            <div style="height: 36px;"></div>
-            <div style="border-top: 1px solid #333; padding-top: 4px; font-weight: bold;">Customer Signature</div>
-          </div>
+            <td style="width: 27%; padding-top: 12px; padding-left: 14px; vertical-align: bottom; text-align: center;">
+              <div style="height: 40px;"></div>
+              <div style="border-top: 1px solid #333; padding-top: 5px; font-weight: bold;">Customer Signature</div>
+            </td>
 
-          <div style="text-align: center; min-width: 140px;">
-            <div style="height: 36px;"></div>
-            <div style="border-top: 1px solid #333; padding-top: 4px; font-weight: bold;">Owner Signature</div>
-          </div>
-        </div>
+            <td style="width: 27%; padding-top: 12px; padding-left: 14px; vertical-align: bottom; text-align: center;">
+              <div style="height: 40px;"></div>
+              <div style="border-top: 1px solid #333; padding-top: 5px; font-weight: bold;">Owner Signature</div>
+            </td>
+          </tr>
+        </table>
 
         <!-- BOTTOM DISCLAIMER FOOTER -->
-        <div style="margin-top: 14px; background: #111; color: #fbbf24; text-align: center; padding: 7px 10px; font-size: 10px; font-weight: bold; letter-spacing: 0.4px; line-height: 1.5;">
-          10%-15% VARIATION POSSIBLE IN PRICING (DUE TO CHANGE IN WEIGHT)<br/>
-          <span style="color: #fff;">NEW ORDER DELIVERY 15-20 DAYS &bull; REPAIR DELIVERY 7 DAYS &bull; SUNDAY NO DELIVERY</span>
-        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 14px;">
+          <tr>
+            <td style="background: #111; color: #fbbf24; text-align: center; vertical-align: middle; padding: 8px 10px; font-size: 10px; font-weight: bold; letter-spacing: 0.4px; line-height: 1.55;">
+              10%-15% VARIATION POSSIBLE IN PRICING (DUE TO CHANGE IN WEIGHT)<br/>
+              <span style="color: #fff;">NEW ORDER DELIVERY 15-20 DAYS &bull; REPAIR DELIVERY 7 DAYS &bull; SUNDAY NO DELIVERY</span>
+            </td>
+          </tr>
+        </table>
+
       </div>
     `;
 
@@ -1014,7 +1032,7 @@ export default function App() {
 
     const cleanCustomerName = (client.customerName || 'Client').replace(/[^a-zA-Z0-9]/g, '_');
     const opt = {
-      margin: 8,
+      margin: 6,
       filename: `Namah_Order_Slip_${cleanCustomerName}_${orderSheetNumbers.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
