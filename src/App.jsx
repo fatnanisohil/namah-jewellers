@@ -46,7 +46,7 @@ const SALESPERSON_NUMBERS = {
 
 const ORDER_DEPARTMENT_NUMBER = '9217403206'; // Amardeep & Gautam
 
-// Jewellery Items Dropdown List (including OTHER)
+// Jewellery Items Dropdown List
 const JEWELLERY_ITEMS_LIST = [
   'BANGLES',
   'BRACELET',
@@ -59,7 +59,6 @@ const JEWELLERY_ITEMS_LIST = [
   'STONE MALA',
   'TIMANIYA',
   'TOPS'
-  // 'OTHER (SPECIFY IN DESCRIPTION)'
 ];
 
 // Proper Case text helper function
@@ -74,7 +73,7 @@ export default function App() {
   const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
   const [selectedKarigarTagFilter, setSelectedKarigarTagFilter] = useState('ALL');
   
-  // New Karigar Timeline Quick Filter Tab State ('ALL', 'OVERDUE', 'TODAY', 'UPCOMING')
+  // Karigar Timeline Quick Filter Tab State ('ALL', 'OVERDUE', 'TODAY', 'UPCOMING')
   const [karigarTimelineTab, setKarigarTimelineTab] = useState('ALL');
 
   const [previewImage, setPreviewImage] = useState(null);
@@ -266,12 +265,17 @@ export default function App() {
         setOrders(prevOrders => {
           const merged = data.map((serverOrder, index) => {
             const localMatch = prevOrders.find(o => o.orderSheetNo === serverOrder.orderSheetNo && o.tagNumber === serverOrder.tagNumber);
+            const rawColorStone = serverOrder.colorStone || serverOrder['Color Stone'] || serverOrder.colorstone || localMatch?.colorStone || '';
+            const rawAdvance = serverOrder.advanceAmount || serverOrder['Advance Amount'] || serverOrder.advance || localMatch?.advanceAmount || '';
+
             return {
               ...serverOrder,
               customerName: toProperCase(serverOrder.customerName),
               jewelleryItem: toProperCase(serverOrder.jewelleryItem),
               karigarName: toProperCase(serverOrder.karigarName),
               colorTone: toProperCase(serverOrder.colorTone),
+              colorStone: toProperCase(String(rawColorStone)),
+              advanceAmount: rawAdvance,
               orderDescription: toProperCase(serverOrder.orderDescription),
               dailyRemarks: serverOrder.dailyRemarks || '',
               imagePreviewLocal: localMatch?.imagePreviewLocal || serverOrder.imagePreviewLocal,
@@ -388,7 +392,6 @@ export default function App() {
     const img = new Image();
 
     img.onload = () => {
-      // Compress & resize phone camera photo to max 800px (~60-100 KB)
       const MAX_SIZE = 800;
       let width = img.width;
       let height = img.height;
@@ -423,20 +426,10 @@ export default function App() {
   const handleCreateOrder = (e) => {
     e.preventDefault();
 
-    // 1. Mandatory Product Photo Check
     if (!formData.imageBase64 && !formData.imagePreviewLocal) {
       alert("⚠️ Product Photo is mandatory! Please capture or upload a photo before submitting.");
       return;
     }
-
-    // 2. Mandatory Custom Jewellery Input Check when "OTHER" is selected
-    // if (
-    //   formData.jewelleryItem.includes('OTHER') &&
-    //   !(formData.otherJewelleryItem || '').trim()
-    // ) {
-    //   alert("⚠️ Please specify the custom jewellery item name before submitting!");
-    //   return;
-    // }
 
     const finalJewelleryItem = formData.jewelleryItem.includes('OTHER')
       ? formData.otherJewelleryItem.trim().toUpperCase()
@@ -479,7 +472,6 @@ export default function App() {
       try {
         const payload = new URLSearchParams();
         Object.keys(submissionData).forEach(key => {
-          // Skip temporary local keys & avoid sending duplicate giant Base64 in productImageLink
           if (
             key !== 'otherJewelleryItem' &&
             key !== '_localTimestamp' &&
@@ -489,6 +481,9 @@ export default function App() {
             payload.append(key, submissionData[key] || '');
           }
         });
+        if (submissionData.imageBase64) {
+          payload.set('productImageLink', submissionData.imageBase64);
+        }
 
         const res = await fetch(GOOGLE_SHEETS_API_URL, {
           method: "POST",
@@ -499,7 +494,6 @@ export default function App() {
           throw new Error(`Server responded with ${res.status}`);
         }
 
-        // Wait 4.5s so Google Drive image upload & Sheet append finish before refreshing
         setTimeout(fetchOrdersFromSheet, 4500);
       } catch (err) {
         console.error("Background sync error:", err);
@@ -655,7 +649,10 @@ export default function App() {
       karigarName: data.get('karigarName'),
       karigarDod: extractDateOnly(data.get('karigarDod')),
       'Gold Weight(g)': data.get('goldWeight'),
+      goldWeight: data.get('goldWeight'),
       'Diamond Weight(ct)': data.get('diamondWeight'),
+      diamondWeight: data.get('diamondWeight'),
+      colorStone: data.get('colorStone'),
       colorTone: data.get('colorTone'),
       purity: data.get('purity'),
       size: data.get('size'),
@@ -687,6 +684,7 @@ export default function App() {
         karigarName: updatedOrder.karigarName || '',
         'Gold Weight(g)': updatedOrder['Gold Weight(g)'] || '',
         'Diamond Weight(ct)': updatedOrder['Diamond Weight(ct)'] || '',
+        colorStone: updatedOrder.colorStone || '',
         colorTone: updatedOrder.colorTone || '',
         purity: updatedOrder.purity || '',
         size: updatedOrder.size || '',
@@ -751,16 +749,18 @@ export default function App() {
       listToExport = listToExport.filter(o => matchesStatusFilter(o, exportStatus));
     }
 
-    const headers = "Order Sheet,Customer Name,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
+    const headers = "Order Sheet,Customer Name,Sales Person,Order Person,Color Stone,Advance Amount,DOD (Promised),Product Status,Daily Remarks\n";
     const rows = listToExport.map(o => {
       const sheetNo = `"${(o.orderSheetNo || '').replace(/"/g, '""')}"`;
       const custName = `"${(o.customerName || '').replace(/"/g, '""')}"`;
       const salesP = `"${(o.salesPerson || '').replace(/"/g, '""')}"`;
       const orderP = `"${(o.orderPerson || '').replace(/"/g, '""')}"`;
+      const cStone = `"${(o.colorStone || '').replace(/"/g, '""')}"`;
+      const adv = `"${String(o.advanceAmount || '').replace(/"/g, '""')}"`;
       const dod = `"${formatDDMM(o.deliveryDate).replace(/"/g, '""')}"`;
       const status = `"${(o.productStatus || '--Not Assign--').replace(/"/g, '""')}"`;
       const remarks = `"${(o.dailyRemarks || '').replace(/"/g, '""')}"`;
-      return `${sheetNo},${custName},${salesP},${orderP},${dod},${status},${remarks}`;
+      return `${sheetNo},${custName},${salesP},${orderP},${cStone},${adv},${dod},${status},${remarks}`;
     }).join("\n");
 
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -781,8 +781,9 @@ export default function App() {
       return matchSheet && matchTag;
     }) || order;
 
-    const goldWt = fullOrder.goldWeight || '';
-    const diamondWt = fullOrder.diamondWeight || '';
+    const goldWt = fullOrder['Gold Weight(g)'] || fullOrder.goldWeight || '';
+    const diamondWt = fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight || '';
+    const colorStone = fullOrder.colorStone || '';
     const orderDesc = fullOrder.orderDescription || '';
 
     let msg = `*Karigar Work Order*\n\n` +
@@ -793,6 +794,7 @@ export default function App() {
 
     if (goldWt) msg += `🟡 *Gold Weight:* ${goldWt}g\n`;
     if (diamondWt) msg += `💎 *Diamond Weight:* ${diamondWt}ct\n`;
+    if (colorStone) msg += `🔮 *Color Stone:* ${colorStone}\n`;
 
     if (fullOrder.colorTone) msg += `🎨 *Color Tone:* ${fullOrder.colorTone}\n`;
     if (fullOrder.purity) msg += `✨ *Purity:* ${fullOrder.purity}\n`;
@@ -846,6 +848,7 @@ export default function App() {
 
       if (goldWt) msg += `🟡 *Gold Wt:* ${goldWt}g\n`;
       if (diamondWt) msg += `💎 *Diamond Wt:* ${diamondWt}ct\n`;
+      if (ord.colorStone) msg += `🔮 *Color Stone:* ${ord.colorStone}\n`;
       if (ord.advanceAmount) msg += `💵 *Advance:* ₹${ord.advanceAmount}\n`;
       if (imgUrl) msg += `📷 *Image:* ${imgUrl}\n`;
 
@@ -891,6 +894,7 @@ export default function App() {
           ord.purity ? `Purity: ${ord.purity}` : '',
           gWt ? `Gold: ${gWt}g` : '',
           dWt ? `Dia: ${dWt}ct` : '',
+          ord.colorStone ? `Stone: ${ord.colorStone}` : '',
           ord.colorTone ? `Tone: ${ord.colorTone}` : '',
           ord.size ? `Size: ${ord.size}` : ''
         ]
@@ -1254,10 +1258,10 @@ export default function App() {
           <div className="flex items-center gap-2.5">
             <div className="bg-gradient-to-tr from-amber-600 via-amber-500 to-amber-300 p-2 sm:p-2.5 rounded-2xl shadow-lg shadow-amber-500/20">
               <img
-  src={`${import.meta.env.BASE_URL}logo.png`}
-  alt="Namah Jewellers"
-  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain bg-white/95 p-1 shadow-lg"
-/>
+                src={`${import.meta.env.BASE_URL}logo.png`}
+                alt="Namah Jewellers"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl object-contain bg-white/95 p-1 shadow-lg"
+              />
             </div>
             <div>
               <h1 className="text-sm sm:text-lg font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-amber-400 to-amber-500">
@@ -1562,19 +1566,21 @@ export default function App() {
 
             const consolidatedRows = Object.values(groupedMap);
 
-            const headers = "Customer Name,Order / Tag,Item Count,Sales Person,Order Person,DOD (Promised),Product Status,Daily Remarks\n";
+            const headers = "Customer Name,Order / Tag,Item Count,Sales Person,Order Person,Total Advance,DOD (Promised),Product Status,Daily Remarks\n";
             const rows = consolidatedRows.map(cust => {
               const custName = `"${(cust.customerName || '').replace(/"/g, '""')}"`;
               const orderTags = `"${cust.items.map(i => `${i.orderSheetNo || ''} (${i.tagNumber || 'NA'})`).join(' | ').replace(/"/g, '""')}"`;
               const itemCount = cust.items.length;
               const salesP = `"${Array.from(new Set(cust.items.map(i => i.salesPerson).filter(Boolean))).join(', ').replace(/"/g, '""')}"`;
               const orderP = `"${Array.from(new Set(cust.items.map(i => i.orderPerson).filter(Boolean))).join(', ').replace(/"/g, '""')}"`;
+              const totalAdv = cust.items.reduce((sum, i) => sum + (parseFloat(i.advanceAmount) || 0), 0);
+              const advCell = `"${totalAdv > 0 ? totalAdv : ''}"`;
               const uniqueDods = Array.from(new Set(cust.items.map(i => formatDateDDMM(i.deliveryDate)).filter(Boolean)));
               const dods = `"${uniqueDods.join(' | ').replace(/"/g, '""')}"`;
               const statuses = `"${cust.items.map(i => getStatusStr(i)).join(' | ').replace(/"/g, '""')}"`;
               const remarks = `"${cust.items.map(i => i.dailyRemarks || '--').join(' | ').replace(/"/g, '""')}"`;
 
-              return `${custName},${orderTags},${itemCount},${salesP},${orderP},${dods},${statuses},${remarks}`;
+              return `${custName},${orderTags},${itemCount},${salesP},${orderP},${advCell},${dods},${statuses},${remarks}`;
             }).join("\n");
 
             const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -2595,6 +2601,7 @@ export default function App() {
                         <div className="text-[11px] text-slate-300 flex flex-wrap gap-x-2 gap-y-0.5">
                           {gWt && <span>Gold: <strong className="text-amber-400">{gWt}g</strong></span>}
                           {dWt && <span>Dia: <strong className="text-amber-400">{dWt}ct</strong></span>}
+                          {order.colorStone && <span>Stone: <strong className="text-cyan-300">{order.colorStone}</strong></span>}
                           {adv && <span>Adv: <strong className="text-emerald-400">₹{adv}</strong></span>}
                           {order.colorTone && <span>Tone: {order.colorTone}</span>}
                           {order.size && <span>Size: {order.size}</span>}
@@ -2619,7 +2626,7 @@ export default function App() {
                         </span>
                       </div>
 
-                      {/* Action & Status Footer (Equal Height & Width) */}
+                      {/* Action & Status Footer */}
                       <div className="grid grid-cols-2 gap-2.5 pt-2.5 border-t border-slate-800 items-stretch">
                         {!isAssigned || productStatus.includes('not assign') || productStatus === '' ? (
                           <button
@@ -2796,6 +2803,7 @@ export default function App() {
                                     {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
                                     {gWt && dWt && <span className="text-slate-600">|</span>}
                                     {dWt && <span>Dia: <strong className="text-amber-400 font-bold">{dWt}ct</strong></span>}
+                                    {order.colorStone && <><br /><span>Color Stone: <strong className="text-cyan-300 font-bold">{order.colorStone}</strong></span></>}
                                     {adv && <><br /><span>Adv: <strong className="text-emerald-400 font-bold">₹{adv}</strong></span></>}
                                   </>
                                 );
@@ -3039,6 +3047,7 @@ export default function App() {
                         <div className="text-[11px] text-slate-300 flex flex-wrap gap-2">
                           {gWt && <span>Gold: <strong className="text-amber-400">{gWt}g</strong></span>}
                           {dWt && <span>Dia: <strong className="text-amber-400">{dWt}ct</strong></span>}
+                          {order.colorStone && <span>Stone: <strong className="text-cyan-300">{order.colorStone}</strong></span>}
                           {adv && <span>Adv: <strong className="text-emerald-400">₹{adv}</strong></span>}
                         </div>
                         {(order.orderDescription || order.remarks) && (
@@ -3143,6 +3152,7 @@ export default function App() {
                                     {gWt && <span>Gold: <strong className="text-amber-400 font-bold">{gWt}g</strong></span>}
                                     {gWt && dWt && <span className="text-slate-600">|</span>}
                                     {dWt && <span>Dia: <strong className="text-amber-400 font-bold">{dWt}ct</strong></span>}
+                                    {order.colorStone && <><br /><span>Color Stone: <strong className="text-cyan-300 font-bold">{order.colorStone}</strong></span></>}
                                     {adv && <><br /><span>Adv: <strong className="text-emerald-400 font-bold">₹{adv}</strong></span></>}
                                   </>
                                 );
@@ -3632,8 +3642,8 @@ export default function App() {
               </div>
 
               <div className="p-4 bg-[#111318] border border-slate-800/80 rounded-xl space-y-4">
-                <h4 className="text-xs font-bold text-amber-400 uppercase">Gold, Diamond & Advance Specifications</h4>
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
+                <h4 className="text-xs font-bold text-amber-400 uppercase">Gold, Diamond, Color Stone & Advance Specifications</h4>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs text-slate-400 mb-1">Gold Wt (g)</label>
                     <input
@@ -3653,6 +3663,17 @@ export default function App() {
                       className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200"
                       value={formData.diamondWeight}
                       onChange={(e) => setFormData({ ...formData, diamondWeight: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs text-slate-400 mb-1">Color Stone</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Emerald 2.5ct / Ruby"
+                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2.5 py-2 text-sm text-slate-200"
+                      value={formData.colorStone}
+                      onChange={(e) => setFormData({ ...formData, colorStone: e.target.value })}
                     />
                   </div>
 
@@ -3694,7 +3715,7 @@ export default function App() {
                     />
                   </div>
 
-                  <div>
+                  <div className="col-span-2 md:col-span-2">
                     <label className="block text-xs text-slate-400 mb-1">Size</label>
                     <input
                       type="text"
@@ -4044,6 +4065,9 @@ export default function App() {
                             {badgeText}
                           </span>
                         </div>
+                        {order.colorStone && (
+                          <p className="text-xs text-slate-400">Color Stone: <strong className="text-cyan-300">{order.colorStone}</strong></p>
+                        )}
                         <p className="text-xs text-slate-400">Karigar DOD: <strong className="text-emerald-400">{extractDateOnly(order.karigarDod)}</strong></p>
 
                         <div className="space-y-2 pt-1 border-t border-slate-800">
@@ -4399,7 +4423,11 @@ export default function App() {
                   <div key={i} className="bg-[#111318] border border-slate-800 p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div>
                       <p className="font-bold text-amber-400">{ord.orderSheetNo} - {ord.jewelleryItem}</p>
-                      <p className="text-[11px] text-slate-400">Tag: {ord.tagNumber} | Salesperson: {ord.salesPerson} {ord.advanceAmount ? `| Advance: ₹${ord.advanceAmount}` : ''}</p>
+                      <p className="text-[11px] text-slate-400">
+                        Tag: {ord.tagNumber} | Salesperson: {ord.salesPerson}
+                        {ord.colorStone ? ` | Stone: ${ord.colorStone}` : ''}
+                        {ord.advanceAmount ? ` | Advance: ₹${ord.advanceAmount}` : ''}
+                      </p>
                     </div>
                     <span className={`self-start sm:self-center px-2.5 py-1 rounded-lg border font-bold text-xs ${
                       !ord.productStatus || ord.productStatus.includes('Not Assign')
@@ -4459,138 +4487,69 @@ export default function App() {
 
       {selectedOrderForKarigar && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-xl w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-amber-400">
-                {selectedOrderForKarigar.karigarName ? 'Update Karigar Placing Details' : 'Assign Order to Karigar'}
-              </h3>
+              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign to Karigar ({selectedOrderForKarigar.orderSheetNo})</h3>
               <button onClick={() => setSelectedOrderForKarigar(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleKarigarSubmit} className="space-y-4">
-              <div className="p-3 bg-[#111318] rounded-xl text-xs text-slate-300 space-y-1">
-                <p><strong className="text-amber-400">Order Sheet:</strong> {selectedOrderForKarigar.orderSheetNo}</p>
-                <p><strong className="text-amber-400">Tag Number:</strong> {selectedOrderForKarigar.tagNumber}</p>
-                <p><strong className="text-amber-400">Jewellery Item:</strong> {selectedOrderForKarigar.jewelleryItem}</p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Karigar Name *</label>
-                  <input
-                    type="text"
-                    required
-                    name="karigarName"
-                    defaultValue={selectedOrderForKarigar.karigarName || ''}
-                    placeholder="e.g. Craftsman Vijay"
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
-                  />
+                  <label className="block text-xs text-slate-400 mb-1">Karigar Name *</label>
+                  <input type="text" name="karigarName" required placeholder="e.g. Vijay Karigar" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
-
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1">Karigar Delivery Date (DOD) *</label>
-                  <input
-                    type="date"
-                    required
-                    name="karigarDod"
-                    defaultValue={extractDateOnly(selectedOrderForKarigar.karigarDod) || ''}
-                    className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
-                  />
+                  <label className="block text-xs text-slate-400 mb-1">Karigar DOD *</label>
+                  <input type="date" name="karigarDod" required className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
               </div>
 
-              <div className="p-3 bg-[#111318] border border-slate-800/80 rounded-xl space-y-3">
-                <h4 className="text-[11px] font-bold text-amber-400 uppercase">Review / Override Specifications for Karigar</h4>
-                
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Gold Weight (g)</label>
-                    <input
-                      type="text"
-                      name="goldWeight"
-                      defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''}
-                      placeholder="e.g. 45.2"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Diamond Weight (ct)</label>
-                    <input
-                      type="text"
-                      name="diamondWeight"
-                      defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''}
-                      placeholder="e.g. 2.15"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Purity</label>
-                    <select
-                      name="purity"
-                      defaultValue={selectedOrderForKarigar.purity || ''}
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200 cursor-pointer"
-                    >
-                      <option value="" disabled>Select Purity</option>
-                      <option value="22kt">22kt</option>
-                      <option value="18kt">18kt</option>
-                      <option value="14kt">14kt</option>
-                      <option value="9kt">9kt</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Color Tone</label>
-                    <input
-                      type="text"
-                      name="colorTone"
-                      defaultValue={selectedOrderForKarigar.colorTone || ''}
-                      placeholder="e.g. Yellow Gold"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-[10px] text-slate-400 mb-1">Size</label>
-                    <input
-                      type="text"
-                      name="size"
-                      defaultValue={selectedOrderForKarigar.size || ''}
-                      placeholder="e.g. 16 inch"
-                      className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
-                    />
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 <div>
-                  <label className="block text-[10px] text-slate-400 mb-1">Order Description</label>
-                  <textarea
-                    name="orderDescription"
-                    rows="2"
-                    defaultValue={selectedOrderForKarigar.orderDescription || ''}
-                    placeholder="Enter order description..."
-                    className="w-full bg-[#181b22] border border-slate-800 rounded-lg px-2 py-1.5 text-xs text-slate-200"
-                  ></textarea>
+                  <label className="block text-[11px] text-slate-400 mb-1">Gold (g)</label>
+                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">Diamond (ct)</label>
+                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">Color Stone</label>
+                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone} placeholder="e.g. Emerald" className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-slate-400 mb-1">Purity</label>
+                  <input type="text" name="purity" defaultValue={selectedOrderForKarigar.purity} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-xs text-white" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Color Tone</label>
+                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1">Size</label>
+                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-300 mb-1">Alteration Details / Special Instructions</label>
-                <textarea
-                  name="alterationDetails"
-                  rows="2"
-                  defaultValue={selectedOrderForKarigar.alterationDetails || ''}
-                  placeholder="Instructions or alterations for karigar..."
-                  className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200"
-                ></textarea>
+                <label className="block text-xs text-slate-400 mb-1">Order Description</label>
+                <textarea name="orderDescription" rows="2" defaultValue={selectedOrderForKarigar.orderDescription} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></textarea>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Save & Generate WhatsApp Slip</button>
+              <div>
+                <label className="block text-xs text-amber-400 font-semibold mb-1">Alternation If Any</label>
+                <textarea name="alterationDetails" rows="2" placeholder="Specify alterations..." className="w-full bg-[#111318] border border-amber-500/40 rounded-xl px-3 py-2 text-sm text-white"></textarea>
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-xs font-semibold text-slate-300 cursor-pointer">Cancel</button>
+                <button type="submit" className="px-5 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Save & Generate Slip</button>
               </div>
             </form>
           </div>
@@ -4599,15 +4558,25 @@ export default function App() {
 
       {whatsappModalData && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-emerald-400">WhatsApp Karigar Work Order</h3>
+              <h3 className="text-sm sm:text-md font-bold text-emerald-400 flex items-center gap-2"><Check className="w-5 h-5" /> Work Order Slip</h3>
               <button onClick={() => setWhatsappModalData(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-4 bg-[#111318] border border-slate-800 rounded-xl text-xs font-mono text-emerald-300 whitespace-pre-wrap select-all max-h-72 overflow-y-auto">
+            {formatDriveUrl(whatsappModalData) && (
+              <div className="flex items-center gap-3 bg-[#111318] p-3 rounded-xl border border-slate-800">
+                <img src={formatDriveUrl(whatsappModalData)} alt="" onClick={() => setPreviewImage(formatDriveUrl(whatsappModalData))} className="w-16 h-16 rounded-lg object-cover border border-amber-500/40 cursor-pointer" />
+                <div>
+                  <span className="text-xs font-bold text-amber-400 block">Product Photo Attached</span>
+                  <span className="text-[11px] text-slate-400">Included in WhatsApp message link</span>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-[#111318] p-4 rounded-xl border border-slate-800 text-xs text-slate-300 whitespace-pre-line font-mono max-h-64 overflow-y-auto">
               {buildWhatsAppMessage(whatsappModalData)}
             </div>
 
@@ -4615,19 +4584,19 @@ export default function App() {
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(buildWhatsAppMessage(whatsappModalData));
-                  alert("Message caption copied to clipboard!");
+                  alert("Slip copied to clipboard!");
                 }}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer"
+                className="px-4 py-2.5 bg-slate-800 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5" /> Copy Message
               </button>
               <a
-                href={'https://wa.me/?text=' + encodeURIComponent(buildWhatsAppMessage(whatsappModalData))}
+                href={`https://wa.me/?text=${encodeURIComponent(buildWhatsAppMessage(whatsappModalData))}`}
                 target="_blank"
                 rel="noreferrer"
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20"
               >
-                <Send className="w-4 h-4" /> Open WhatsApp
+                <Send className="w-4 h-4" /> Send via WhatsApp
               </a>
             </div>
           </div>
@@ -4635,26 +4604,23 @@ export default function App() {
       )}
 
       {previewImage && (
-        <div 
-          className="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
+        <div
           onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4 cursor-pointer"
         >
-          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
-            <button 
+          <div className="relative max-w-4xl max-h-[90vh] flex items-center justify-center">
+            <img
+              src={previewImage}
+              alt="Full Size Product Preview"
+              className="max-w-full max-h-[85vh] rounded-2xl border-2 border-amber-500/60 shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
               onClick={() => setPreviewImage(null)}
-              className="absolute -top-12 right-0 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full border border-slate-700 cursor-pointer"
+              className="absolute -top-4 -right-4 bg-amber-500 text-slate-950 p-2 rounded-full shadow-lg hover:bg-amber-400 transition-all cursor-pointer"
             >
-              <X className="w-6 h-6" />
+              <X className="w-5 h-5" />
             </button>
-            
-            <div className="relative flex items-center justify-center">
-              <img 
-                src={previewImage.includes('sz=') ? previewImage.replace(/sz=w\d+/, 'sz=w1200') : previewImage + '&sz=w1200'} 
-                alt="Product Preview HD" 
-                className="max-w-[90vw] max-h-[82vh] w-auto h-auto rounded-2xl object-contain border border-amber-500/50 shadow-2xl bg-slate-900"
-                onClick={(e) => e.stopPropagation()} 
-              />
-            </div>
           </div>
         </div>
       )}
