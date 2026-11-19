@@ -4530,6 +4530,7 @@ export default function App() {
                     <option value="SS">SS</option>
                     <option value="SARYU">SARYU</option>
                     <option value="RRR">RRR</option>
+                    <option value="RRR">SUPER DIAMOND</option>
                     <option value="SWARNANDA">SWARNANDA</option>
                     <option value="ANANTA">ANANTA</option>
                     <option value="GHOSH GHAT">GHOSH GHAT</option>
