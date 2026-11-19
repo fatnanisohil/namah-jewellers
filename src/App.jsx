@@ -58,7 +58,8 @@ const JEWELLERY_ITEMS_LIST = [
   'RING',
   'STONE MALA',
   'TIMANIYA',
-  'TOPS'
+  'TOPS',
+  'TEEKA'
 ];
 
 // Proper Case text helper function
