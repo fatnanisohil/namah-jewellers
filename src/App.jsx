@@ -2433,8 +2433,10 @@ export default function App() {
               </div>
             </div>
 
-            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-3.5 sm:p-4 flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3 sm:gap-4 shadow-2xl">
-              <div className="grid grid-cols-2 sm:flex items-center gap-2.5 w-full lg:w-auto">
+            {/* SINGLE-LINE CLEAN ACTION & FILTER BAR */}
+            <div className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-3 sm:p-3.5 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-2.5 shadow-2xl">
+              {/* Left: Action Buttons */}
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => {
                     setExportSalesperson(filterSalesperson);
@@ -2444,34 +2446,35 @@ export default function App() {
                     setExportEndDate(filterEndDate);
                     setShowExportModal(true);
                   }}
-                  className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-3 sm:px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
+                  className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-3 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 whitespace-nowrap transition-all shadow-md cursor-pointer"
                 >
-                  <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-400" /> Export CSV
+                  <Download className="w-3.5 h-3.5 text-slate-400 shrink-0" /> Export CSV
                 </button>
 
                 <button
                   onClick={() => setActiveTab('new-order')}
-                  className="bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-slate-950 font-black px-3 sm:px-5 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-lg shadow-orange-500/20 cursor-pointer"
+                  className="bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs flex items-center justify-center gap-1.5 whitespace-nowrap transition-all shadow-lg shadow-orange-500/20 cursor-pointer"
                 >
-                  <PlusCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950" /> New Order
+                  <PlusCircle className="w-3.5 h-3.5 text-slate-950 shrink-0" /> New Order
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto justify-end text-xs">
-                <div className="relative sm:col-span-2 lg:w-48">
-                  <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+              {/* Right: Search + Dropdowns + Promised DOD on Single Line */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-nowrap items-center gap-2 w-full xl:w-auto justify-end text-xs">
+                <div className="relative sm:col-span-2 lg:w-44 xl:w-48 shrink-0">
+                  <Search className="w-3.5 h-3.5 absolute left-2.5 top-2.5 text-slate-500" />
                   <input
                     type="text"
-                    placeholder="Search Order, Tag, Customer..."
+                    placeholder="Search Order, Tag, Client..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-[#111318] border border-slate-700/80 rounded-xl pl-8 pr-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-[#111318] border border-slate-700/80 rounded-xl pl-8 pr-2.5 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
                   />
                 </div>
 
-                <div className="flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2">
-                  <div className="flex items-center gap-1.5">
-                    <Filter className="w-3.5 h-3.5 text-amber-400" />
+                <div className="flex items-center justify-between gap-1 bg-[#111318] border border-slate-700/80 rounded-xl px-2.5 py-2 shrink-0">
+                  <div className="flex items-center gap-1">
+                    <Filter className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                     <span className="text-slate-400 text-[11px]">Sales:</span>
                   </div>
                   <select
@@ -2479,77 +2482,63 @@ export default function App() {
                     onChange={(e) => setFilterSalesperson(e.target.value)}
                     className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
                   >
-                    <option value="ALL" className="bg-[#181b22]">All Sales</option>
+                    <option value="ALL" className="bg-[#181b22]">All</option>
                     {['Sohil', 'Mohit', 'Hema', 'Akansha', 'Yogita', 'Ziya', 'Deepika'].map(s => (
                       <option key={s} value={s} className="bg-[#181b22]">{s}</option>
                     ))}
                   </select>
                 </div>
 
-                <div className="flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2">
+                <div className="flex items-center justify-between gap-1 bg-[#111318] border border-slate-700/80 rounded-xl px-2.5 py-2 shrink-0">
                   <span className="text-slate-400 text-[11px]">Desk:</span>
                   <select
                     value={filterExecutive}
                     onChange={(e) => setFilterExecutive(e.target.value)}
                     className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
                   >
-                    <option value="ALL" className="bg-[#181b22]">All Execs</option>
+                    <option value="ALL" className="bg-[#181b22]">All</option>
                     <option value="Amardeep" className="bg-[#181b22]">Amardeep</option>
                     <option value="Gautam" className="bg-[#181b22]">Gautam</option>
                   </select>
                 </div>
 
-                <div className="sm:col-span-2 flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-2">
+                <div className="flex items-center justify-between gap-1 bg-[#111318] border border-slate-700/80 rounded-xl px-2.5 py-2 shrink-0">
                   <span className="text-slate-400 text-[11px]">Status:</span>
                   <select
                     value={filterStatus}
                     onChange={(e) => setFilterStatus(e.target.value)}
-                    className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer"
+                    className="bg-transparent text-amber-400 font-bold focus:outline-none cursor-pointer max-w-[125px] truncate"
                   >
-                    <option value="ALL" className="bg-[#181b22]">All Status</option>
+                    <option value="ALL" className="bg-[#181b22]">All</option>
                     <option value="Under Process" className="bg-[#181b22]">Under Process</option>
-                    <option value="Ready but bill pending" className="bg-[#181b22]">Ready but bill pending</option>
+                    <option value="Ready but bill pending" className="bg-[#181b22]">Bill Pending</option>
                     <option value="Packed" className="bg-[#181b22]">Packed</option>
                     {isAdminUser && <option value="Delivered" className="bg-[#181b22]">Delivered</option>}
                     <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
                   </select>
                 </div>
 
-                {/* Promised DOD Date Range Filter */}
-                <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
-                      <span className="text-slate-400 text-[11px]">Promised DOD:</span>
-                    </div>
-                    {(filterStartDate || filterEndDate) && (
-                      <button
-                        onClick={() => {
-                          setFilterStartDate('');
-                          setFilterEndDate('');
-                        }}
-                        title="Clear DOD Filter"
-                        className="sm:hidden text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
-                      >
-                        <X className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                {/* Compact Inline Promised DOD Date Range Filter */}
+                <div className="sm:col-span-2 flex items-center justify-between gap-1.5 bg-[#111318] border border-slate-700/80 rounded-xl px-2.5 py-1.5 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
+                    <Calendar className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span className="text-slate-400 text-[11px] whitespace-nowrap">DOD:</span>
                   </div>
-                  <div className="grid grid-cols-2 sm:flex items-center gap-1.5">
+                  <div className="flex items-center gap-1 flex-1 sm:flex-initial">
                     <input
                       type="date"
                       value={filterStartDate}
                       onChange={(e) => setFilterStartDate(e.target.value)}
-                      title="Start Date (Promised DOD)"
-                      className="w-full sm:w-auto bg-[#181b22] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                      title="Promised DOD From"
+                      className="w-full sm:w-[110px] bg-[#181b22] border border-slate-700/80 rounded-lg px-1.5 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
                     />
-                    <span className="hidden sm:inline text-slate-500 text-[11px]">to</span>
+                    <span className="text-slate-500 text-[10px]">-</span>
                     <input
                       type="date"
                       value={filterEndDate}
                       onChange={(e) => setFilterEndDate(e.target.value)}
-                      title="End Date (Promised DOD)"
-                      className="w-full sm:w-auto bg-[#181b22] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                      title="Promised DOD To"
+                      className="w-full sm:w-[110px] bg-[#181b22] border border-slate-700/80 rounded-lg px-1.5 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
                     />
                   </div>
                   {(filterStartDate || filterEndDate) && (
@@ -2559,7 +2548,7 @@ export default function App() {
                         setFilterEndDate('');
                       }}
                       title="Clear DOD Filter"
-                      className="hidden sm:inline text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                      className="text-slate-400 hover:text-red-400 transition-colors cursor-pointer shrink-0"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>
@@ -4499,35 +4488,46 @@ export default function App() {
                       </p>
                     </div>
                     <span className="self-start sm:self-center px-2.5 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-lg font-bold">
-                      {ord.productStatus || 'Processing'}
+                      {ord.productStatus || 'Under Process'}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="pt-2 border-t border-slate-800 space-y-2.5">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-                <a
-                  href={`https://wa.me/${selectedCustomerCRM.contactNumber.replace(/\D/g, '')}?text=${encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
-                >
-                  <Send className="w-3.5 h-3.5" /> Send Consolidated Slip on WhatsApp
-                </a>
-                <button
-                  onClick={() => generateCustomerPDFSlip(selectedCustomerCRM)}
-                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
-                >
-                  <Download className="w-3.5 h-3.5" /> Download Customer Order Slip (PDF)
-                </button>
-              </div>
-              <div className="flex justify-end">
-                <button onClick={() => setSelectedCustomerCRM(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer">
-                  Close Profile
-                </button>
-              </div>
+            <div className="bg-[#111318] border border-emerald-500/30 rounded-xl p-4 space-y-2">
+              <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                <Send className="w-3.5 h-3.5" /> Consolidated Client WhatsApp Message
+              </h4>
+              <pre className="whitespace-pre-wrap text-xs text-slate-300 font-sans max-h-40 overflow-y-auto bg-[#181b22] p-3 rounded-lg border border-slate-800">
+                {buildConsolidatedCustomerMessage(selectedCustomerCRM)}
+              </pre>
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+              <button
+                onClick={() => generateCustomerPDFSlip(selectedCustomerCRM)}
+                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5" /> Download Customer Order Slip (PDF)
+              </button>
+
+              <button
+                onClick={() => {
+                  const text = buildConsolidatedCustomerMessage(selectedCustomerCRM);
+                  navigator.clipboard.writeText(text);
+                  alert('Consolidated client summary copied! Ready to send on WhatsApp.');
+                }}
+                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" /> Copy Summary
+              </button>
+              <button
+                onClick={() => setSelectedCustomerCRM(null)}
+                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold cursor-pointer"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>
@@ -4535,79 +4535,99 @@ export default function App() {
 
       {selectedOrderForKarigar && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign Karigar & Edit Specs</h3>
+              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign to Karigar</h3>
               <button onClick={() => setSelectedOrderForKarigar(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleKarigarSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="bg-[#111318] border border-slate-800 rounded-xl p-3 space-y-2 text-xs">
+              <div className="grid grid-cols-2 gap-1.5">
+                <p className="text-slate-400">Order Sheet: <strong className="text-amber-400">{selectedOrderForKarigar.orderSheetNo}</strong></p>
+                <p className="text-slate-400">Item: <strong className="text-slate-200">{selectedOrderForKarigar.jewelleryItem}</strong></p>
+                <p className="text-slate-400">Tag: <strong className="text-slate-200">{selectedOrderForKarigar.tagNumber}</strong></p>
+                <p className="text-slate-400">Client DOD: <strong className="text-emerald-400">{formatDDMM(selectedOrderForKarigar.deliveryDate)}</strong></p>
+              </div>
+              
+              <div className="border-t border-slate-800 pt-2">
+                <p className="text-slate-400">Order Description: <strong className="text-slate-200">{selectedOrderForKarigar.orderDescription || 'N/A'}</strong></p>
+              </div>
+            </div>
+
+            <form onSubmit={handleKarigarSubmit} className="space-y-3">
+              <div>
+                <label className="block text-xs text-slate-300 mb-1">Karigar Name *</label>
+                <input type="text" name="karigarName" required placeholder="e.g. Rajesh Karigar" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-300 mb-1">Order Description *</label>
+                <textarea 
+                  name="orderDescription" 
+                  rows="2" 
+                  required 
+                  defaultValue={selectedOrderForKarigar.orderDescription || ''} 
+                  placeholder="Review or edit order description..." 
+                  className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+                ></textarea>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Karigar Name *</label>
-                  <input type="text" name="karigarName" required placeholder="e.g. Vijay Karigar" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                  <label className="block text-xs text-slate-300 mb-1">Gold Weight (g)</label>
+                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''} placeholder="e.g. 42.5" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Karigar DOD *</label>
-                  <input type="date" name="karigarDod" required className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                  <label className="block text-xs text-slate-300 mb-1">Diamond Weight (ct)</label>
+                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''} placeholder="e.g. 2.15" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Gold Weight (g)</label>
-                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                  <label className="block text-xs text-slate-300 mb-1">Color Stone</label>
+                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone || ''} placeholder="e.g. Emerald / Ruby" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Diamond Weight (ct)</label>
-                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
-                </div>
-
-                <div className="col-span-2 sm:col-span-1">
-                  <label className="block text-slate-300 font-semibold mb-1">Color Stone</label>
-                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone || ''} placeholder="e.g. Emerald / Ruby" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                  <label className="block text-xs text-slate-300 mb-1">Color Tone</label>
+                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone || ''} placeholder="e.g. Yellow Gold" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Color Tone</label>
-                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
-                </div>
-
-                <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Purity</label>
-                  <select name="purity" defaultValue={selectedOrderForKarigar.purity || '22kt'} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200 cursor-pointer">
-                    <option value="22kt">22kt</option>
-                    <option value="18kt">18kt</option>
-                    <option value="14kt">14kt</option>
-                    <option value="9kt">9kt</option>
+                  <label className="block text-xs text-slate-300 mb-1">Purity</label>
+                  <select name="purity" defaultValue={selectedOrderForKarigar.purity || '22kt'} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white cursor-pointer">
+                    <option value="22kt">22kt Gold</option>
+                    <option value="18kt">18kt Gold</option>
+                    <option value="14kt">14kt Gold</option>
+                    <option value="9kt">9kt Gold</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Size</label>
-                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                  <label className="block text-xs text-slate-300 mb-1">Size</label>
+                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size || ''} placeholder="e.g. 16 inch" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Order Description</label>
-                <textarea rows="2" name="orderDescription" defaultValue={selectedOrderForKarigar.orderDescription || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200"></textarea>
+                <label className="block text-xs text-slate-300 mb-1">Karigar DOD *</label>
+                <input type="date" name="karigarDod" required className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
               </div>
 
               <div>
-                <label className="block text-slate-300 font-semibold mb-1">Alternation If Any (Optional)</label>
-                <textarea rows="2" name="alterationDetails" placeholder="Specify alterations..." className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200"></textarea>
+                <label className="block text-xs text-slate-300 mb-1">Alternation If Any</label>
+                <textarea name="alterationDetails" rows="2" placeholder="Enter details if any..." className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></textarea>
               </div>
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
-                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl cursor-pointer">Cancel</button>
-                <button type="submit" className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl cursor-pointer">Generate WhatsApp Slip</button>
+              <div className="flex justify-end gap-2 pt-3">
+                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs cursor-pointer">Cancel</button>
+                <button type="submit" className="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Assign & Generate Slip</button>
               </div>
             </form>
           </div>
@@ -4618,58 +4638,49 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-emerald-400">WhatsApp Karigar Work Slip</h3>
+              <h3 className="text-sm sm:text-md font-bold text-emerald-400">WhatsApp Work Order Slip</h3>
               <button onClick={() => setWhatsappModalData(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
-
-            <pre className="bg-[#111318] border border-slate-800 p-4 rounded-xl text-xs text-slate-300 whitespace-pre-wrap font-sans max-h-60 overflow-y-auto">
+            <div className="bg-[#111318] border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-1.5 max-h-60 overflow-y-auto whitespace-pre-wrap">
               {buildWhatsAppMessage(whatsappModalData)}
-            </pre>
-
-            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+            </div>
+            <div className="flex flex-col sm:flex-row justify-end gap-2">
               <button
                 onClick={() => {
-                  navigator.clipboard.writeText(buildWhatsAppMessage(whatsappModalData));
-                  alert('Copied to clipboard!');
+                  const text = buildWhatsAppMessage(whatsappModalData);
+                  navigator.clipboard.writeText(text);
+                  alert('Work order details copied! Paste directly into WhatsApp.');
                 }}
-                className="flex-1 justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs flex items-center gap-1.5 font-semibold cursor-pointer"
+                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Message
+                <Copy className="w-3.5 h-3.5" /> Copy Text for WhatsApp
               </button>
-
-              <a
-                href={`https://wa.me/?text=${encodeURIComponent(buildWhatsAppMessage(whatsappModalData))}`}
-                target="_blank"
-                rel="noreferrer"
-                className="flex-1 justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20"
-              >
-                <Send className="w-3.5 h-3.5" /> Open WhatsApp
-              </a>
+              <button onClick={() => setWhatsappModalData(null)} className="px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold cursor-pointer">Close</button>
             </div>
           </div>
         </div>
       )}
 
       {previewImage && (
-        <div
-          onClick={() => setPreviewImage(null)}
-          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
+        <div 
+          onClick={() => setPreviewImage(null)} 
+          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
         >
           <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
-            <img
-              src={previewImage}
-              alt="Full Size Preview"
-              className="max-w-full max-h-[85vh] rounded-2xl border-2 border-amber-500/40 shadow-2xl object-contain"
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={() => setPreviewImage(null)}
-              className="mt-4 px-5 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-amber-600 shadow-lg cursor-pointer"
+            <button 
+              onClick={() => setPreviewImage(null)} 
+              className="absolute -top-10 right-0 text-white hover:text-amber-400 text-sm font-bold flex items-center gap-1 cursor-pointer"
             >
-              Close Preview ✕
+              <X className="w-6 h-6" /> Close
             </button>
+            <img 
+              src={previewImage} 
+              alt="Full Size Product Preview" 
+              className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/40 shadow-2xl" 
+              onClick={(e) => e.stopPropagation()} 
+            />
           </div>
         </div>
       )}
