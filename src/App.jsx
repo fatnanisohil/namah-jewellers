@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 
 import html2pdf from 'html2pdf.js';
+
 const GOOGLE_SHEETS_API_URL = "https://script.google.com/macros/s/AKfycbzCUr7rdM-mOJ0xw9llzwPhO3aszIvC_FtJLNZ1ebWWoUUQ3qltPFTmrfHAJuZQsu1iWA/exec";
 
 // Salesperson Phone Directory Lookup
@@ -66,6 +67,79 @@ const JEWELLERY_ITEMS_LIST = [
 const toProperCase = (str) => {
   if (!str || typeof str !== 'string') return str;
   return str.toLowerCase().replace(/\b\w/g, (char) => char.toUpperCase());
+};
+
+// Extract Google Drive File ID from any Drive link format
+const extractDriveFileId = (rawUrl) => {
+  if (!rawUrl || typeof rawUrl !== 'string') return '';
+  if (rawUrl.includes('/file/d/')) {
+    return rawUrl.split('/file/d/')[1]?.split('/')[0]?.split('?')[0] || '';
+  }
+  if (rawUrl.includes('id=')) {
+    return rawUrl.split('id=')[1]?.split('&')[0] || '';
+  }
+  if (rawUrl.includes('/d/')) {
+    return rawUrl.split('/d/')[1]?.split('/')[0]?.split('?')[0] || '';
+  }
+  return '';
+};
+
+// Reliable Google Drive Image Component with Automatic Fallbacks
+const DriveImage = ({ order, size = 'w200', alt = '', className = '', onClick, placeholderText = 'Product' }) => {
+  const [fallbackStep, setFallbackStep] = useState(0);
+
+  const rawUrl = order?.imagePreviewLocal || order?.productImageLink || '';
+  const fileId = extractDriveFileId(rawUrl);
+
+  useEffect(() => {
+    setFallbackStep(0);
+  }, [rawUrl]);
+
+  const getSrc = () => {
+    if (!rawUrl) return '';
+    if (
+      rawUrl.startsWith('data:image') ||
+      rawUrl.startsWith('blob:') ||
+      (!rawUrl.includes('drive.google.com') && !rawUrl.includes('googleusercontent.com') && rawUrl.startsWith('http'))
+    ) {
+      return rawUrl;
+    }
+
+    if (!fileId) return rawUrl;
+
+    // Step 0: Direct Googleusercontent CDN (bypasses Drive thumbnail blocks)
+    if (fallbackStep === 0) return `https://lh3.googleusercontent.com/d/${fileId}=${size}`;
+    // Step 1: Google Drive Thumbnail endpoint
+    if (fallbackStep === 1) return `https://drive.google.com/thumbnail?id=${fileId}&sz=${size}`;
+    // Step 2: Google Drive UC View endpoint
+    if (fallbackStep === 2) return `https://drive.google.com/uc?export=view&id=${fileId}`;
+    return '';
+  };
+
+  const src = getSrc();
+
+  if (!src) {
+    return (
+      <div className={`bg-[#212530] flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] font-semibold shrink-0 ${className}`}>
+        {placeholderText}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      referrerPolicy="no-referrer"
+      onClick={onClick}
+      onError={() => {
+        if (fileId && fallbackStep < 3) {
+          setFallbackStep((prev) => prev + 1);
+        }
+      }}
+      className={className}
+    />
+  );
 };
 
 export default function App() {
@@ -233,31 +307,23 @@ export default function App() {
     return clean;
   };
 
-  // Supports dynamic thumbnail vs full-screen resolution (e.g., 'w200' for lists, 'w1600' for modal preview)
+  // Supports dynamic thumbnail vs full-screen resolution using Googleusercontent CDN
   const formatDriveUrl = (order, size = 'w200') => {
-    if (order.imagePreviewLocal) return order.imagePreviewLocal;
+    if (order?.imagePreviewLocal) return order.imagePreviewLocal;
 
-    const rawUrl = order.productImageLink || '';
+    const rawUrl = order?.productImageLink || '';
     if (!rawUrl || typeof rawUrl !== 'string') return '';
 
-    if (rawUrl.startsWith('data:image')) return rawUrl;
-    if (rawUrl.startsWith('blob:') || (!rawUrl.includes('drive.google.com') && rawUrl.startsWith('http'))) {
+    if (rawUrl.startsWith('data:image') || rawUrl.startsWith('blob:')) return rawUrl;
+    if (!rawUrl.includes('drive.google.com') && !rawUrl.includes('googleusercontent.com') && rawUrl.startsWith('http')) {
       return rawUrl;
     }
 
-    let fileId = '';
-    if (rawUrl.includes('/file/d/')) {
-      fileId = rawUrl.split('/file/d/')[1]?.split('/')[0];
-    } else if (rawUrl.includes('id=')) {
-      fileId = rawUrl.split('id=')[1]?.split('&')[0];
-    } else if (rawUrl.includes('/d/')) {
-      fileId = rawUrl.split('/d/')[1]?.split('/')[0];
-    }
-
+    const fileId = extractDriveFileId(rawUrl);
     if (fileId) {
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=${size}`;
+      return `https://lh3.googleusercontent.com/d/${fileId}=${size}`;
     }
-    return '';
+    return rawUrl;
   };
 
   const fetchOrdersFromSheet = async () => {
@@ -1927,8 +1993,6 @@ export default function App() {
                       const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                       const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
                       const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
-                      const thumbUrl = formatDriveUrl(ord, 'w200');
-                      const fullUrl = formatDriveUrl(ord, 'w1600');
 
                       return (
                         <div
@@ -1941,18 +2005,13 @@ export default function App() {
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="flex items-center gap-3">
-                              {thumbUrl ? (
-                                <img
-                                  src={thumbUrl}
-                                  alt=""
-                                  onClick={() => setPreviewImage(fullUrl)}
-                                  className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
-                                />
-                              ) : (
-                                <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] shrink-0">
-                                  Item
-                                </div>
-                              )}
+                              <DriveImage
+                                order={ord}
+                                size="w200"
+                                placeholderText="Item"
+                                onClick={() => setPreviewImage(formatDriveUrl(ord, 'w1600'))}
+                                className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
+                              />
                               <div>
                                 <h5 className="text-sm font-black text-slate-100 leading-tight">{ord.customerName}</h5>
                                 <p className="text-xs text-amber-400 font-bold mt-0.5">
@@ -2021,24 +2080,17 @@ export default function App() {
                           const rawStatus = ord.productStatus ? String(ord.productStatus).trim() : '';
                           const isUnassigned = !rawStatus || rawStatus === '' || rawStatus.toLowerCase().includes('not assign');
                           const isToday = extractDateOnly(ord.deliveryDate) === todayDateStr;
-                          const thumbUrl = formatDriveUrl(ord, 'w200');
-                          const fullUrl = formatDriveUrl(ord, 'w1600');
                           
                           return (
                             <tr key={idx} className={`hover:bg-[#111318]/50 ${isToday ? 'bg-amber-500/10 border-l-4 border-amber-500' : ''}`}>
                               <td className="p-3">
-                                {thumbUrl ? (
-                                  <img 
-                                    src={thumbUrl} 
-                                    alt="" 
-                                    onClick={() => setPreviewImage(fullUrl)} 
-                                    className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform" 
-                                  />
-                                ) : (
-                                  <div className="w-12 h-12 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[9px]">
-                                    Item
-                                  </div>
-                                )}
+                                <DriveImage
+                                  order={ord}
+                                  size="w200"
+                                  placeholderText="Item"
+                                  onClick={() => setPreviewImage(formatDriveUrl(ord, 'w1600'))}
+                                  className="w-12 h-12 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                />
                               </td>
                               <td className="p-3 font-bold text-slate-100">{ord.customerName}</td>
                               <td className="p-3 text-amber-400 font-bold">{ord.orderSheetNo} ({ord.tagNumber})</td>
@@ -2578,26 +2630,18 @@ export default function App() {
                   const gWt = order['Gold Weight(g)'] || order.goldWeight;
                   const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
                   const adv = order.advanceAmount;
-                  const thumbUrl = formatDriveUrl(order, 'w200');
-                  const fullUrl = formatDriveUrl(order, 'w1600');
 
                   return (
                     <div key={idx} className="bg-[#181b22] border border-slate-800/90 rounded-2xl p-4 space-y-3 shadow-xl">
                       {/* Header Row: Image + Order Sheet + Toggle */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          {thumbUrl ? (
-                            <img
-                              src={thumbUrl}
-                              alt=""
-                              onClick={() => setPreviewImage(fullUrl)}
-                              className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md shrink-0 cursor-pointer"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] font-semibold shrink-0">
-                              Product
-                            </div>
-                          )}
+                          <DriveImage
+                            order={order}
+                            size="w200"
+                            onClick={() => setPreviewImage(formatDriveUrl(order, 'w1600'))}
+                            className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md shrink-0 cursor-pointer"
+                          />
                           <div>
                             <div className="flex items-center gap-2 flex-wrap">
                               <h4 className="text-sm font-black text-amber-400">{order.orderSheetNo || `NJ-2026-00${idx + 1}`}</h4>
@@ -2787,23 +2831,15 @@ export default function App() {
                   ) : (
                     filteredOrders.map((order, idx) => {
                       const isAssigned = order.karigarName || (order.productStatus && !order.productStatus.includes('Not Assign') && order.productStatus !== '');
-                      const thumbUrl = formatDriveUrl(order, 'w200');
-                      const fullUrl = formatDriveUrl(order, 'w1600');
                       return (
                         <tr key={idx} className="hover:bg-[#20242e]/60 transition-all group">
                           <td className="p-4">
-                            {thumbUrl ? (
-                              <img
-                                src={thumbUrl}
-                                alt=""
-                                onClick={() => setPreviewImage(fullUrl)}
-                                className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md group-hover:scale-105 transition-transform cursor-pointer"
-                              />
-                            ) : (
-                              <div className="w-14 h-14 bg-[#212530] rounded-xl flex flex-col items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] font-semibold">
-                                <span>Product</span>
-                              </div>
-                            )}
+                            <DriveImage
+                              order={order}
+                              size="w200"
+                              onClick={() => setPreviewImage(formatDriveUrl(order, 'w1600'))}
+                              className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md group-hover:scale-105 transition-transform cursor-pointer"
+                            />
                           </td>
 
                           <td className="p-4 space-y-1">
@@ -3056,25 +3092,17 @@ export default function App() {
                   const gWt = order['Gold Weight(g)'] || order.goldWeight;
                   const dWt = order['Diamond Weight(ct)'] || order.diamondWeight;
                   const adv = order.advanceAmount;
-                  const thumbUrl = formatDriveUrl(order, 'w200');
-                  const fullUrl = formatDriveUrl(order, 'w1600');
 
                   return (
                     <div key={idx} className="bg-[#111318] border border-slate-800 rounded-2xl p-4 space-y-3 shadow-lg">
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          {thumbUrl ? (
-                            <img
-                              src={thumbUrl}
-                              alt=""
-                              onClick={() => setPreviewImage(fullUrl)}
-                              className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
-                            />
-                          ) : (
-                            <div className="w-14 h-14 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px] shrink-0">
-                              Product
-                            </div>
-                          )}
+                          <DriveImage
+                            order={order}
+                            size="w200"
+                            onClick={() => setPreviewImage(formatDriveUrl(order, 'w1600'))}
+                            className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shrink-0 cursor-pointer"
+                          />
                           <div>
                             <h4 className="text-sm font-black text-amber-400">
                               {order.orderSheetNo} <span className="text-xs text-slate-400 font-mono">({order.tagNumber})</span>
@@ -3171,16 +3199,15 @@ export default function App() {
                   ) : (
                     offOrders.map((order, idx) => {
                       const isAssigned = order.karigarName || (order.productStatus && !order.productStatus.includes('Not Assign') && order.productStatus !== '');
-                      const thumbUrl = formatDriveUrl(order, 'w200');
-                      const fullUrl = formatDriveUrl(order, 'w1600');
                       return (
                         <tr key={idx} className="hover:bg-[#20242e]/60 transition-all group">
                           <td className="p-4">
-                            {thumbUrl ? (
-                              <img src={thumbUrl} alt="" onClick={() => setPreviewImage(fullUrl)} className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer" />
-                            ) : (
-                              <div className="w-14 h-14 bg-[#212530] rounded-xl flex items-center justify-center border border-slate-700/60 text-slate-500 text-[10px]">Product</div>
-                            )}
+                            <DriveImage
+                              order={order}
+                              size="w200"
+                              onClick={() => setPreviewImage(formatDriveUrl(order, 'w1600'))}
+                              className="w-14 h-14 rounded-xl object-cover bg-slate-900 border border-slate-700/60 shadow-md cursor-pointer"
+                            />
                           </td>
                           <td className="p-4 space-y-1">
                             <h4 className="text-sm font-black text-amber-400">{order.orderSheetNo}</h4>
@@ -4104,8 +4131,6 @@ export default function App() {
                       badgeColor = 'text-amber-400 bg-amber-500/10 border-amber-500/30';
                       badgeText = 'DUE TODAY';
                     }
-                    const thumbUrl = formatDriveUrl(order, 'w200');
-                    const fullUrl = formatDriveUrl(order, 'w1600');
 
                     return (
                       <div key={idx} className="bg-[#111318] p-4 rounded-2xl border border-slate-800 space-y-3 shadow-xl relative">
@@ -4114,9 +4139,12 @@ export default function App() {
                             <span className="text-xs font-black text-amber-400">{order.orderSheetNo}</span>
                             <h4 className="text-sm font-bold text-slate-100">{order.jewelleryItem}</h4>
                           </div>
-                          {thumbUrl && (
-                            <img src={thumbUrl} alt="" onClick={() => setPreviewImage(fullUrl)} className="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-slate-800 cursor-pointer" />
-                          )}
+                          <DriveImage
+                            order={order}
+                            size="w200"
+                            onClick={() => setPreviewImage(formatDriveUrl(order, 'w1600'))}
+                            className="w-10 h-10 rounded-lg object-cover bg-slate-900 border border-slate-800 cursor-pointer"
+                          />
                         </div>
                         <div className="flex justify-between items-center text-xs">
                           <span className="text-slate-400">Karigar: <strong className="text-amber-300">{order.karigarName || 'Unassigned'}</strong></span>
@@ -4497,36 +4525,38 @@ export default function App() {
 
             <div className="bg-[#111318] border border-emerald-500/30 rounded-xl p-4 space-y-2">
               <h4 className="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                <Send className="w-3.5 h-3.5" /> Consolidated Client WhatsApp Message
+                <Send className="w-3.5 h-3.5" /> Consolidated Customer WhatsApp Slip Preview
               </h4>
-              <pre className="whitespace-pre-wrap text-xs text-slate-300 font-sans max-h-40 overflow-y-auto bg-[#181b22] p-3 rounded-lg border border-slate-800">
+              <pre className="text-xs text-slate-300 font-sans whitespace-pre-wrap max-h-40 overflow-y-auto">
                 {buildConsolidatedCustomerMessage(selectedCustomerCRM)}
               </pre>
             </div>
 
-            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+            <div className="flex flex-wrap justify-end gap-2 sm:gap-3 pt-2 border-t border-slate-800">
+              <button
+                onClick={() => setSelectedCustomerCRM(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Close
+              </button>
+
               <button
                 onClick={() => generateCustomerPDFSlip(selectedCustomerCRM)}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" /> Download Customer Order Slip (PDF)
+                <Download className="w-3.5 h-3.5" /> Download PDF Slip
               </button>
 
               <button
                 onClick={() => {
-                  const text = buildConsolidatedCustomerMessage(selectedCustomerCRM);
-                  navigator.clipboard.writeText(text);
-                  alert('Consolidated client summary copied! Ready to send on WhatsApp.');
+                  const text = encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM));
+                  const cleanNumber = selectedCustomerCRM.contactNumber.replace(/\D/g, '');
+                  const phone = cleanNumber.length === 10 ? `91${cleanNumber}` : cleanNumber;
+                  window.open(`https://wa.me/${phone}?text=${text}`, '_blank');
                 }}
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Summary
-              </button>
-              <button
-                onClick={() => setSelectedCustomerCRM(null)}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold cursor-pointer"
-              >
-                Close
+                <Send className="w-3.5 h-3.5" /> Share on WhatsApp
               </button>
             </div>
           </div>
@@ -4535,99 +4565,82 @@ export default function App() {
 
       {selectedOrderForKarigar && (
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign to Karigar</h3>
+              <h3 className="text-sm sm:text-md font-bold text-amber-400">Place Karigar Work Order</h3>
               <button onClick={() => setSelectedOrderForKarigar(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="bg-[#111318] border border-slate-800 rounded-xl p-3 space-y-2 text-xs">
-              <div className="grid grid-cols-2 gap-1.5">
-                <p className="text-slate-400">Order Sheet: <strong className="text-amber-400">{selectedOrderForKarigar.orderSheetNo}</strong></p>
-                <p className="text-slate-400">Item: <strong className="text-slate-200">{selectedOrderForKarigar.jewelleryItem}</strong></p>
-                <p className="text-slate-400">Tag: <strong className="text-slate-200">{selectedOrderForKarigar.tagNumber}</strong></p>
-                <p className="text-slate-400">Client DOD: <strong className="text-emerald-400">{formatDDMM(selectedOrderForKarigar.deliveryDate)}</strong></p>
-              </div>
-              
-              <div className="border-t border-slate-800 pt-2">
-                <p className="text-slate-400">Order Description: <strong className="text-slate-200">{selectedOrderForKarigar.orderDescription || 'N/A'}</strong></p>
-              </div>
-            </div>
-
-            <form onSubmit={handleKarigarSubmit} className="space-y-3">
+            <form onSubmit={handleKarigarSubmit} className="space-y-3 text-xs">
               <div>
-                <label className="block text-xs text-slate-300 mb-1">Karigar Name *</label>
-                <input type="text" name="karigarName" required placeholder="e.g. Rajesh Karigar" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
-              </div>
-
-              <div>
-                <label className="block text-xs text-slate-300 mb-1">Order Description *</label>
-                <textarea 
-                  name="orderDescription" 
-                  rows="2" 
-                  required 
-                  defaultValue={selectedOrderForKarigar.orderDescription || ''} 
-                  placeholder="Review or edit order description..." 
-                  className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
-                ></textarea>
+                <label className="block text-slate-400 mb-1">Karigar Name *</label>
+                <input name="karigarName" type="text" required defaultValue={selectedOrderForKarigar.karigarName} placeholder="Enter karigar name" className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-300 mb-1">Gold Weight (g)</label>
-                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''} placeholder="e.g. 42.5" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Gold Weight (g)</label>
+                  <input name="goldWeight" type="text" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
                 </div>
-
                 <div>
-                  <label className="block text-xs text-slate-300 mb-1">Diamond Weight (ct)</label>
-                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''} placeholder="e.g. 2.15" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Diamond Weight (ct)</label>
+                  <input name="diamondWeight" type="text" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-300 mb-1">Color Stone</label>
-                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone || ''} placeholder="e.g. Emerald / Ruby" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Color Stone</label>
+                  <input name="colorStone" type="text" defaultValue={selectedOrderForKarigar.colorStone} placeholder="e.g. Ruby / Emerald" className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
                 </div>
-
                 <div>
-                  <label className="block text-xs text-slate-300 mb-1">Color Tone</label>
-                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone || ''} placeholder="e.g. Yellow Gold" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Color Tone</label>
+                  <input name="colorTone" type="text" defaultValue={selectedOrderForKarigar.colorTone} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs text-slate-300 mb-1">Purity</label>
-                  <select name="purity" defaultValue={selectedOrderForKarigar.purity || '22kt'} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white cursor-pointer">
-                    <option value="22kt">22kt Gold</option>
-                    <option value="18kt">18kt Gold</option>
-                    <option value="14kt">14kt Gold</option>
-                    <option value="9kt">9kt Gold</option>
-                  </select>
+                  <label className="block text-slate-400 mb-1">Purity</label>
+                  <input name="purity" type="text" defaultValue={selectedOrderForKarigar.purity} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
                 </div>
-
                 <div>
-                  <label className="block text-xs text-slate-300 mb-1">Size</label>
-                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size || ''} placeholder="e.g. 16 inch" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                  <label className="block text-slate-400 mb-1">Size</label>
+                  <input name="size" type="text" defaultValue={selectedOrderForKarigar.size} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3">
+                <div>
+                  <label className="block text-slate-400 mb-1">Karigar DOD (Promised: {formatDDMM(selectedOrderForKarigar.deliveryDate)}) *</label>
+                  <input
+                    name="karigarDod"
+                    type="date"
+                    required
+                    className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200"
+                  />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs text-slate-300 mb-1">Karigar DOD *</label>
-                <input type="date" name="karigarDod" required className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" />
+                <label className="block text-slate-400 mb-1">Order Description</label>
+                <textarea name="orderDescription" rows="2" defaultValue={selectedOrderForKarigar.orderDescription} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200"></textarea>
               </div>
 
               <div>
-                <label className="block text-xs text-slate-300 mb-1">Alternation If Any</label>
-                <textarea name="alterationDetails" rows="2" placeholder="Enter details if any..." className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"></textarea>
+                <label className="block text-slate-400 mb-1">Alteration Details</label>
+                <textarea name="alterationDetails" rows="2" defaultValue={selectedOrderForKarigar.alterationDetails} placeholder="Enter alteration instructions if any..." className="w-full bg-[#111318] border border-slate-800 rounded-lg px-3 py-2 text-slate-200"></textarea>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3">
-                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs cursor-pointer">Assign & Generate Slip</button>
+              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl font-semibold cursor-pointer">
+                  Cancel
+                </button>
+                <button type="submit" className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black rounded-xl cursor-pointer">
+                  Save & Generate Slip
+                </button>
               </div>
             </form>
           </div>
@@ -4638,48 +4651,62 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-emerald-400">WhatsApp Work Order Slip</h3>
+              <h3 className="text-sm sm:text-md font-bold text-emerald-400 flex items-center gap-2">
+                <Send className="w-4 h-4" /> Karigar WhatsApp Slip
+              </h3>
               <button onClick={() => setWhatsappModalData(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="bg-[#111318] border border-slate-800 rounded-xl p-4 text-xs font-mono text-slate-300 space-y-1.5 max-h-60 overflow-y-auto whitespace-pre-wrap">
+
+            <div className="bg-[#111318] border border-slate-800 p-4 rounded-xl text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
               {buildWhatsAppMessage(whatsappModalData)}
             </div>
-            <div className="flex flex-col sm:flex-row justify-end gap-2">
+
+            <div className="flex justify-end gap-2 sm:gap-3 pt-2">
               <button
                 onClick={() => {
-                  const text = buildWhatsAppMessage(whatsappModalData);
-                  navigator.clipboard.writeText(text);
-                  alert('Work order details copied! Paste directly into WhatsApp.');
+                  navigator.clipboard.writeText(buildWhatsAppMessage(whatsappModalData));
+                  alert("Slip copied to clipboard!");
                 }}
-                className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
+                className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Text for WhatsApp
+                <Copy className="w-3.5 h-3.5" /> Copy
               </button>
-              <button onClick={() => setWhatsappModalData(null)} className="px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-xs font-bold cursor-pointer">Close</button>
+
+              <button
+                onClick={() => {
+                  const text = encodeURIComponent(buildWhatsAppMessage(whatsappModalData));
+                  window.open(`https://wa.me/?text=${text}`, '_blank');
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
+              >
+                <Send className="w-3.5 h-3.5" /> Open WhatsApp
+              </button>
             </div>
           </div>
         </div>
       )}
 
+      {/* Full Screen Image Lightbox Modal */}
       {previewImage && (
-        <div 
-          onClick={() => setPreviewImage(null)} 
-          className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 cursor-pointer"
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4"
         >
-          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
-            <button 
-              onClick={() => setPreviewImage(null)} 
-              className="absolute -top-10 right-0 text-white hover:text-amber-400 text-sm font-bold flex items-center gap-1 cursor-pointer"
+          <div className="relative max-w-3xl max-h-[90vh] flex flex-col items-center">
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-10 right-0 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-full border border-slate-700 cursor-pointer"
             >
-              <X className="w-6 h-6" /> Close
+              <X className="w-5 h-5" />
             </button>
-            <img 
-              src={previewImage} 
-              alt="Full Size Product Preview" 
-              className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/40 shadow-2xl" 
-              onClick={(e) => e.stopPropagation()} 
+            <img
+              src={previewImage}
+              alt="Full Size Product Preview"
+              referrerPolicy="no-referrer"
+              className="max-w-full max-h-[85vh] rounded-2xl object-contain border border-amber-500/40 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
         </div>
