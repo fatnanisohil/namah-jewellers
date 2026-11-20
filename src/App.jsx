@@ -136,6 +136,8 @@ export default function App() {
   const [filterExecutive, setFilterExecutive] = useState('ALL');
   const [filterWorkType, setFilterWorkType] = useState('ALL');
   const [filterStatus, setFilterStatus] = useState('ALL');
+  const [filterStartDate, setFilterStartDate] = useState('');
+  const [filterEndDate, setFilterEndDate] = useState('');
 
   // OFF Orders specific Filters State
   const [offOrdersExecutiveFilter, setOffOrdersExecutiveFilter] = useState('ALL');
@@ -1213,10 +1215,11 @@ export default function App() {
       if (filterSalesperson !== 'ALL' && order.salesPerson !== filterSalesperson) return false;
       if (filterExecutive !== 'ALL' && order.orderPerson !== filterExecutive) return false;
       if (filterWorkType !== 'ALL' && (order.orderType || '').toUpperCase() !== filterWorkType) return false;
+      if (!matchesDateRange(order, filterStartDate, filterEndDate)) return false;
 
       return true;
     });
-  }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType]);
+  }, [orders, searchQuery, filterSalesperson, filterExecutive, filterWorkType, filterStartDate, filterEndDate]);
 
   const dynamicTotalActiveCount = baseFilteredOrdersForStats.length;
 
@@ -2437,6 +2440,8 @@ export default function App() {
                     setExportSalesperson(filterSalesperson);
                     setExportExecutive(filterExecutive);
                     setExportStatus(filterStatus);
+                    setExportStartDate(filterStartDate);
+                    setExportEndDate(filterEndDate);
                     setShowExportModal(true);
                   }}
                   className="bg-[#222630] hover:bg-[#2c3240] text-slate-300 border border-slate-700/80 font-semibold px-3 sm:px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer"
@@ -2508,6 +2513,57 @@ export default function App() {
                     {isAdminUser && <option value="Delivered" className="bg-[#181b22]">Delivered</option>}
                     <option value="--Not Assign--" className="bg-[#181b22]">--Not Assign--</option>
                   </select>
+                </div>
+
+                {/* Promised DOD Date Range Filter */}
+                <div className="sm:col-span-2 flex flex-col sm:flex-row sm:items-center gap-2 bg-[#111318] border border-slate-700/80 rounded-xl px-3 py-1.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span className="text-slate-400 text-[11px]">Promised DOD:</span>
+                    </div>
+                    {(filterStartDate || filterEndDate) && (
+                      <button
+                        onClick={() => {
+                          setFilterStartDate('');
+                          setFilterEndDate('');
+                        }}
+                        title="Clear DOD Filter"
+                        className="sm:hidden text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 sm:flex items-center gap-1.5">
+                    <input
+                      type="date"
+                      value={filterStartDate}
+                      onChange={(e) => setFilterStartDate(e.target.value)}
+                      title="Start Date (Promised DOD)"
+                      className="w-full sm:w-auto bg-[#181b22] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                    />
+                    <span className="hidden sm:inline text-slate-500 text-[11px]">to</span>
+                    <input
+                      type="date"
+                      value={filterEndDate}
+                      onChange={(e) => setFilterEndDate(e.target.value)}
+                      title="End Date (Promised DOD)"
+                      className="w-full sm:w-auto bg-[#181b22] border border-slate-700/80 rounded-lg px-2 py-0.5 text-[11px] text-amber-300 font-semibold focus:outline-none focus:border-amber-500 cursor-pointer"
+                    />
+                  </div>
+                  {(filterStartDate || filterEndDate) && (
+                    <button
+                      onClick={() => {
+                        setFilterStartDate('');
+                        setFilterEndDate('');
+                      }}
+                      title="Clear DOD Filter"
+                      className="hidden sm:inline text-slate-400 hover:text-red-400 transition-colors cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -4437,56 +4493,41 @@ export default function App() {
                   <div key={i} className="bg-[#111318] border border-slate-800 p-3 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
                     <div>
                       <p className="font-bold text-amber-400">{ord.orderSheetNo} - {ord.jewelleryItem}</p>
-                      <p className="text-[11px] text-slate-400">
-                        Tag: {ord.tagNumber} | Salesperson: {ord.salesPerson}
-                        {ord.colorStone ? ` | Stone: ${ord.colorStone}` : ''}
-                        {ord.advanceAmount ? ` | Advance: ₹${ord.advanceAmount}` : ''}
+                      <p className="text-slate-400">
+                        Tag: {ord.tagNumber} | Purity: {ord.purity} | Sales: {ord.salesPerson}
+                        {ord.advanceAmount ? ` | Adv: ₹${ord.advanceAmount}` : ''}
                       </p>
                     </div>
-                    <span className={`self-start sm:self-center px-2.5 py-1 rounded-lg border font-bold text-xs ${
-                      !ord.productStatus || ord.productStatus.includes('Not Assign')
-                        ? 'bg-slate-900 text-slate-400 border-slate-700'
-                        : ord.productStatus.toLowerCase() === 'packed'
-                        ? 'bg-purple-900/20 text-purple-300 border-purple-600/30'
-                        : ord.productStatus.toLowerCase().includes('bill pending')
-                        ? 'bg-emerald-900/20 text-emerald-300 border-emerald-600/30'
-                        : ord.productStatus.toLowerCase() === 'delivered'
-                        ? 'bg-blue-900/20 text-blue-300 border-blue-600/30'
-                        : 'bg-amber-900/20 text-amber-300 border-amber-600/30'
-                    }`}>
-                      {ord.productStatus && !ord.productStatus.includes('Not Assign') ? ord.productStatus : '--Not Assign--'}
+                    <span className="self-start sm:self-center px-2.5 py-1 bg-amber-500/10 text-amber-300 border border-amber-500/30 rounded-lg font-bold">
+                      {ord.productStatus || 'Processing'}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row flex-wrap justify-end gap-2 pt-3 border-t border-slate-800">
-              <button
-                onClick={() => generateCustomerPDFSlip(selectedCustomerCRM)}
-                className="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-amber-500/20 cursor-pointer"
-              >
-                <Download className="w-4 h-4" /> Download PDF Slip
-              </button>
-
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(buildConsolidatedCustomerMessage(selectedCustomerCRM));
-                  alert("Consolidated client slip copied to clipboard!");
-                }}
-                className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Copy className="w-3.5 h-3.5" /> Copy Full Slip
-              </button>
-              
-              <a
-                href={'https://wa.me/' + selectedCustomerCRM.contactNumber.replace(/[^0-9]/g, '') + '?text=' + encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1 cursor-pointer"
-              >
-                <Send className="w-3.5 h-3.5" /> Send Consolidated WhatsApp
-              </a>
+            <div className="pt-2 border-t border-slate-800 space-y-2.5">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
+                <a
+                  href={`https://wa.me/${selectedCustomerCRM.contactNumber.replace(/\D/g, '')}?text=${encodeURIComponent(buildConsolidatedCustomerMessage(selectedCustomerCRM))}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+                >
+                  <Send className="w-3.5 h-3.5" /> Send Consolidated Slip on WhatsApp
+                </a>
+                <button
+                  onClick={() => generateCustomerPDFSlip(selectedCustomerCRM)}
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-4 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-lg"
+                >
+                  <Download className="w-3.5 h-3.5" /> Download Customer Order Slip (PDF)
+                </button>
+              </div>
+              <div className="flex justify-end">
+                <button onClick={() => setSelectedCustomerCRM(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs font-semibold cursor-pointer">
+                  Close Profile
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -4496,117 +4537,77 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign to Karigar & Edit Work Order</h3>
+              <h3 className="text-sm sm:text-md font-bold text-amber-400">Assign Karigar & Edit Specs</h3>
               <button onClick={() => setSelectedOrderForKarigar(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleKarigarSubmit} className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-400 mb-1">Order Sheet</label>
-                  <input type="text" readOnly value={selectedOrderForKarigar.orderSheetNo} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-slate-300" />
+                  <label className="block text-slate-300 font-semibold mb-1">Karigar Name *</label>
+                  <input type="text" name="karigarName" required placeholder="e.g. Vijay Karigar" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
                 </div>
+
                 <div>
-                  <label className="block text-slate-400 mb-1">Tag Number</label>
-                  <input type="text" readOnly value={selectedOrderForKarigar.tagNumber} className="w-full bg-[#111318] border border-slate-800 rounded-lg px-2.5 py-2 text-slate-300" />
+                  <label className="block text-slate-300 font-semibold mb-1">Karigar DOD *</label>
+                  <input type="date" name="karigarDod" required className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Karigar Name *</label>
-                  <select
-                    name="karigarName"
-                    required
-                    defaultValue={selectedOrderForKarigar.karigarName || ''}
-                    className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100 cursor-pointer"
-                  >
-                    <option value="" disabled>Select Karigar</option>
-                    <option value="FOR PEROI">FOR PEROI</option>
-                    <option value="RHODIUM">RHODIUM</option>
-                    <option value="CHANCHAL">CHANCHAL</option>
-                    <option value="SS">SS</option>
-                    <option value="SARYU">SARYU</option>
-                    <option value="RRR">RRR</option>
-                    <option value="RRR">SUPER DIAMOND</option>
-                    <option value="SWARNANDA">SWARNANDA</option>
-                    <option value="ANANTA">ANANTA</option>
-                    <option value="GHOSH GHAT">GHOSH GHAT</option>
-                    <option value="ABHA">ABHA</option>
-                    <option value="ANANTA">ANANTA</option>
-                    <option value="DAKSH">DAKSH</option>
-                    <option value="ANIL POLKI">ANIL POLKI</option>
-                    <option value="GALAXY">GALAXY</option>
-                    <option value="GA CHAIN">GA CHAIN</option>
-                    <option value="ARIHANT">ARIHANT</option>
-                    <option value="DHARMA">DHARMA</option>
-                    <option value="HISSARIA">HISSARIA</option>
-                    <option value="JDM">JDM</option>
-                    <option value="KAYA">KAYA</option>
-                    <option value="MADHU">MADHU</option>
-                    <option value="MANNAT">MANNAT</option>
-                    <option value="Others">Others</option>
+                  <label className="block text-slate-300 font-semibold mb-1">Gold Weight (g)</label>
+                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Diamond Weight (ct)</label>
+                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                </div>
+
+                <div className="col-span-2 sm:col-span-1">
+                  <label className="block text-slate-300 font-semibold mb-1">Color Stone</label>
+                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone || ''} placeholder="e.g. Emerald / Ruby" className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Color Tone</label>
+                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
+                </div>
+
+                <div>
+                  <label className="block text-slate-300 font-semibold mb-1">Purity</label>
+                  <select name="purity" defaultValue={selectedOrderForKarigar.purity || '22kt'} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200 cursor-pointer">
+                    <option value="22kt">22kt</option>
+                    <option value="18kt">18kt</option>
+                    <option value="14kt">14kt</option>
+                    <option value="9kt">9kt</option>
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-slate-300 mb-1 font-semibold">Karigar DOD *</label>
-                  <input type="date" name="karigarDod" required defaultValue={extractDateOnly(selectedOrderForKarigar.karigarDod)} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1">Gold Wt (g)</label>
-                  <input type="text" name="goldWeight" defaultValue={selectedOrderForKarigar['Gold Weight(g)'] || selectedOrderForKarigar.goldWeight || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Diamond Wt (ct)</label>
-                  <input type="text" name="diamondWeight" defaultValue={selectedOrderForKarigar['Diamond Weight(ct)'] || selectedOrderForKarigar.diamondWeight || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Color Stone</label>
-                  <input type="text" name="colorStone" defaultValue={selectedOrderForKarigar.colorStone || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Color Tone</label>
-                  <input type="text" name="colorTone" defaultValue={selectedOrderForKarigar.colorTone || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-slate-400 mb-1">Purity</label>
-                  <input type="text" name="purity" defaultValue={selectedOrderForKarigar.purity || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
-                </div>
-                <div>
-                  <label className="block text-slate-400 mb-1">Size</label>
-                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size || ''} className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100" />
+                  <label className="block text-slate-300 font-semibold mb-1">Size</label>
+                  <input type="text" name="size" defaultValue={selectedOrderForKarigar.size || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200" />
                 </div>
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">Order Description *</label>
-                <textarea 
-                  name="orderDescription" 
-                  rows="2" 
-                  required
-                  defaultValue={selectedOrderForKarigar.orderDescription || ''}
-                  placeholder="Enter exact order description..."
-                  className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100"
-                ></textarea>
+                <label className="block text-slate-300 font-semibold mb-1">Order Description</label>
+                <textarea rows="2" name="orderDescription" defaultValue={selectedOrderForKarigar.orderDescription || ''} className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200"></textarea>
               </div>
 
               <div>
-                <label className="block text-slate-300 mb-1 font-semibold">Alteration If Any</label>
-                <textarea name="alterationDetails" rows="2" placeholder="Specify any alteration or special adjustments..." className="w-full bg-[#111318] border border-slate-700 rounded-lg px-2.5 py-2 text-slate-100"></textarea>
+                <label className="block text-slate-300 font-semibold mb-1">Alternation If Any (Optional)</label>
+                <textarea rows="2" name="alterationDetails" placeholder="Specify alterations..." className="w-full bg-[#111318] border border-slate-800 rounded-xl px-3 py-2 text-slate-200"></textarea>
               </div>
 
-              <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
-                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 rounded-xl text-slate-300 cursor-pointer">Cancel</button>
-                <button type="submit" className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl cursor-pointer">Save & Generate Slip</button>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+                <button type="button" onClick={() => setSelectedOrderForKarigar(null)} className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl cursor-pointer">Cancel</button>
+                <button type="submit" className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl cursor-pointer">Generate WhatsApp Slip</button>
               </div>
             </form>
           </div>
@@ -4617,61 +4618,58 @@ export default function App() {
         <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-[#181b22] border border-slate-800 rounded-2xl max-w-md w-full p-5 sm:p-6 space-y-4 shadow-2xl">
             <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-              <h3 className="text-sm sm:text-md font-bold text-emerald-400">Karigar WhatsApp Work Order Slip</h3>
+              <h3 className="text-sm sm:text-md font-bold text-emerald-400">WhatsApp Karigar Work Slip</h3>
               <button onClick={() => setWhatsappModalData(null)} className="text-slate-400 hover:text-white cursor-pointer">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <pre className="bg-[#111318] p-4 rounded-xl border border-slate-800 text-xs text-slate-300 whitespace-pre-wrap font-mono leading-relaxed max-h-72 overflow-y-auto">
+            <pre className="bg-[#111318] border border-slate-800 p-4 rounded-xl text-xs text-slate-300 whitespace-pre-wrap font-sans max-h-60 overflow-y-auto">
               {buildWhatsAppMessage(whatsappModalData)}
             </pre>
 
-            <div className="flex justify-end gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
               <button
                 onClick={() => {
                   navigator.clipboard.writeText(buildWhatsAppMessage(whatsappModalData));
-                  alert("Slip copied to clipboard!");
+                  alert('Copied to clipboard!');
                 }}
-                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                className="flex-1 justify-center px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs flex items-center gap-1.5 font-semibold cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy Text
+                <Copy className="w-3.5 h-3.5" /> Copy Message
               </button>
+
               <a
                 href={`https://wa.me/?text=${encodeURIComponent(buildWhatsAppMessage(whatsappModalData))}`}
                 target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1 cursor-pointer"
+                rel="noreferrer"
+                className="flex-1 justify-center px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20"
               >
-                <Send className="w-3.5 h-3.5" /> Share on WhatsApp
+                <Send className="w-3.5 h-3.5" /> Open WhatsApp
               </a>
             </div>
           </div>
         </div>
       )}
 
-      {/* FULL-SIZE IMAGE LIGHTBOX MODAL */}
       {previewImage && (
-        <div 
-          onClick={() => setPreviewImage(null)} 
-          className="fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6 cursor-pointer"
+        <div
+          onClick={() => setPreviewImage(null)}
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4 cursor-zoom-out"
         >
-          <div 
-            onClick={(e) => e.stopPropagation()} 
-            className="relative flex flex-col items-center justify-center max-w-[95vw] max-h-[92vh]"
-          >
-            <button 
-              onClick={() => setPreviewImage(null)} 
-              className="fixed top-4 right-4 z-50 bg-slate-900/90 hover:bg-red-500 text-white p-2.5 rounded-full border border-slate-700 shadow-2xl cursor-pointer transition-colors"
-              title="Close Preview"
-            >
-              <X className="w-6 h-6" />
-            </button>
-            <img 
-              src={previewImage} 
-              alt="Full Size Preview" 
-              className="w-auto h-auto max-w-[92vw] max-h-[85vh] min-w-[280px] sm:min-w-[450px] object-contain rounded-2xl border-2 border-slate-700/80 shadow-2xl bg-slate-900" 
+          <div className="relative max-w-4xl max-h-[90vh] flex flex-col items-center">
+            <img
+              src={previewImage}
+              alt="Full Size Preview"
+              className="max-w-full max-h-[85vh] rounded-2xl border-2 border-amber-500/40 shadow-2xl object-contain"
+              onClick={(e) => e.stopPropagation()}
             />
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="mt-4 px-5 py-2 bg-amber-500 text-slate-950 font-bold rounded-xl text-xs hover:bg-amber-600 shadow-lg cursor-pointer"
+            >
+              Close Preview ✕
+            </button>
           </div>
         </div>
       )}
