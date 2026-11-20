@@ -496,14 +496,20 @@ export default function App() {
   const handleCreateOrder = (e) => {
     e.preventDefault();
 
+    const finalJewelleryItem = formData.jewelleryItem.includes('OTHER')
+      ? formData.otherJewelleryItem.trim().toUpperCase()
+      : formData.jewelleryItem.trim().toUpperCase();
+
+    if (!finalJewelleryItem) {
+      alert("⚠️ Jewellery Item Name is mandatory! Please select a jewellery item before saving.");
+      setJewelleryDropdownOpen(true);
+      return;
+    }
+
     if (!formData.imageBase64 && !formData.imagePreviewLocal) {
       alert("⚠️ Product Photo is mandatory! Please capture or upload a photo before submitting.");
       return;
     }
-
-    const finalJewelleryItem = formData.jewelleryItem.includes('OTHER')
-      ? formData.otherJewelleryItem.trim().toUpperCase()
-      : formData.jewelleryItem;
 
     const submissionData = {
       ...formData,
