@@ -3787,10 +3787,10 @@ export default function App() {
                       onChange={(e) => setFormData({ ...formData, purity: e.target.value })}
                     >
                       <option value="" disabled>Select Purity</option>
-                      <option value="22kt">22kt Gold</option>
-                      <option value="18kt">18kt Gold</option>
-                      <option value="14kt">14kt Gold</option>
-                      <option value="9kt">9kt Gold</option>
+                      <option value="22kt">22kt</option>
+                      <option value="18kt">18kt</option>
+                      <option value="14kt">14kt</option>
+                      <option value="9kt">9kt</option>
                     </select>
                   </div>
 
