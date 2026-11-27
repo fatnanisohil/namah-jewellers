@@ -1127,7 +1127,8 @@ export default function App() {
         books: [
           { start: 8151, end: 8225 },
           { start: 7476, end: 7550 },
-          { start: 7776, end: 7850 }
+          { start: 7401, end: 7475 },
+          { start: 8376, end: 8450 }           
         ] 
       },
       { 
