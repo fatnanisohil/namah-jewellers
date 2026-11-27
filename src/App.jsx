@@ -888,51 +888,71 @@ export default function App() {
     return msg;
   };
 
-  const buildConsolidatedCustomerMessage = (client) => {
-    const activeItems = client.ordersList.filter(ord => {
-      const status = (ord.productStatus || ord.status || '').toLowerCase();
-      return status !== 'delivered';
-    });
+  const [sharingSlip, setSharingSlip] = useState(false);
 
-    const firstOrder = client.ordersList[0] || {};
-    const salesPersonName = firstOrder.salesPerson || 'N/A';
-    const salesPersonPhone = SALESPERSON_NUMBERS[salesPersonName] || 'N/A';
-    const advanceTotal = activeItems.reduce((sum, ord) => sum + (parseFloat(ord.advanceAmount) || 0), 0);
+  const handleShareKarigarSlip = async (order) => {
+    setSharingSlip(true);
+    const slipText = buildWhatsAppMessage(order);
+    const imgUrl = formatDriveUrl(order, 'w1200');
 
-    let msg = `*Namah Jewellers - Consolidated Order Slip*\n\n` +
-      `👤 *Customer:* ${client.customerName}\n` +
-      `📞 *Contact:* ${client.contactNumber}\n` +
-      `🤝 *Sales Person:* ${salesPersonName} (${salesPersonPhone})\n` +
-      `🛠️ *Order Department:* ${ORDER_DEPARTMENT_NUMBER}\n`;
+    try {
+      let imageBlob = null;
+      if (imgUrl) {
+        const response = await fetch(imgUrl);
+        if (response.ok) {
+          imageBlob = await response.blob();
+        }
+      }
 
-    if (advanceTotal > 0) {
-      msg += `💵 *Total Advance Paid:* ₹${advanceTotal}\n`;
+      // 1. Mobile & Supported Browsers: Native Share with actual Image File + Slip Text
+      if (imageBlob && navigator.canShare) {
+        const file = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
+          type: imageBlob.type || 'image/jpeg'
+        });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Karigar Work Order - ${order.orderSheetNo || ''}`,
+            text: slipText
+          });
+          setSharingSlip(false);
+          return;
+        }
+      }
+
+      // 2. Desktop Chrome Fallback: Copy actual Image to Clipboard + Open WhatsApp Web
+      if (imageBlob && navigator.clipboard && window.ClipboardItem) {
+        try {
+          const imgBitmap = await createImageBitmap(imageBlob);
+          const canvas = document.createElement('canvas');
+          canvas.width = imgBitmap.width;
+          canvas.height = imgBitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(imgBitmap, 0, 0);
+
+          const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': pngBlob })
+          ]);
+
+          alert("✅ Product Image copied to clipboard! Select 'NAMAH ORDER MANAGEMENT' in WhatsApp and press Ctrl + V to attach the photo preview.");
+        } catch (clipErr) {
+          console.warn("Clipboard image copy skipped:", clipErr);
+        }
+      }
+
+      const encodedText = encodeURIComponent(slipText);
+      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+    } catch (err) {
+      if (err.name !== 'AbortError') {
+        console.error("Share failed:", err);
+        const encodedText = encodeURIComponent(slipText);
+        window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+      }
+    } finally {
+      setSharingSlip(false);
     }
-
-    msg += `📦 *Total Active Items Ordered:* ${activeItems.length}\n\n` +
-      `-----------------------------------\n\n`;
-
-    activeItems.forEach((ord, index) => {
-      const goldWt = ord['Gold Weight(g)'] || ord.goldWeight || '';
-      const diamondWt = ord['Diamond Weight(ct)'] || ord.diamondWeight || '';
-      const imgUrl = formatDriveUrl(ord, 'w1600');
-
-      msg += `*Item #${index + 1}: ${ord.jewelleryItem || 'Jewellery'}*\n` +
-        `🔢 *Order Sheet:* ${ord.orderSheetNo || 'N/A'}\n` +
-        `🏷️ *Tag Number:* ${ord.tagNumber || 'N/A'}\n` +
-        `✨ *Purity:* ${ord.purity || 'N/A'}\n`;
-
-      if (goldWt) msg += `🟡 *Gold Wt:* ${goldWt}g\n`;
-      if (diamondWt) msg += `💎 *Diamond Wt:* ${diamondWt}ct\n`;
-      if (ord.colorStone) msg += `🔮 *Color Stone:* ${ord.colorStone}\n`;
-      if (ord.advanceAmount) msg += `💵 *Advance:* ₹${ord.advanceAmount}\n`;
-      if (imgUrl) msg += `📷 *Image:* ${imgUrl}\n`;
-
-      msg += `\n-----------------------------------\n\n`;
-    });
-
-    msg += `Thank you for shopping with Namah Jewellers! ✨`;
-    return msg;
   };
 
   const generateCustomerPDFSlip = (client) => {
@@ -4666,7 +4686,21 @@ export default function App() {
               </button>
             </div>
 
-            <div className="bg-[#111318] border border-slate-800 p-4 rounded-xl text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">
+            {/* Product Image Preview inside Modal */}
+            <div className="flex items-center gap-3 bg-[#111318] border border-slate-800 p-2.5 rounded-xl">
+              <DriveImage
+                order={whatsappModalData}
+                size="w400"
+                className="w-16 h-16 rounded-lg object-cover border border-amber-500/40 shrink-0"
+              />
+              <div className="text-xs space-y-0.5">
+                <p className="font-black text-amber-400">{whatsappModalData.orderSheetNo} ({whatsappModalData.tagNumber})</p>
+                <p className="font-bold text-slate-200">{whatsappModalData.jewelleryItem}</p>
+                <p className="text-slate-400">Karigar: <strong className="text-emerald-400">{whatsappModalData.karigarName}</strong></p>
+              </div>
+            </div>
+
+            <div className="bg-[#111318] border border-slate-800 p-4 rounded-xl text-xs text-slate-300 font-sans whitespace-pre-wrap leading-relaxed max-h-56 overflow-y-auto">
               {buildWhatsAppMessage(whatsappModalData)}
             </div>
 
@@ -4678,17 +4712,16 @@ export default function App() {
                 }}
                 className="px-3.5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" /> Copy
+                <Copy className="w-3.5 h-3.5" /> Copy Text
               </button>
 
               <button
-                onClick={() => {
-                  const text = encodeURIComponent(buildWhatsAppMessage(whatsappModalData));
-                  window.open(`https://wa.me/?text=${text}`, '_blank');
-                }}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
+                disabled={sharingSlip}
+                onClick={() => handleShareKarigarSlip(whatsappModalData)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-600/20 cursor-pointer"
               >
-                <Send className="w-3.5 h-3.5" /> Open WhatsApp
+                <Send className="w-3.5 h-3.5" />
+                {sharingSlip ? 'Preparing Image...' : 'Share Image + Slip to WhatsApp'}
               </button>
             </div>
           </div>
