@@ -922,6 +922,7 @@ export default function App() {
       }
 
       // 2. Desktop Chrome Fallback: Copy actual Image to Clipboard + Open WhatsApp Web
+      // 2. Desktop Chrome Fallback: Copy Image to Clipboard + Open WhatsApp Web cleanly
       if (imageBlob && navigator.clipboard && window.ClipboardItem) {
         try {
           const imgBitmap = await createImageBitmap(imageBlob);
@@ -936,7 +937,14 @@ export default function App() {
             new ClipboardItem({ 'image/png': pngBlob })
           ]);
 
-          alert("✅ Product Image copied to clipboard! Select 'NAMAH ORDER MANAGEMENT' in WhatsApp and press Ctrl + V to attach the photo preview.");
+          window.open('https://web.whatsapp.com/', '_blank');
+          alert(
+            "✅ Step 1: Product Image is copied!\n" +
+            "In WhatsApp Web, open 'NAMAH ORDER MANAGEMENT' and press Ctrl + V to paste the photo.\n\n" +
+            "✅ Step 2: Click OK here, then click 'Copy Text' on the website and paste (Ctrl + V) into the photo's Caption box!"
+          );
+          setSharingSlip(false);
+          return;
         } catch (clipErr) {
           console.warn("Clipboard image copy skipped:", clipErr);
         }
