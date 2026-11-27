@@ -896,6 +896,11 @@ export default function App() {
     const imgUrl = formatDriveUrl(order, 'w1200');
 
     try {
+      // Always copy the slip text to clipboard first so on Windows Desktop you just press Ctrl + V in the caption box
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(slipText).catch(() => {});
+      }
+
       let imageBlob = null;
       if (imgUrl) {
         const response = await fetch(imgUrl);
@@ -904,7 +909,6 @@ export default function App() {
         }
       }
 
-      // 1. Mobile & Supported Browsers: Native Share with actual Image File + Slip Text
       if (imageBlob && navigator.canShare) {
         const file = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
           type: imageBlob.type || 'image/jpeg'
@@ -918,35 +922,6 @@ export default function App() {
           });
           setSharingSlip(false);
           return;
-        }
-      }
-
-      // 2. Desktop Chrome Fallback: Copy actual Image to Clipboard + Open WhatsApp Web
-      // 2. Desktop Chrome Fallback: Copy Image to Clipboard + Open WhatsApp Web cleanly
-      if (imageBlob && navigator.clipboard && window.ClipboardItem) {
-        try {
-          const imgBitmap = await createImageBitmap(imageBlob);
-          const canvas = document.createElement('canvas');
-          canvas.width = imgBitmap.width;
-          canvas.height = imgBitmap.height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(imgBitmap, 0, 0);
-
-          const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-          await navigator.clipboard.write([
-            new ClipboardItem({ 'image/png': pngBlob })
-          ]);
-
-          window.open('https://web.whatsapp.com/', '_blank');
-          alert(
-            "✅ Step 1: Product Image is copied!\n" +
-            "In WhatsApp Web, open 'NAMAH ORDER MANAGEMENT' and press Ctrl + V to paste the photo.\n\n" +
-            "✅ Step 2: Click OK here, then click 'Copy Text' on the website and paste (Ctrl + V) into the photo's Caption box!"
-          );
-          setSharingSlip(false);
-          return;
-        } catch (clipErr) {
-          console.warn("Clipboard image copy skipped:", clipErr);
         }
       }
 
