@@ -894,13 +894,9 @@ export default function App() {
     setSharingSlip(true);
     const slipText = buildWhatsAppMessage(order);
     const imgUrl = formatDriveUrl(order, 'w1200');
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     try {
-      // Always copy the slip text to clipboard first so on Windows Desktop you just press Ctrl + V in the caption box
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(slipText).catch(() => {});
-      }
-
       let imageBlob = null;
       if (imgUrl) {
         const response = await fetch(imgUrl);
@@ -909,7 +905,8 @@ export default function App() {
         }
       }
 
-      if (imageBlob && navigator.canShare) {
+      // 1. Mobile (iOS / Android): Native Share attaches Image + Text together automatically
+      if (isMobile && imageBlob && navigator.canShare) {
         const file = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
           type: imageBlob.type || 'image/jpeg'
         });
@@ -925,13 +922,34 @@ export default function App() {
         }
       }
 
-      const encodedText = encodeURIComponent(slipText);
-      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+      // 2. Windows Laptop: Copy Image to Clipboard + Open WhatsApp Web (then click Copy Text for caption)
+      if (imageBlob && navigator.clipboard && window.ClipboardItem) {
+        try {
+          const imgBitmap = await createImageBitmap(imageBlob);
+          const canvas = document.createElement('canvas');
+          canvas.width = imgBitmap.width;
+          canvas.height = imgBitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(imgBitmap, 0, 0);
+
+          const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+          await navigator.clipboard.write([
+            new ClipboardItem({ 'image/png': pngBlob })
+          ]);
+        } catch (clipErr) {
+          console.warn("Clipboard image copy skipped:", clipErr);
+        }
+      }
+
+      window.open('https://web.whatsapp.com/', '_blank');
+      alert(
+        "✅ Product Image copied to clipboard!\n\n" +
+        "1. In WhatsApp Web, open 'Namah Order Management' and press Ctrl + V to paste the photo.\n" +
+        "2. Come back here, click 'Copy Text', and paste (Ctrl + V) into the photo's caption!"
+      );
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error("Share failed:", err);
-        const encodedText = encodeURIComponent(slipText);
-        window.open(`https://wa.me/?text=${encodedText}`, '_blank');
       }
     } finally {
       setSharingSlip(false);
