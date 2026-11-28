@@ -1633,8 +1633,8 @@ export default function App() {
           </>
         )}
 
-        
-        {activeTab === 'dashboard' && (() => {
+
+        {activeTab === 'dashboard' && !showNewBI && (() => {
           const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
             return !isDelivered;
