@@ -1633,8 +1633,7 @@ export default function App() {
           </>
         )}
 
-        {/* New BI Dashboard opens right here when clicked */}
-        {showNewBI && <ExecutiveDashboard orders={orders} />}
+        
         {activeTab === 'dashboard' && (() => {
           const allLiveOrders = orders.filter(o => {
             const isDelivered = (o.orderStatus || '').toLowerCase() === 'delivered' || (o.productStatus || '').toLowerCase() === 'delivered';
