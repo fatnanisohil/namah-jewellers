@@ -882,8 +882,7 @@ export default function App() {
 
     if (fullOrder.alterationDetails) msg += `🔄 *Alternation If Any:* ${fullOrder.alterationDetails}\n`;
     
-    msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n` +
-      `📷 *Image URL:* ${formatDriveUrl(fullOrder, 'w1600')}`;
+    msg += `⏱️ *Karigar DOD:* ${extractDateOnly(fullOrder.karigarDod)}\n\n`;
 
     return msg;
   };
