@@ -889,17 +889,95 @@ export default function App() {
 
   const [sharingSlip, setSharingSlip] = useState(false);
 
+  const createCombinedKarigarCardBlob = async (order, imageBlob) => {
+    const canvas = document.createElement('canvas');
+    const width = 1080;
+    const height = 640;
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+
+    // Dark luxury background
+    ctx.fillStyle = '#111318';
+    ctx.fillRect(0, 0, width, height);
+
+    // Gold border
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(16, 16, width - 32, height - 32);
+
+    // Header bar
+    ctx.fillStyle = '#181b22';
+    ctx.fillRect(22, 22, width - 44, 76);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 30px sans-serif';
+    ctx.fillText('NAMAH JEWELLERS — KARIGAR WORK ORDER', 44, 70);
+
+    // Draw Product Image on Left
+    const imgX = 44;
+    const imgY = 122;
+    const imgSize = 470;
+    ctx.fillStyle = '#1e222b';
+    ctx.fillRect(imgX, imgY, imgSize, imgSize);
+
+    if (imageBlob) {
+      const imgBitmap = await createImageBitmap(imageBlob);
+      const scale = Math.min(imgSize / imgBitmap.width, imgSize / imgBitmap.height);
+      const drawW = imgBitmap.width * scale;
+      const drawH = imgBitmap.height * scale;
+      const offsetX = imgX + (imgSize - drawW) / 2;
+      const offsetY = imgY + (imgSize - drawH) / 2;
+      ctx.drawImage(imgBitmap, offsetX, offsetY, drawW, drawH);
+    } else {
+      ctx.fillStyle = '#64748b';
+      ctx.font = 'bold 24px sans-serif';
+      ctx.fillText('No Product Photo', imgX + 130, imgY + 240);
+    }
+
+    // Draw Order Details on Right
+    const fullOrder = (orders || []).find(o =>
+      String(o.orderSheetNo || '').trim() === String(order.orderSheetNo || '').trim() &&
+      String(o.tagNumber || '').trim().toUpperCase() === String(order.tagNumber || '').trim().toUpperCase()
+    ) || order;
+
+    const lines = [
+      ['Order Sheet:', fullOrder.orderSheetNo || 'N/A', '#fbbf24'],
+      ['Jewellery Item:', fullOrder.jewelleryItem || 'N/A', '#ffffff'],
+      ['Tag Number:', fullOrder.tagNumber || 'N/A', '#e2e8f0'],
+      ['Karigar:', fullOrder.karigarName || 'N/A', '#34d399'],
+      ['Gold Weight:', (fullOrder['Gold Weight(g)'] || fullOrder.goldWeight) ? `${fullOrder['Gold Weight(g)'] || fullOrder.goldWeight}g` : '-', '#e2e8f0'],
+      ['Diamond Wt:', (fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight) ? `${fullOrder['Diamond Weight(ct)'] || fullOrder.diamondWeight}ct` : '-', '#e2e8f0'],
+      ['Color Stone:', fullOrder.colorStone || '-', '#e2e8f0'],
+      ['Purity / Tone:', `${fullOrder.purity || '-'}  |  ${fullOrder.colorTone || '-'}`, '#e2e8f0'],
+      ['Size:', fullOrder.size || '-', '#e2e8f0'],
+      ['Karigar DOD:', String(fullOrder.karigarDod || '').split('T')[0] || 'N/A', '#f87171'],
+      ['Description:', fullOrder.orderDescription || '-', '#cbd5e1']
+    ];
+
+    let textX = 545;
+    let textY = 152;
+    lines.forEach(([label, value, color]) => {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = 'bold 20px sans-serif';
+      ctx.fillText(label, textX, textY);
+
+      ctx.fillStyle = color;
+      ctx.font = 'bold 22px sans-serif';
+      const cleanVal = String(value).slice(0, 32);
+      ctx.fillText(cleanVal, textX + 155, textY);
+      textY += 42;
+    });
+
+    return await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+  };
+
   const handleShareKarigarSlip = async (order) => {
     setSharingSlip(true);
     const slipText = buildWhatsAppMessage(order);
     const imgUrl = formatDriveUrl(order, 'w1200');
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     try {
-      // Always copy the slip text to clipboard first so on Windows Desktop you just press Ctrl + V in the caption box
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(slipText).catch(() => {});
-      }
-
       let imageBlob = null;
       if (imgUrl) {
         const response = await fetch(imgUrl);
@@ -908,19 +986,36 @@ export default function App() {
         }
       }
 
-      if (imageBlob && navigator.canShare) {
-        const file = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
-          type: imageBlob.type || 'image/jpeg'
-        });
-
-        if (navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: `Karigar Work Order - ${order.orderSheetNo || ''}`,
-            text: slipText
+      if (navigator.canShare) {
+        let shareFile;
+        if (isMobile && imageBlob) {
+          // Mobile: Native Photo + Text Caption together
+          shareFile = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
+            type: imageBlob.type || 'image/jpeg'
           });
-          setSharingSlip(false);
-          return;
+          if (navigator.canShare({ files: [shareFile] })) {
+            await navigator.share({
+              files: [shareFile],
+              title: `Karigar Work Order - ${order.orderSheetNo || ''}`,
+              text: slipText
+            });
+            setSharingSlip(false);
+            return;
+          }
+        } else {
+          // Laptop / Windows: Single Combined Work Order Card Image (Photo + All Details in 1 bubble)
+          const cardBlob = await createCombinedKarigarCardBlob(order, imageBlob);
+          shareFile = new File([cardBlob], `${order.orderSheetNo || 'Karigar_Order'}_Slip.png`, {
+            type: 'image/png'
+          });
+          if (navigator.canShare({ files: [shareFile] })) {
+            await navigator.share({
+              files: [shareFile],
+              title: `Karigar Work Order - ${order.orderSheetNo || ''}`
+            });
+            setSharingSlip(false);
+            return;
+          }
         }
       }
 
@@ -929,8 +1024,6 @@ export default function App() {
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error("Share failed:", err);
-        const encodedText = encodeURIComponent(slipText);
-        window.open(`https://wa.me/?text=${encodedText}`, '_blank');
       }
     } finally {
       setSharingSlip(false);
