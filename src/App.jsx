@@ -1003,8 +1003,13 @@ export default function App() {
         }
       }
 
-      // 2. Laptop (Windows): Copy Real Image to Clipboard (skipping Windows Share dialog)
+      // 2. Laptop (Windows): Save BOTH Text and Image into Windows Clipboard History (Win + V)
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(slipText);
+      }
+
       if (imageBlob && navigator.clipboard && window.ClipboardItem) {
+        await new Promise((r) => setTimeout(r, 150)); // Brief pause so Windows logs both items separately in Win+V
         const imgBitmap = await createImageBitmap(imageBlob);
         const canvas = document.createElement('canvas');
         canvas.width = imgBitmap.width;
