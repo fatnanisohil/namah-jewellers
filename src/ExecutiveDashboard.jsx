@@ -10,16 +10,73 @@ import {
 
 const GOLD_PALETTE = ['#f59e0b', '#10b981', '#3b82f6', '#a855f7', '#ec4899', '#06b6d4', '#f97316'];
 
+// Robust Date Parser for Google Sheets GMT strings, ISO strings, and DD/MM/YYYY
+function parseSheetDate(raw) {
+  if (!raw || raw === 'N/A' || raw === '-') return null;
+  const str = String(raw).trim();
+
+  // Check DD/MM/YYYY or DD-MM-YYYY first
+  const dmyMatch = str.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+  if (dmyMatch) {
+    const [, d, m, y] = dmyMatch;
+    const dt = new Date(Number(y), Number(m) - 1, Number(d));
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+
+  // Check YYYY-MM-DD
+  const ymdMatch = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (ymdMatch) {
+    const [, y, m, d] = ymdMatch;
+    const dt = new Date(Number(y), Number(m) - 1, Number(d));
+    return isNaN(dt.getTime()) ? null : dt;
+  }
+
+  // Fallback for JS Date strings like "Fri Nov 20 2026 00:00:00 GMT+0530..."
+  const parsed = new Date(str);
+  if (!isNaN(parsed.getTime())) {
+    return new Date(parsed.getFullYear(), parsed.getMonth(), parsed.getDate());
+  }
+  return null;
+}
+
+// Format Date in Indian Style: "28-11-2026"
+function formatIndianDate(raw) {
+  const dt = parseSheetDate(raw);
+  if (!dt) return 'N/A';
+  const dd = String(dt.getDate()).padStart(2, '0');
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const yyyy = dt.getFullYear();
+  return `${dd}-${mm}-${yyyy}`;
+}
+
+// Short Indian Label for Charts: "28 Nov"
+function formatShortIndianDate(dt) {
+  if (!dt) return '';
+  return dt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+}
+
+// Sortable YYYY-MM-DD key
+function toSortKey(dt) {
+  if (!dt) return '';
+  const yyyy = dt.getFullYear();
+  const mm = String(dt.getMonth() + 1).padStart(2, '0');
+  const dd = String(dt.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [salesFilter, setSalesFilter] = useState('ALL');
   const [karigarFilter, setKarigarFilter] = useState('ALL');
-  const [statusFilter, setStatusFilter] = useState('ACTIVE'); // ACTIVE | ALL | DELIVERED
+  const [statusFilter, setStatusFilter] = useState('ACTIVE');
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  // Today's date at midnight IST (local browser time)
+  const todayMidnight = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  }, []);
 
-  // Unique dropdown lists
   const salesPersons = useMemo(() => {
     const set = new Set(orders.map(o => String(o.salesPerson || '').trim()).filter(Boolean));
     return ['ALL', ...Array.from(set).sort()];
@@ -30,10 +87,12 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
     return ['ALL', ...Array.from(set).sort()];
   }, [orders]);
 
-  // Filtered dataset
   const filteredOrders = useMemo(() => {
+    const fromDt = dateFrom ? parseSheetDate(dateFrom) : null;
+    const toDt = dateTo ? parseSheetDate(dateTo) : null;
+
     return orders.filter(o => {
-      const status = String(o.productStatus || o.status || '').trim().toLowerCase();
+      const status = String(o.productStatus || o.orderStatus || o.status || '').trim().toLowerCase();
       const isDelivered = status === 'delivered';
 
       if (statusFilter === 'ACTIVE' && isDelivered) return false;
@@ -42,13 +101,24 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
       if (salesFilter !== 'ALL' && String(o.salesPerson || '').trim() !== salesFilter) return false;
       if (karigarFilter !== 'ALL' && String(o.karigarName || '').trim() !== karigarFilter) return false;
 
-      const orderDate = String(o.orderTakenDate || o.timestamp || '').split('T')[0];
-      if (dateFrom && orderDate && orderDate < dateFrom) return false;
-      if (dateTo && orderDate && orderDate > dateTo) return false;
+      const orderDt = parseSheetDate(o.orderTakenDate || o.timestamp);
+      if (fromDt && orderDt && orderDt < fromDt) return false;
+      if (toDt && orderDt && orderDt > toDt) return false;
 
       return true;
     });
   }, [orders, statusFilter, salesFilter, karigarFilter, dateFrom, dateTo]);
+
+  // Helper to check if an order is Overdue at Karigar
+  const isOrderKarigarOverdue = (o) => {
+    const status = String(o.productStatus || o.orderStatus || o.status || '').toLowerCase();
+    const karigar = String(o.karigarName || '').trim();
+    if (!karigar || status === 'delivered' || status.includes('ready') || status.includes('received')) {
+      return false;
+    }
+    const kDodDt = parseSheetDate(o.karigarDod || o.karigarDeliveryDate || o['Karigar DOD']);
+    return kDodDt ? kDodDt < todayMidnight : false;
+  };
 
   // Executive KPIs
   const kpis = useMemo(() => {
@@ -64,15 +134,12 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
       totalDiamond += parseFloat(o['Diamond Weight(ct)'] || o.diamondWeight || 0) || 0;
       totalAdvance += parseFloat(o.advanceAmount || 0) || 0;
 
-      const status = String(o.productStatus || o.status || '').toLowerCase();
+      const status = String(o.productStatus || o.orderStatus || o.status || '').toLowerCase();
       const karigar = String(o.karigarName || '').trim();
-      const kDod = String(o.karigarDod || '').split('T')[0];
 
       if (status.includes('ready')) readyCount++;
       if (!karigar && status !== 'delivered') unassignedKarigar++;
-      if (karigar && kDod && kDod < todayStr && status !== 'delivered' && !status.includes('ready')) {
-        overdueKarigar++;
-      }
+      if (isOrderKarigarOverdue(o)) overdueKarigar++;
     });
 
     return {
@@ -84,7 +151,7 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
       unassignedKarigar,
       readyCount
     };
-  }, [filteredOrders, todayStr]);
+  }, [filteredOrders, todayMidnight]);
 
   // Chart 1: Salesperson Performance
   const salesChartData = useMemo(() => {
@@ -108,17 +175,14 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
       const k = String(o.karigarName || '').trim();
       if (!k) return;
       if (!map[k]) map[k] = { name: k, onTime: 0, overdue: 0, gold: 0 };
-      const status = String(o.productStatus || o.status || '').toLowerCase();
-      const kDod = String(o.karigarDod || '').split('T')[0];
-      const isOverdue = kDod && kDod < todayStr && status !== 'delivered' && !status.includes('ready');
-      if (isOverdue) map[k].overdue += 1;
+      if (isOrderKarigarOverdue(o)) map[k].overdue += 1;
       else map[k].onTime += 1;
       map[k].gold += parseFloat(o['Gold Weight(g)'] || o.goldWeight || 0) || 0;
     });
     return Object.values(map)
       .map(item => ({ ...item, gold: Number(item.gold.toFixed(1)) }))
       .sort((a, b) => (b.onTime + b.overdue) - (a.onTime + a.overdue));
-  }, [filteredOrders, todayStr]);
+  }, [filteredOrders, todayMidnight]);
 
   // Chart 3: Order Type Split
   const orderTypeData = useMemo(() => {
@@ -140,33 +204,43 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
     return Object.entries(map).map(([name, value]) => ({ name, value }));
   }, [filteredOrders]);
 
-  // Chart 5: Daily Intake Trend (Last 14 Active Dates)
+  // Chart 5: Daily Intake Trend in Clean Indian Date Format ("28 Nov")
   const dailyTrendData = useMemo(() => {
     const map = {};
     filteredOrders.forEach(o => {
-      const d = String(o.orderTakenDate || o.timestamp || '').split('T')[0];
-      if (!d || d.length < 8) return;
-      if (!map[d]) map[d] = { date: d.slice(5), fullDate: d, orders: 0, gold: 0 };
-      map[d].orders += 1;
-      map[d].gold += parseFloat(o['Gold Weight(g)'] || o.goldWeight || 0) || 0;
+      const dt = parseSheetDate(o.orderTakenDate || o.timestamp);
+      if (!dt) return;
+      const key = toSortKey(dt);
+      if (!map[key]) {
+        map[key] = {
+          date: formatShortIndianDate(dt),
+          fullDate: formatIndianDate(dt),
+          sortKey: key,
+          orders: 0,
+          gold: 0
+        };
+      }
+      map[key].orders += 1;
+      map[key].gold += parseFloat(o['Gold Weight(g)'] || o.goldWeight || 0) || 0;
     });
     return Object.values(map)
-      .sort((a, b) => a.fullDate.localeCompare(b.fullDate))
+      .sort((a, b) => a.sortKey.localeCompare(b.sortKey))
       .slice(-14)
       .map(d => ({ ...d, gold: Number(d.gold.toFixed(1)) }));
   }, [filteredOrders]);
 
-  // Critical Overdue Karigar Watchlist
+  // Critical Overdue Karigar Watchlist (Sorted Oldest Overdue First)
   const overdueList = useMemo(() => {
     return filteredOrders
-      .filter(o => {
-        const status = String(o.productStatus || o.status || '').toLowerCase();
-        const kDod = String(o.karigarDod || '').split('T')[0];
-        return o.karigarName && kDod && kDod < todayStr && status !== 'delivered' && !status.includes('ready');
+      .filter(isOrderKarigarOverdue)
+      .map(o => {
+        const kDodDt = parseSheetDate(o.karigarDod || o.karigarDeliveryDate || o['Karigar DOD']);
+        const daysLate = kDodDt ? Math.floor((todayMidnight - kDodDt) / (1000 * 60 * 60 * 24)) : 0;
+        return { ...o, _kDodDt: kDodDt, _daysLate: daysLate };
       })
-      .sort((a, b) => String(a.karigarDod || '').localeCompare(String(b.karigarDod || '')))
-      .slice(0, 8);
-  }, [filteredOrders, todayStr]);
+      .sort((a, b) => (a._kDodDt?.getTime() || 0) - (b._kDodDt?.getTime() || 0))
+      .slice(0, 15);
+  }, [filteredOrders, todayMidnight]);
 
   const resetFilters = () => {
     setDateFrom('');
@@ -177,7 +251,7 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
   };
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 pb-8">
       {/* Top Filter Bar */}
       <div className="bg-[#161922] border border-slate-800/90 rounded-2xl p-4 shadow-xl flex flex-wrap items-end gap-3">
         <div className="flex items-center gap-2 text-amber-400 font-bold text-xs uppercase tracking-wider mr-2 py-2">
@@ -306,7 +380,6 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
 
       {/* Main Analytics Row 1: Salesperson & Karigar Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Salesperson Leaderboard */}
         <div className="bg-[#161922] border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
@@ -320,9 +393,7 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} />
                 <YAxis stroke="#94a3b8" fontSize={11} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f1117', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }}
-                />
+                <Tooltip contentStyle={{ backgroundColor: '#0f1117', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }} />
                 <Bar dataKey="orders" name="Orders" fill="#f59e0b" radius={[6, 6, 0, 0]} />
                 <Bar dataKey="gold" name="Gold (g)" fill="#10b981" radius={[6, 6, 0, 0]} />
               </BarChart>
@@ -330,7 +401,6 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
           </div>
         </div>
 
-        {/* Karigar Workload & SLA Health */}
         <div className="bg-[#161922] border border-slate-800 rounded-2xl p-5 shadow-xl">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
@@ -344,10 +414,8 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
                 <XAxis type="number" stroke="#94a3b8" fontSize={11} />
                 <YAxis dataKey="name" type="category" stroke="#cbd5e1" fontSize={11} width={90} />
-                <Tooltip
-                  contentStyle={{ backgroundColor: '#0f1117', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }}
-                />
-                <Bar dataKey="onTime" name="On Schedule" stackId="a" fill="#10b981" radius={[0, 0, 0, 0]} />
+                <Tooltip contentStyle={{ backgroundColor: '#0f1117', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }} />
+                <Bar dataKey="onTime" name="On Schedule" stackId="a" fill="#10b981" />
                 <Bar dataKey="overdue" name="Overdue DOD" stackId="a" fill="#f43f5e" radius={[0, 6, 6, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -357,7 +425,6 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
 
       {/* Main Analytics Row 2: Order Intake Trend + Order Type & Purity Donuts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Daily Order Trend */}
         <div className="bg-[#161922] border border-slate-800 rounded-2xl p-5 shadow-xl lg:col-span-1">
           <h3 className="text-sm font-bold text-slate-100 mb-4">Recent Order Intake Trend</h3>
           <div className="h-56">
@@ -373,6 +440,7 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
                 <XAxis dataKey="date" stroke="#94a3b8" fontSize={10} />
                 <YAxis stroke="#94a3b8" fontSize={10} />
                 <Tooltip
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.fullDate || ''}
                   contentStyle={{ backgroundColor: '#0f1117', borderColor: '#334155', borderRadius: '12px', fontSize: '12px' }}
                 />
                 <Area type="monotone" dataKey="orders" name="Orders" stroke="#f59e0b" fillOpacity={1} fill="url(#goldGrad)" />
@@ -381,7 +449,6 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
           </div>
         </div>
 
-        {/* Order Type Split */}
         <div className="bg-[#161922] border border-slate-800 rounded-2xl p-5 shadow-xl">
           <h3 className="text-sm font-bold text-slate-100 mb-2">Order Category Split</h3>
           <div className="h-56 flex items-center">
@@ -405,7 +472,6 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
           </div>
         </div>
 
-        {/* Purity Mix */}
         <div className="bg-[#161922] border border-slate-800 rounded-2xl p-5 shadow-xl">
           <h3 className="text-sm font-bold text-slate-100 mb-2">Gold Purity Breakdown</h3>
           <div className="h-56 flex items-center">
@@ -434,9 +500,9 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
       <div className="bg-[#161922] border border-rose-500/20 rounded-2xl p-5 shadow-xl">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-bold text-rose-400 flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4" /> Priority Overdue Karigar Watchlist
+            <AlertTriangle className="w-4 h-4" /> Priority Overdue Karigar Watchlist ({kpis.overdueKarigar})
           </h3>
-          <span className="text-xs text-slate-400">Showing oldest overdue items first</span>
+          <span className="text-xs text-slate-400">Oldest overdue items first (DD-MM-YYYY)</span>
         </div>
 
         {overdueList.length === 0 ? (
@@ -454,6 +520,7 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
                   <th className="py-2.5 px-3">Salesperson</th>
                   <th className="py-2.5 px-3">Karigar</th>
                   <th className="py-2.5 px-3">Karigar DOD</th>
+                  <th className="py-2.5 px-3">Delay</th>
                   <th className="py-2.5 px-3">Client DOD</th>
                 </tr>
               </thead>
@@ -469,8 +536,13 @@ export default function ExecutiveDashboard({ orders = [], onSelectOrder }) {
                     <td className="py-2.5 px-3 text-slate-300">{item.customerName}</td>
                     <td className="py-2.5 px-3 text-slate-400">{item.salesPerson}</td>
                     <td className="py-2.5 px-3 font-semibold text-emerald-400">{item.karigarName}</td>
-                    <td className="py-2.5 px-3 font-bold text-rose-400">{String(item.karigarDod || '').split('T')[0]}</td>
-                    <td className="py-2.5 px-3 text-slate-300">{String(item.promisedDeliveryDate || '').split('T')[0]}</td>
+                    <td className="py-2.5 px-3 font-bold text-rose-400">{formatIndianDate(item.karigarDod || item.karigarDeliveryDate || item['Karigar DOD'])}</td>
+                    <td className="py-2.5 px-3">
+                      <span className="px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 font-bold text-[10px]">
+                        {item._daysLate}d late
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-slate-300">{formatIndianDate(item.promisedDeliveryDate || item.clientDod)}</td>
                   </tr>
                 ))}
               </tbody>

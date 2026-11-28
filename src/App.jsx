@@ -1606,25 +1606,32 @@ export default function App() {
       </nav>
 
       <main className="flex-1 p-3 sm:p-6 max-w-[1450px] w-full mx-auto space-y-5 sm:space-y-6">
-        {/* Switcher Buttons */}
-        <div className="flex items-center gap-2 mb-4">
-          <button
-            onClick={() => setShowNewBI(false)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
-              !showNewBI ? 'bg-amber-500 text-slate-950' : 'bg-[#181b22] text-slate-400 border border-slate-800'
-            }`}
-          >
-            Current Dashboard
-          </button>
-          <button
-            onClick={() => setShowNewBI(true)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
-              showNewBI ? 'bg-emerald-500 text-slate-950' : 'bg-[#181b22] text-slate-400 border border-slate-800'
-            }`}
-          >
-            ✨ Executive BI Analytics (New)
-          </button>
-        </div>
+        {activeTab === 'dashboard' && (
+          <>
+            {/* Switcher Buttons */}
+            <div className="flex items-center gap-2 mb-4">
+              <button
+                onClick={() => setShowNewBI(false)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
+                  !showNewBI ? 'bg-amber-500 text-slate-950' : 'bg-[#181b22] text-slate-400 border border-slate-800'
+                }`}
+              >
+                Current Dashboard
+              </button>
+              <button
+                onClick={() => setShowNewBI(true)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold cursor-pointer ${
+                  showNewBI ? 'bg-emerald-500 text-slate-950' : 'bg-[#181b22] text-slate-400 border border-slate-800'
+                }`}
+              >
+                ✨ Executive BI Analytics (New)
+              </button>
+            </div>
+
+            {/* New BI Dashboard opens right here when clicked */}
+            {showNewBI && <ExecutiveDashboard orders={orders} />}
+          </>
+        )}
 
         {/* New BI Dashboard opens right here when clicked */}
         {showNewBI && <ExecutiveDashboard orders={orders} />}
