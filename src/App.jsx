@@ -975,9 +975,13 @@ export default function App() {
     setSharingSlip(true);
     const slipText = buildWhatsAppMessage(order);
     const imgUrl = formatDriveUrl(order, 'w1200');
-    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     try {
+      // 1. Copy the Karigar Slip text to clipboard first
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(slipText).catch(() => {});
+      }
+
       let imageBlob = null;
       if (imgUrl) {
         const response = await fetch(imgUrl);
@@ -986,8 +990,8 @@ export default function App() {
         }
       }
 
-      // 1. Mobile (iOS / Android): Native Share attaches Real Photo + Full Text together
-      if (isMobile && imageBlob && navigator.canShare) {
+      // 2. Open the native Share window (on BOTH Laptop & Mobile) with the image attached
+      if (imageBlob && navigator.canShare) {
         const file = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
           type: imageBlob.type || 'image/jpeg'
         });
@@ -1003,27 +1007,9 @@ export default function App() {
         }
       }
 
-      // 2. Laptop (Windows): Save BOTH Text and Image into Windows Clipboard History (Win + V)
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(slipText);
-      }
-
-      if (imageBlob && navigator.clipboard && window.ClipboardItem) {
-        await new Promise((r) => setTimeout(r, 150)); // Brief pause so Windows logs both items separately in Win+V
-        const imgBitmap = await createImageBitmap(imageBlob);
-        const canvas = document.createElement('canvas');
-        canvas.width = imgBitmap.width;
-        canvas.height = imgBitmap.height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(imgBitmap, 0, 0);
-
-        const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-        await navigator.clipboard.write([
-          new ClipboardItem({ 'image/png': pngBlob })
-        ]);
-      }
-
-      window.open('https://web.whatsapp.com/', '_blank');
+      // Fallback only if browser blocks navigator.share
+      const encodedText = encodeURIComponent(slipText);
+      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error("Share failed:", err);
