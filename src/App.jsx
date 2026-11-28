@@ -986,41 +986,39 @@ export default function App() {
         }
       }
 
-      if (navigator.canShare) {
-        let shareFile;
-        if (isMobile && imageBlob) {
-          // Mobile: Native Photo + Text Caption together
-          shareFile = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
-            type: imageBlob.type || 'image/jpeg'
+      // 1. Mobile (iOS / Android): Native Share attaches Real Photo + Full Text together
+      if (isMobile && imageBlob && navigator.canShare) {
+        const file = new File([imageBlob], `${order.orderSheetNo || 'Karigar_Order'}.jpg`, {
+          type: imageBlob.type || 'image/jpeg'
+        });
+
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `Karigar Work Order - ${order.orderSheetNo || ''}`,
+            text: slipText
           });
-          if (navigator.canShare({ files: [shareFile] })) {
-            await navigator.share({
-              files: [shareFile],
-              title: `Karigar Work Order - ${order.orderSheetNo || ''}`,
-              text: slipText
-            });
-            setSharingSlip(false);
-            return;
-          }
-        } else {
-          // Laptop / Windows: Single Combined Work Order Card Image (Photo + All Details in 1 bubble)
-          const cardBlob = await createCombinedKarigarCardBlob(order, imageBlob);
-          shareFile = new File([cardBlob], `${order.orderSheetNo || 'Karigar_Order'}_Slip.png`, {
-            type: 'image/png'
-          });
-          if (navigator.canShare({ files: [shareFile] })) {
-            await navigator.share({
-              files: [shareFile],
-              title: `Karigar Work Order - ${order.orderSheetNo || ''}`
-            });
-            setSharingSlip(false);
-            return;
-          }
+          setSharingSlip(false);
+          return;
         }
       }
 
-      const encodedText = encodeURIComponent(slipText);
-      window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+      // 2. Laptop (Windows): Copy Real Image to Clipboard (skipping Windows Share dialog)
+      if (imageBlob && navigator.clipboard && window.ClipboardItem) {
+        const imgBitmap = await createImageBitmap(imageBlob);
+        const canvas = document.createElement('canvas');
+        canvas.width = imgBitmap.width;
+        canvas.height = imgBitmap.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(imgBitmap, 0, 0);
+
+        const pngBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        await navigator.clipboard.write([
+          new ClipboardItem({ 'image/png': pngBlob })
+        ]);
+      }
+
+      window.open('https://web.whatsapp.com/', '_blank');
     } catch (err) {
       if (err.name !== 'AbortError') {
         console.error("Share failed:", err);
