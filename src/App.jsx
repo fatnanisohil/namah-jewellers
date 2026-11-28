@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
 import ExecutiveDashboard from './ExecutiveDashboard';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Package,
   Clock,
@@ -144,6 +144,7 @@ const DriveImage = ({ order, size = 'w200', alt = '', className = '', onClick, p
 };
 
 export default function App() {
+  const [showNewBI, setShowNewBI] = useState(false);
   const [activeTab, setActiveTab] = useState('orders');
   const [karigarSubTab, setKarigarSubTab] = useState('Amardeep');
   const [karigarSearchQuery, setKarigarSearchQuery] = useState('');
